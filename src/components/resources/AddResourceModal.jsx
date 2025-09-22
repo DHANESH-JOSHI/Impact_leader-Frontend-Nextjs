@@ -1,0 +1,684 @@
+"use client";
+
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  X,
+  Save,
+  FolderOpen,
+  Upload,
+  File,
+  Video,
+  Volume2,
+  Image,
+  User,
+  Tag,
+} from "lucide-react";
+
+const modalVariants = {
+  hidden: {
+    opacity: 0,
+    scale: 0.95,
+    y: -50,
+  },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: {
+      duration: 0.3,
+      ease: "easeOut",
+    },
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.95,
+    y: -50,
+    transition: {
+      duration: 0.2,
+    },
+  },
+};
+
+const backdropVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 },
+  exit: { opacity: 0 },
+};
+
+export default function AddResourceModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  categories,
+}) {
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    type: "video",
+    fileUrl: "",
+    fileName: "",
+    fileSize: 0,
+    duration: 0,
+    category: categories[0] || "",
+    tags: "",
+    author: "",
+    status: "draft",
+    thumbnail: "",
+    featured: false,
+  });
+
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [selectedFile, setSelectedFile] = useState(null);
+
+  // Handle input changes
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  // Handle file upload
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Check file type
+      const fileType = file.type;
+      let resourceType = "document";
+
+      if (fileType.startsWith("video/")) {
+        resourceType = "video";
+      } else if (fileType.startsWith("audio/")) {
+        resourceType = "audio";
+      }
+
+      setSelectedFile(file);
+      setFormData((prev) => ({
+        ...prev,
+        fileName: file.name,
+        fileSize: file.size,
+        type: resourceType,
+      }));
+
+      // Simulate file upload progress
+      simulateUpload(file);
+    }
+  };
+
+  const simulateUpload = (file) => {
+    setUploadProgress(0);
+    const interval = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          // Create object URL for preview
+          const url = URL.createObjectURL(file);
+          setFormData((prevData) => ({
+            ...prevData,
+            fileUrl: url,
+          }));
+          return 100;
+        }
+        return prev + 10;
+      });
+    }, 200);
+  };
+
+  // Validate form
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.title.trim()) {
+      newErrors.title = "Title is required";
+    }
+
+    if (!formData.description.trim()) {
+      newErrors.description = "Description is required";
+    }
+
+    if (!formData.author.trim()) {
+      newErrors.author = "Author name is required";
+    }
+
+    if (!formData.category) {
+      newErrors.category = "Category is required";
+    }
+
+    if (!selectedFile && !formData.fileUrl) {
+      newErrors.file = "Please upload a file or provide a URL";
+    }
+
+    return newErrors;
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const newErrors = validateForm();
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    const resourceData = {
+      ...formData,
+      tags: formData.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter((tag) => tag),
+    };
+
+    onSubmit(resourceData);
+
+    // Reset form
+    setFormData({
+      title: "",
+      description: "",
+      type: "video",
+      fileUrl: "",
+      fileName: "",
+      fileSize: 0,
+      duration: 0,
+      category: categories[0] || "",
+      tags: "",
+      author: "",
+      status: "draft",
+      thumbnail: "",
+      featured: false,
+    });
+    setSelectedFile(null);
+    setUploadProgress(0);
+    setErrors({});
+    setIsSubmitting(false);
+  };
+
+  const handleClose = () => {
+    if (!isSubmitting) {
+      setFormData({
+        title: "",
+        description: "",
+        type: "video",
+        fileUrl: "",
+        fileName: "",
+        fileSize: 0,
+        duration: 0,
+        category: categories[0] || "",
+        tags: "",
+        author: "",
+        status: "draft",
+        thumbnail: "",
+        featured: false,
+      });
+      setSelectedFile(null);
+      setUploadProgress(0);
+      setErrors({});
+      onClose();
+    }
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          className="fixed inset-0 flex items-center justify-center z-50 p-4"
+          style={{
+            backdropFilter: "blur(8px)",
+            backgroundColor: "rgba(100, 100, 100, 0.3)",
+          }}
+          variants={backdropVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          onClick={handleClose}
+        >
+          <motion.div
+            className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
+            variants={modalVariants}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div
+              className="flex items-center justify-between p-6 border-b border-gray-200"
+              style={{ backgroundColor: "#f8fafc" }}
+            >
+              <div className="flex items-center space-x-3">
+                <div
+                  className="p-2 rounded-lg"
+                  style={{ backgroundColor: "#eff6ff" }}
+                >
+                  <FolderOpen
+                    className="h-6 w-6"
+                    style={{ color: "#2691ce" }}
+                  />
+                </div>
+                <div>
+                  <h2
+                    className="text-xl font-semibold"
+                    style={{ color: "#040606" }}
+                  >
+                    Add New Resource
+                  </h2>
+                  <p className="text-sm" style={{ color: "#646464" }}>
+                    Upload and manage your media resources
+                  </p>
+                </div>
+              </div>
+              <motion.button
+                onClick={handleClose}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                disabled={isSubmitting}
+              >
+                <X className="h-5 w-5" style={{ color: "#646464" }} />
+              </motion.button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 max-h-[calc(90vh-140px)] overflow-y-auto">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* File Upload Section */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: "#040606" }}
+                  >
+                    Upload File *
+                  </label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-blue-500 transition-colors">
+                    <input
+                      type="file"
+                      accept="audio/*,video/*,.pdf,.doc,.docx"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      id="file-upload"
+                      disabled={isSubmitting}
+                    />
+                    <label htmlFor="file-upload" className="cursor-pointer">
+                      <div className="text-center">
+                        <Upload
+                          className="h-12 w-12 mx-auto mb-4"
+                          style={{ color: "#2691ce" }}
+                        />
+                        <p
+                          className="text-lg font-medium mb-2"
+                          style={{ color: "#040606" }}
+                        >
+                          Click to upload or drag and drop
+                        </p>
+                        <p className="text-sm" style={{ color: "#646464" }}>
+                          MP3, MP4, PDF, DOC files up to 100MB
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* Upload Progress */}
+                  {uploadProgress > 0 && uploadProgress < 100 && (
+                    <div className="mt-4">
+                      <div className="flex justify-between text-sm mb-1">
+                        <span style={{ color: "#646464" }}>Uploading...</span>
+                        <span style={{ color: "#646464" }}>
+                          {uploadProgress}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="h-2 rounded-full transition-all duration-300"
+                          style={{
+                            backgroundColor: "#2691ce",
+                            width: `${uploadProgress}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* File Info */}
+                  {selectedFile && (
+                    <motion.div
+                      className="mt-4 p-4 border border-gray-200 rounded-lg"
+                      style={{ backgroundColor: "#f8fafc" }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div style={{ color: "#2691ce" }}>
+                          {formData.type === "video" && (
+                            <Video className="h-5 w-5" />
+                          )}
+                          {formData.type === "audio" && (
+                            <Volume2 className="h-5 w-5" />
+                          )}
+                          {formData.type === "document" && (
+                            <File className="h-5 w-5" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p
+                            className="font-medium"
+                            style={{ color: "#040606" }}
+                          >
+                            {selectedFile.name}
+                          </p>
+                          <p className="text-sm" style={{ color: "#646464" }}>
+                            {formatFileSize(selectedFile.size)} •{" "}
+                            {formData.type}
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {errors.file && (
+                    <motion.p
+                      className="text-red-500 text-sm mt-1"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      {errors.file}
+                    </motion.p>
+                  )}
+                </motion.div>
+
+                {/* Title and Basic Info */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <label
+                      className="block text-sm font-medium mb-2"
+                      style={{ color: "#040606" }}
+                    >
+                      Title *
+                    </label>
+                    <input
+                      type="text"
+                      name="title"
+                      value={formData.title}
+                      onChange={handleInputChange}
+                      placeholder="Enter resource title..."
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${
+                        errors.title ? "border-red-500" : "border-gray-300"
+                      }`}
+                      style={{ focusRingColor: "#2691ce" }}
+                      disabled={isSubmitting}
+                    />
+                    {errors.title && (
+                      <motion.p
+                        className="text-red-500 text-sm mt-1"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        {errors.title}
+                      </motion.p>
+                    )}
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <label
+                      className="block text-sm font-medium mb-2"
+                      style={{ color: "#040606" }}
+                    >
+                      <User className="inline h-4 w-4 mr-1" />
+                      Author *
+                    </label>
+                    <input
+                      type="text"
+                      name="author"
+                      value={formData.author}
+                      onChange={handleInputChange}
+                      placeholder="Enter author name..."
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${
+                        errors.author ? "border-red-500" : "border-gray-300"
+                      }`}
+                      style={{ focusRingColor: "#2691ce" }}
+                      disabled={isSubmitting}
+                    />
+                    {errors.author && (
+                      <motion.p
+                        className="text-red-500 text-sm mt-1"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        {errors.author}
+                      </motion.p>
+                    )}
+                  </motion.div>
+                </div>
+
+                {/* Description */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: "#040606" }}
+                  >
+                    Description *
+                  </label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    placeholder="Describe your resource..."
+                    rows={4}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none ${
+                      errors.description ? "border-red-500" : "border-gray-300"
+                    }`}
+                    style={{ focusRingColor: "#2691ce" }}
+                    disabled={isSubmitting}
+                  />
+                  {errors.description && (
+                    <motion.p
+                      className="text-red-500 text-sm mt-1"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      {errors.description}
+                    </motion.p>
+                  )}
+                </motion.div>
+
+                {/* Category and Settings */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5 }}
+                  >
+                    <label
+                      className="block text-sm font-medium mb-2"
+                      style={{ color: "#040606" }}
+                    >
+                      <Tag className="inline h-4 w-4 mr-1" />
+                      Category *
+                    </label>
+                    <select
+                      name="category"
+                      value={formData.category}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${
+                        errors.category ? "border-red-500" : "border-gray-300"
+                      }`}
+                      style={{ focusRingColor: "#2691ce" }}
+                      disabled={isSubmitting}
+                    >
+                      {categories.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.category && (
+                      <motion.p
+                        className="text-red-500 text-sm mt-1"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        {errors.category}
+                      </motion.p>
+                    )}
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.6 }}
+                  >
+                    <label
+                      className="block text-sm font-medium mb-2"
+                      style={{ color: "#040606" }}
+                    >
+                      Status
+                    </label>
+                    <select
+                      name="status"
+                      value={formData.status}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
+                      style={{ focusRingColor: "#2691ce" }}
+                      disabled={isSubmitting}
+                    >
+                      <option value="draft">Draft</option>
+                      <option value="published">Published</option>
+                      <option value="archived">Archived</option>
+                    </select>
+                  </motion.div>
+                </div>
+
+                {/* Tags */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.7 }}
+                >
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: "#040606" }}
+                  >
+                    Tags (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    name="tags"
+                    value={formData.tags}
+                    onChange={handleInputChange}
+                    placeholder="Enter tags separated by commas (e.g., tutorial, music, education)"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
+                    style={{ focusRingColor: "#2691ce" }}
+                    disabled={isSubmitting}
+                  />
+                  <p className="text-xs mt-1" style={{ color: "#646464" }}>
+                    Separate multiple tags with commas
+                  </p>
+                </motion.div>
+
+                {/* Featured Toggle */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.8 }}
+                >
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="featured"
+                      checked={formData.featured}
+                      onChange={handleInputChange}
+                      className="w-4 h-4 rounded focus:ring-2"
+                      style={{ color: "#2691ce", focusRingColor: "#2691ce" }}
+                      disabled={isSubmitting}
+                    />
+                    <label
+                      className="ml-2 text-sm"
+                      style={{ color: "#040606" }}
+                    >
+                      Mark as featured resource
+                    </label>
+                  </div>
+                </motion.div>
+              </form>
+            </div>
+
+            {/* Modal Footer */}
+            <div
+              className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200"
+              style={{ backgroundColor: "#f8fafc" }}
+            >
+              <motion.button
+                type="button"
+                onClick={handleClose}
+                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                style={{ color: "#646464" }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </motion.button>
+              <motion.button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className={`px-6 py-2 text-white rounded-lg font-medium transition-all flex items-center space-x-2 ${
+                  isSubmitting
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:shadow-md"
+                }`}
+                style={{ backgroundColor: "#2691ce" }}
+                whileHover={!isSubmitting ? { scale: 1.02 } : {}}
+                whileTap={!isSubmitting ? { scale: 0.98 } : {}}
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Creating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    <span>Create Resource</span>
+                  </>
+                )}
+              </motion.button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
