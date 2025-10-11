@@ -1,87 +1,23 @@
-import { ExternalApiService } from "./externalApiService";
+import { apiClient } from '@/lib/apiClient';
+import { authStorage } from '@/lib/storage';
+import { AUTH } from '@/constants/apiEndpoints';
 
-// Store tokens in localStorage for persistence across page refreshes
-// In production, consider using more secure storage
-let currentTokens = {
-  accessToken: null,
-  refreshToken: null,
-  user: null,
-};
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(";").shift();
-  return null;
-}
-
-// Load tokens from localStorage on service initialization
-const loadTokensFromStorage = () => {
-  if (typeof window !== "undefined") {
-    try {
-      const storedTokens = localStorage.getItem("impactLeadersAuth");
-      console.log(
-        "🔧 Auth Service: Loading tokens from localStorage",
-        storedTokens
-      );
-      if (storedTokens) {
-        const parsed = JSON.parse(storedTokens);
-        currentTokens = { ...parsed };
-        console.log("🔧 Auth Service: Loaded tokens from localStorage");
-      }
-    } catch (error) {
-      console.error("Error loading tokens from localStorage:", error);
-    }
-  }
-};
-
-// Save tokens to localStorage
-const saveTokensToStorage = (tokens) => {
-  if (typeof window !== "undefined") {
-    try {
-      localStorage.setItem("impactLeadersTokens", JSON.stringify(tokens));
-      console.log("🔧 Auth Service: Saved tokens to localStorage");
-    } catch (error) {
-      console.error("Error saving tokens to localStorage:", error);
-    }
-  }
-};
-
-// Clear tokens from localStorage
-const clearTokensFromStorage = () => {
-  if (typeof window !== "undefined") {
-    try {
-      localStorage.removeItem("impactLeadersTokens");
-      console.log("🔧 Auth Service: Cleared tokens from localStorage");
-    } catch (error) {
-      console.error("Error clearing tokens from localStorage:", error);
-    }
-  }
-};
-
-// Initialize tokens from storage
-loadTokensFromStorage();
+// Initialize API client with token getter
+apiClient.setTokenGetter(() => authStorage.getAccessToken());
 
 export class ImpactLeadersAuthService {
   static async login(email, password) {
     try {
-      const response = await ExternalApiService.post("/auth/login", {
-        email,
-        password,
-      });
-
-      console.log("🔍 Auth Service: ExternalApiService response:", {
-        success: response.success,
-        status: response.status,
-        message: response.message,
-      });
+      const response = await apiClient.post(AUTH.LOGIN,
+        { email, password },
+        { skipAuth: true }
+      );
 
       if (!response.success) {
-        // Handle specific error cases
         if (response.status === 429) {
           return {
             success: false,
-            message:
-              "Too many login attempts. Please wait a moment and try again.",
+            message: "Too many login attempts. Please wait a moment and try again.",
           };
         }
 
@@ -91,32 +27,17 @@ export class ImpactLeadersAuthService {
         };
       }
 
-      console.log(
-        "🔍 Auth Service: Full API Response:",
-        JSON.stringify(response, null, 2)
-      );
-
-      // The actual API response structure is nested: response.data.data
-      // ExternalApiService returns: { success: true, data: { success: true, data: { accessToken: "...", user: {...} } } }
+      // Extract auth data from nested response
       const apiData = response.data.data || response.data;
 
-      currentTokens = {
+      const tokens = {
         accessToken: apiData.accessToken,
         refreshToken: apiData.refreshToken,
         user: apiData.user,
       };
 
-      // Save to localStorage for persistence
-      saveTokensToStorage(currentTokens);
-
-      console.log(
-        "👤 Auth Service: User from apiData.user:",
-        JSON.stringify(apiData.user, null, 2)
-      );
-      console.log(
-        "🔑 Auth Service: Stored accessToken:",
-        apiData.accessToken ? "Present" : "Missing"
-      );
+      // Save to storage
+      authStorage.saveTokens(tokens);
 
       return {
         success: true,
@@ -125,7 +46,7 @@ export class ImpactLeadersAuthService {
         user: apiData.user,
       };
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("[Auth] Login error:", error);
       return {
         success: false,
         message: error.message,
@@ -135,27 +56,27 @@ export class ImpactLeadersAuthService {
 
   static async loginWithOTP(email, otp, purpose = "login") {
     try {
-      const response = await ExternalApiService.post("/auth/otp/verify", {
-        email,
-        otp,
-        purpose,
-      });
+      const response = await apiClient.post(AUTH.OTP.VERIFY,
+        { email, otp, purpose },
+        { skipAuth: true }
+      );
 
       if (!response.success) {
-        throw new Error(response.message || "OTP verification failed");
+        return {
+          success: false,
+          message: response.message || "OTP verification failed",
+        };
       }
 
-      // Store tokens - handle nested response structure
       const apiData = response.data.data || response.data;
 
-      currentTokens = {
+      const tokens = {
         accessToken: apiData.accessToken,
         refreshToken: apiData.refreshToken,
         user: apiData.user,
       };
 
-      // Save to localStorage for persistence
-      saveTokensToStorage(currentTokens);
+      authStorage.saveTokens(tokens);
 
       return {
         success: true,
@@ -164,7 +85,7 @@ export class ImpactLeadersAuthService {
         user: apiData.user,
       };
     } catch (error) {
-      console.error("OTP Login error:", error);
+      console.error("[Auth] OTP Login error:", error);
       return {
         success: false,
         message: error.message,
@@ -174,17 +95,17 @@ export class ImpactLeadersAuthService {
 
   static async sendOTP(email, purpose = "login") {
     try {
-      const response = await ExternalApiService.post("/auth/otp/send", {
-        email,
-        purpose,
-      });
+      const response = await apiClient.post(AUTH.OTP.SEND,
+        { email, purpose },
+        { skipAuth: true }
+      );
 
       return {
         success: response.success,
         message: response.success ? "OTP sent successfully" : response.message,
       };
     } catch (error) {
-      console.error("Send OTP error:", error);
+      console.error("[Auth] Send OTP error:", error);
       return {
         success: false,
         message: error.message,
@@ -194,13 +115,16 @@ export class ImpactLeadersAuthService {
 
   static async register(userData) {
     try {
-      const response = await ExternalApiService.post(
-        "/auth/register",
-        userData
+      const response = await apiClient.post(AUTH.REGISTER,
+        userData,
+        { skipAuth: true }
       );
 
       if (!response.success) {
-        throw new Error(response.message || "Registration failed");
+        return {
+          success: false,
+          message: response.message || "Registration failed",
+        };
       }
 
       return {
@@ -208,7 +132,7 @@ export class ImpactLeadersAuthService {
         message: response.data.message || "User created successfully",
       };
     } catch (error) {
-      console.error("Registration error:", error);
+      console.error("[Auth] Registration error:", error);
       return {
         success: false,
         message: error.message,
@@ -218,29 +142,36 @@ export class ImpactLeadersAuthService {
 
   static async getCurrentUser() {
     try {
-      if (!currentTokens.accessToken) {
-        throw new Error("No access token found");
+      const accessToken = authStorage.getAccessToken();
+      if (!accessToken) {
+        return {
+          success: false,
+          message: "No access token found",
+        };
       }
 
-      const response = await ExternalApiService.get(
-        "/auth/me",
-        currentTokens.accessToken
-      );
+      const response = await apiClient.get(AUTH.ME);
 
       if (!response.success) {
-        throw new Error(response.message || "Failed to get current user");
+        return {
+          success: false,
+          message: response.message || "Failed to get current user",
+        };
       }
 
-      // Handle nested response structure
       const userData = response.data.data || response.data;
-      currentTokens.user = userData;
+
+      // Update user in storage
+      const tokens = authStorage.getTokens();
+      tokens.user = userData;
+      authStorage.saveTokens(tokens);
 
       return {
         success: true,
         user: userData,
       };
     } catch (error) {
-      console.error("Get user error:", error);
+      console.error("[Auth] Get user error:", error);
       return {
         success: false,
         message: error.message,
@@ -250,38 +181,45 @@ export class ImpactLeadersAuthService {
 
   static async refreshToken() {
     try {
-      if (!currentTokens.refreshToken) {
-        throw new Error("No refresh token found");
+      const tokens = authStorage.getTokens();
+      if (!tokens.refreshToken) {
+        return {
+          success: false,
+          message: "No refresh token found",
+        };
       }
 
-      const response = await ExternalApiService.post("/auth/refresh", {
-        refreshToken: currentTokens.refreshToken,
-      });
+      const response = await apiClient.post(AUTH.REFRESH,
+        { refreshToken: tokens.refreshToken },
+        { skipAuth: true }
+      );
 
       if (!response.success) {
-        throw new Error(response.message || "Token refresh failed");
+        authStorage.clearTokens();
+        return {
+          success: false,
+          message: response.message || "Token refresh failed",
+        };
       }
 
-      // Update tokens - handle nested response structure
       const apiData = response.data.data || response.data;
 
-      currentTokens.accessToken = apiData.accessToken;
-      if (apiData.refreshToken) {
-        currentTokens.refreshToken = apiData.refreshToken;
-      }
+      const newTokens = {
+        accessToken: apiData.accessToken,
+        refreshToken: apiData.refreshToken || tokens.refreshToken,
+        user: tokens.user,
+      };
 
-      // Save updated tokens to localStorage
-      saveTokensToStorage(currentTokens);
+      authStorage.saveTokens(newTokens);
 
       return {
         success: true,
         token: apiData.accessToken,
-        refreshToken: apiData.refreshToken,
+        refreshToken: newTokens.refreshToken,
       };
     } catch (error) {
-      console.error("Token refresh error:", error);
-      // Clear tokens on refresh failure
-      currentTokens = { accessToken: null, refreshToken: null, user: null };
+      console.error("[Auth] Token refresh error:", error);
+      authStorage.clearTokens();
       return {
         success: false,
         message: error.message,
@@ -291,29 +229,23 @@ export class ImpactLeadersAuthService {
 
   static async logout() {
     try {
-      if (currentTokens.accessToken && currentTokens.refreshToken) {
-        await ExternalApiService.post(
-          "/auth/logout",
-          {
-            refreshToken: currentTokens.refreshToken,
-          },
-          currentTokens.accessToken
-        );
+      const tokens = authStorage.getTokens();
+
+      if (tokens.accessToken && tokens.refreshToken) {
+        await apiClient.post(AUTH.LOGOUT, {
+          refreshToken: tokens.refreshToken,
+        });
       }
 
-      // Clear tokens
-      currentTokens = { accessToken: null, refreshToken: null, user: null };
-      clearTokensFromStorage();
+      authStorage.clearTokens();
 
       return {
         success: true,
         message: "Logged out successfully",
       };
     } catch (error) {
-      console.error("Logout error:", error);
-      // Clear tokens even if logout request fails
-      currentTokens = { accessToken: null, refreshToken: null, user: null };
-      clearTokensFromStorage();
+      console.error("[Auth] Logout error:", error);
+      authStorage.clearTokens();
       return {
         success: true,
         message: "Logged out successfully",
@@ -322,16 +254,22 @@ export class ImpactLeadersAuthService {
   }
 
   static getStoredTokens() {
-    return { ...currentTokens };
+    return authStorage.getTokens();
   }
 
   static setStoredTokens(tokens) {
-    currentTokens = { ...tokens };
-    saveTokensToStorage(currentTokens);
+    authStorage.saveTokens(tokens);
   }
 
   static clearStoredTokens() {
-    currentTokens = { accessToken: null, refreshToken: null, user: null };
-    clearTokensFromStorage();
+    authStorage.clearTokens();
+  }
+
+  static getCurrentToken() {
+    return authStorage.getAccessToken();
+  }
+
+  static isAuthenticated() {
+    return authStorage.isAuthenticated();
   }
 }

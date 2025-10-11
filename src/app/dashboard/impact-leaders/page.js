@@ -1,16 +1,20 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Users, 
-  FileText, 
-  BookOpen, 
-  HelpCircle, 
+import {
+  Users,
+  FileText,
+  BookOpen,
+  HelpCircle,
   Bell,
   Heart,
   Activity,
   TrendingUp,
-  Calendar
+  Calendar,
+  MessageSquare,
+  Search,
+  Monitor,
+  Video
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,6 +29,11 @@ import { ResourcesService } from '@/services/resourcesService';
 import { QnAService } from '@/services/qnaService';
 import { StoriesService } from '@/services/storiesService';
 import { NotificationsService } from '@/services/notificationsService';
+import { ConnectionsService } from '@/services/connectionsService';
+import { MeetingsService } from '@/services/meetingsService';
+import { MessagesService } from '@/services/messagesService';
+import { DirectoryService } from '@/services/directoryService';
+import { SystemHealthService } from '@/services/systemHealthService';
 
 export default function ImpactLeadersAdminDashboard() {
   const [loading, setLoading] = useState(true);
@@ -141,6 +150,38 @@ export default function ImpactLeadersAdminDashboard() {
       href: '/dashboard/impact-leaders/analytics',
       color: 'bg-indigo-500',
       stat: pendingApprovals > 0 ? `${pendingApprovals} pending` : 'Up to date'
+    },
+    {
+      title: 'Messages',
+      description: 'Monitor conversations and messaging',
+      icon: <MessageSquare className="h-6 w-6" />,
+      href: '/dashboard/impact-leaders/messages',
+      color: 'bg-emerald-500',
+      stat: stats?.totalMessages || '0'
+    },
+    {
+      title: 'Meetings',
+      description: 'Manage meeting scheduling and verification',
+      icon: <Video className="h-6 w-6" />,
+      href: '/dashboard/impact-leaders/meetings',
+      color: 'bg-violet-500',
+      stat: stats?.totalMeetings || '0'
+    },
+    {
+      title: 'Directory',
+      description: 'Professional search and directory management',
+      icon: <Search className="h-6 w-6" />,
+      href: '/dashboard/impact-leaders/directory',
+      color: 'bg-cyan-500',
+      stat: stats?.totalDirectoryProfiles || '0'
+    },
+    {
+      title: 'System Health',
+      description: 'Monitor API health and performance',
+      icon: <Monitor className="h-6 w-6" />,
+      href: '/dashboard/impact-leaders/system-health',
+      color: 'bg-slate-500',
+      stat: 'Monitoring'
     }
   ];
 
@@ -151,8 +192,8 @@ export default function ImpactLeadersAdminDashboard() {
           <h1 className="text-3xl font-bold">Impact Leaders Admin</h1>
           <p className="text-gray-600 mt-2">Loading dashboard...</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {Array(8).fill(0).map((_, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+          {Array(12).fill(0).map((_, i) => (
             <div key={i} className="h-32 bg-gray-200 animate-pulse rounded-lg"></div>
           ))}
         </div>
@@ -183,7 +224,7 @@ export default function ImpactLeadersAdminDashboard() {
       </div>
 
       {/* Management Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {managementCards.map((card, index) => (
           <Link key={index} href={card.href}>
             <Card className="hover:shadow-lg transition-all duration-200 cursor-pointer group h-full">

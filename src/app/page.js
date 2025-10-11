@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -26,6 +25,7 @@ import {
   CardDescription,
   CardTitle,
 } from "@/components/ui/card";
+import { authStorage } from "@/lib/storage";
 
 // Brand colors
 const PRIMARY = "#2490CE";
@@ -124,41 +124,41 @@ export default function AdminLoginPage() {
 
   useEffect(() => {
     setShowAnimation(true);
-    
+
     // Check for URL parameters
     const urlParams = new URLSearchParams(window.location.search);
-    const error = urlParams.get('error');
-    const message = urlParams.get('message');
-    
+    const error = urlParams.get("error");
+    const message = urlParams.get("message");
+
     if (error) {
       switch (error) {
-        case 'login_required':
-          showToast('Please login to access the dashboard', 'error');
+        case "login_required":
+          showToast("Please login to access the dashboard", "error");
           break;
-        case 'session_expired':
-          showToast('Your session has expired. Please login again.', 'error');
+        case "session_expired":
+          showToast("Your session has expired. Please login again.", "error");
           break;
-        case 'access_denied':
-          showToast('Access denied. Admin privileges required.', 'error');
+        case "access_denied":
+          showToast("Access denied. Admin privileges required.", "error");
           break;
         default:
-          showToast('Please login to continue', 'error');
+          showToast("Please login to continue", "error");
       }
     }
-    
+
     if (message) {
       switch (message) {
-        case 'logged_out':
-          showToast('Successfully logged out', 'success');
+        case "logged_out":
+          showToast("Successfully logged out", "success");
           break;
         default:
-          showToast(message, 'info');
+          showToast(message, "info");
       }
     }
-    
+
     // Clean URL after showing messages
     if (error || message) {
-      window.history.replaceState({}, '', '/');
+      window.history.replaceState({}, "", "/");
     }
   }, []);
 
@@ -190,11 +190,11 @@ export default function AdminLoginPage() {
         return;
       }
 
-      // Call Impact Leaders API via our internal proxy
-      const response = await fetch('/api/auth/impact-leaders/login', {
-        method: 'POST',
+      // Call Next.js API route (standard structure)
+      const response = await fetch(process.env.NEXT_PUBLIC_API_BASE_URL + "/api/v1/auth/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
       });
@@ -202,37 +202,51 @@ export default function AdminLoginPage() {
       const data = await response.json();
 
       if (data.success) {
-        console.log('✅ Login: Success response received:', data);
-        
-        // Store auth data in localStorage for persistence
-        localStorage.setItem('impactLeadersAuth', JSON.stringify({
-          token: data.token,
-          refreshToken: data.refreshToken,
-          user: data.user,
-          expiresAt: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
-        }));
+        console.log("✅ Login: Success response received:", data);
+
+        // Extract auth data from nested response structure
+        const authData = data.data || data;
+
+        // Save tokens using centralized authStorage utility
+        authStorage.saveTokens({
+          accessToken: authData.accessToken || authData.token,
+          refreshToken: authData.refreshToken,
+          user: authData.user,
+        });
+
+        console.log("💾 Login: Tokens saved to storage");
 
         // Also set a cookie for server-side middleware
-        const cookieValue = `impactLeadersToken=${data.token}; path=/; max-age=${24 * 60 * 60}; SameSite=Lax`;
+        const token = authData.accessToken || authData.token;
+        const cookieValue = `authToken=${token}; path=/; max-age=${
+          24 * 60 * 60
+        }; SameSite=Lax`;
         document.cookie = cookieValue;
-        console.log('🍪 Login: Cookie set:', cookieValue.substring(0, 50) + '...');
-        
-        // Verify cookie was set
+        console.log(
+          "🍪 Login: Cookie set:",
+          cookieValue.substring(0, 50) + "..."
+        );
+
+        // Verify token was stored correctly
         setTimeout(() => {
-          const cookies = document.cookie.split(';').map(c => c.trim());
-          const impactCookie = cookies.find(c => c.startsWith('impactLeadersToken='));
-          console.log('🔍 Login: Cookie verification:', impactCookie ? 'Found' : 'Not found');
+          const storedToken = authStorage.getAccessToken();
+          console.log(
+            "🔍 Login: Token verification:",
+            storedToken ? `Present (${storedToken.substring(0, 20)}...)` : "Not found"
+          );
         }, 100);
-        
-        showToast(`Welcome ${data.user.firstName || 'Admin'}! Redirecting…`, "success");
+
+        showToast(
+          `Welcome ${authData.user.firstName || "Admin"}! Redirecting…`,
+          "success"
+        );
         setTimeout(() => router.push("/dashboard"), 900);
       } else {
-        console.log('❌ Login: Failed response:', data);
+        console.log("❌ Login: Failed response:", data);
         showToast(data.message || "Login failed", "error");
         setError(data.message || "Invalid credentials");
       }
     } catch (err) {
-      console.error("Login Error:", err);
       showToast("Login failed. Please try again.", "error");
       setError("Network error. Please check your connection.");
     } finally {

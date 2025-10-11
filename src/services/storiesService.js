@@ -2,22 +2,6 @@ import { ExternalApiService } from "./externalApiService";
 import { ImpactLeadersAuthService } from "./impactLeadersAuthService";
 
 export class StoriesService {
-  static getAuthToken() {
-    const tokens = ImpactLeadersAuthService.getStoredTokens();
-    // console.log("🔧 StoriesService: Getting auth token");
-    // console.log("🔧 ========>StoriesService: Token status:", {
-    //   hasAccessToken: !!tokens,
-    //   hasRefreshToken: !!tokens.refreshToken,
-    //   hasUser: !!tokens.user,
-    //   user: tokens.user ? tokens.user.email : "No user",
-    // });
-
-    if (!tokens) {
-      console.warn("⚠️ StoriesService: No access token found!");
-    }
-
-    return tokens;
-  }
 
   // Get stories feed
   static async getStoriesFeed(params = {}) {
@@ -30,16 +14,10 @@ export class StoriesService {
       });
 
       const endpoint = `/stories/feed?${queryParams.toString()}`;
-      const token = this.getAuthToken().token;
 
       console.log("🔧 StoriesService: Making API call to:", endpoint);
 
-      console.log(
-        "🔧 StoriesService: Using token:",
-        token ? "Present" : "Missing"
-      );
-
-      const response = await ExternalApiService.get(endpoint, token);
+      const response = await ExternalApiService.get(endpoint);
 
       console.log("🔧 StoriesService: API Response:", {
         success: response.success,
@@ -72,8 +50,7 @@ export class StoriesService {
 
       const response = await ExternalApiService.post(
         "/stories",
-        payload,
-        this.getAuthToken()
+        payload
       );
 
       return {
@@ -114,7 +91,7 @@ export class StoriesService {
       const response = await ExternalApiService.post(
         "/stories/upload",
         formData,
-        this.getAuthToken(),
+        undefined,
         true
       );
 
@@ -156,7 +133,7 @@ export class StoriesService {
       const response = await ExternalApiService.post(
         "/stories/upload",
         formData,
-        this.getAuthToken(),
+        undefined,
         true
       );
 
@@ -178,8 +155,7 @@ export class StoriesService {
   static async viewStory(storyId) {
     try {
       const response = await ExternalApiService.get(
-        `/stories/${storyId}`,
-        this.getAuthToken()
+        `/stories/${storyId}`
       );
 
       return {
@@ -200,8 +176,7 @@ export class StoriesService {
   static async getStoryAnalytics() {
     try {
       const response = await ExternalApiService.get(
-        "/stories/analytics",
-        this.getAuthToken()
+        "/stories/analytics"
       );
 
       return {
@@ -222,8 +197,7 @@ export class StoriesService {
   static async deleteStory(storyId) {
     try {
       const response = await ExternalApiService.delete(
-        `/stories/${storyId}`,
-        this.getAuthToken()
+        `/stories/${storyId}`
       );
 
       return {
@@ -245,8 +219,7 @@ export class StoriesService {
     try {
       const response = await ExternalApiService.put(
         `/stories/${storyId}`,
-        updateData,
-        this.getAuthToken()
+        updateData
       );
 
       return {

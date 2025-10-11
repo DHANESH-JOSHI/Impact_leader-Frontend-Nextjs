@@ -264,7 +264,7 @@ export default function ServerMonitoring() {
     try {
       const response = await fetch('/api/monitoring/system');
       const data = await response.json();
-      
+
       if (data.success) {
         setSystemMetrics(data.data);
       } else {
@@ -281,10 +281,10 @@ export default function ServerMonitoring() {
     try {
       const response = await fetch('/api/monitoring/realtime');
       const data = await response.json();
-      
+
       if (data.success) {
         setRealTimeMetrics(data.data);
-        
+
         // Update history arrays
         setCpuHistory(prev => [...prev.slice(-19), data.data.cpu.usage]);
         setMemoryHistory(prev => [...prev.slice(-19), data.data.memory.usage]);
@@ -300,7 +300,7 @@ export default function ServerMonitoring() {
     try {
       const response = await fetch('/api/monitoring/api-metrics');
       const data = await response.json();
-      
+
       if (data.success) {
         setApiMetrics(data.data);
       }

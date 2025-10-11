@@ -51,7 +51,7 @@ export const useAuth = () => {
       await fetch('/api/auth/logout', {
         method: 'POST',
       });
-      
+
       removeAuthCookie();
       setUser(null);
       router.push('/');

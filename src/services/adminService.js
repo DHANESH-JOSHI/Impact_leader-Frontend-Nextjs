@@ -2,17 +2,12 @@ import { ExternalApiService } from "./externalApiService";
 import { ImpactLeadersAuthService } from "./impactLeadersAuthService";
 
 export class AdminService {
-  static getAuthToken() {
-    const tokens = ImpactLeadersAuthService.getStoredTokens();
-    return tokens.token;
-  }
 
   // Get analytics dashboard data from Impact Leaders API
   static async getAnalyticsDashboard() {
     try {
       const response = await ExternalApiService.get(
         "/admin/analytics",
-        this.getAuthToken()
       );
 
       // Extract overview data from the actual API response structure
@@ -69,17 +64,15 @@ export class AdminService {
         resourcesResponse,
         notificationsResponse,
       ] = await Promise.allSettled([
-        ExternalApiService.get("/users?page=1&limit=1", this.getAuthToken()),
-        ExternalApiService.get("/posts?page=1&limit=1", this.getAuthToken()),
-        ExternalApiService.get("/stories/feed", this.getAuthToken()),
+        ExternalApiService.get("/users?page=1&limit=1"),
+        ExternalApiService.get("/posts?page=1&limit=1"),
+        ExternalApiService.get("/stories/feed"),
         ExternalApiService.get(
           "/resources?page=1&limit=1",
-          this.getAuthToken()
-        ),
+          ),
         ExternalApiService.get(
           "/notifications/unread/count",
-          this.getAuthToken()
-        ),
+          ),
       ]);
 
       const counts = {
@@ -171,7 +164,6 @@ export class AdminService {
     try {
       const response = await ExternalApiService.get(
         "/admin/approvals/pending",
-        this.getAuthToken()
       );
 
       console.log("Get pending approvals response:", response);
@@ -196,7 +188,6 @@ export class AdminService {
       const response = await ExternalApiService.post(
         `/admin/approvals/${contentType}/${contentId}/approve`,
         approvalData,
-        this.getAuthToken()
       );
 
       return {
@@ -219,7 +210,6 @@ export class AdminService {
       const response = await ExternalApiService.post(
         `/admin/approvals/${contentType}/${contentId}/reject`,
         rejectionData,
-        this.getAuthToken()
       );
 
       return {
@@ -252,7 +242,6 @@ export class AdminService {
       const endpoint = `/admin/flagged-content?${queryParams.toString()}`;
       const response = await ExternalApiService.get(
         endpoint,
-        this.getAuthToken()
       );
 
       return {
@@ -275,7 +264,6 @@ export class AdminService {
       const response = await ExternalApiService.post(
         `/admin/flagged-content/${flagId}/${action}`,
         data,
-        this.getAuthToken()
       );
 
       return {
@@ -297,7 +285,6 @@ export class AdminService {
     try {
       const response = await ExternalApiService.get(
         "/admin/system/health",
-        this.getAuthToken()
       );
 
       return {
@@ -339,7 +326,6 @@ export class AdminService {
       const endpoint = `/admin/audit-logs?${queryParams.toString()}`;
       const response = await ExternalApiService.get(
         endpoint,
-        this.getAuthToken()
       );
 
       return {
@@ -362,7 +348,6 @@ export class AdminService {
       const response = await ExternalApiService.post(
         `/admin/export/${exportType}`,
         params,
-        this.getAuthToken()
       );
 
       return {
@@ -384,7 +369,6 @@ export class AdminService {
     try {
       const response = await ExternalApiService.get(
         "/admin/system/config",
-        this.getAuthToken()
       );
 
       return {
@@ -407,7 +391,6 @@ export class AdminService {
       const response = await ExternalApiService.put(
         "/admin/system/config",
         configData,
-        this.getAuthToken()
       );
 
       return {
@@ -437,7 +420,6 @@ export class AdminService {
       const endpoint = `/admin/analytics/user-activity?${queryParams.toString()}`;
       const response = await ExternalApiService.get(
         endpoint,
-        this.getAuthToken()
       );
 
       return {
@@ -468,7 +450,6 @@ export class AdminService {
       const endpoint = `/admin/analytics/content?${queryParams.toString()}`;
       const response = await ExternalApiService.get(
         endpoint,
-        this.getAuthToken()
       );
 
       return {
@@ -491,7 +472,6 @@ export class AdminService {
       const response = await ExternalApiService.post(
         "/admin/maintenance/notify",
         maintenanceData,
-        this.getAuthToken()
       );
 
       return {
@@ -574,5 +554,110 @@ export class AdminService {
       { value: "1y", label: "Last year" },
       { value: "custom", label: "Custom range" },
     ];
+  }
+
+  // ==================== User Management (From Postman Collection) ====================
+
+  // Get pending users (awaiting approval)
+  static async getPendingUsers(params = {}) {
+    try {
+      const { page = 1, limit = 20 } = params;
+
+      let queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+
+      const endpoint = `/admin/pending-users?${queryParams.toString()}`;
+      const response = await ExternalApiService.get(endpoint);
+
+      return {
+        success: response.success,
+        data: response.data,
+        message: response.message,
+      };
+    } catch (error) {
+      console.error("Get pending users error:", error);
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+  // Approve user registration
+  static async approveUser(userId, approvalData = {}) {
+    try {
+      const response = await ExternalApiService.put(
+        `/admin/approve-user/${userId}`,
+        {
+          isApproved: true,
+          ...approvalData,
+        }
+      );
+
+      return {
+        success: response.success,
+        data: response.data,
+        message: response.message,
+      };
+    } catch (error) {
+      console.error("Approve user error:", error);
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+  // Reject user registration
+  static async rejectUser(userId, reason = "") {
+    try {
+      const response = await ExternalApiService.put(
+        `/admin/reject-user/${userId}`,
+        {
+          reason,
+        }
+      );
+
+      return {
+        success: response.success,
+        data: response.data,
+        message: response.message,
+      };
+    } catch (error) {
+      console.error("Reject user error:", error);
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+  // Get all users (Admin only)
+  static async getAllUsersAdmin(params = {}) {
+    try {
+      const { page = 1, limit = 50 } = params;
+
+      let queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+
+      const endpoint = `/admin/users?${queryParams.toString()}`;
+      const response = await ExternalApiService.get(endpoint);
+
+      return {
+        success: response.success,
+        data: response.data,
+        message: response.message,
+      };
+    } catch (error) {
+      console.error("Get all users (admin) error:", error);
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
   }
 }

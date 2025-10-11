@@ -2,10 +2,6 @@ import { ExternalApiService } from './externalApiService';
 import { ImpactLeadersAuthService } from './impactLeadersAuthService';
 
 export class NotificationsService {
-  static getAuthToken() {
-    const tokens = ImpactLeadersAuthService.getStoredTokens();
-    return tokens.accessToken;
-  }
 
   // Get user notifications
   static async getNotifications(params = {}) {
@@ -28,7 +24,7 @@ export class NotificationsService {
       if (priority) queryParams.append('priority', priority);
 
       const endpoint = `/notifications?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint, this.getAuthToken());
+      const response = await ExternalApiService.get(endpoint);
 
       return {
         success: response.success,
@@ -47,7 +43,7 @@ export class NotificationsService {
   // Get unread notifications count
   static async getUnreadCount() {
     try {
-      const response = await ExternalApiService.get('/notifications/unread/count', this.getAuthToken());
+      const response = await ExternalApiService.get('/notifications/unread/count');
 
       return {
         success: response.success,
@@ -66,7 +62,7 @@ export class NotificationsService {
   // Mark notification as read
   static async markAsRead(notificationId) {
     try {
-      const response = await ExternalApiService.post(`/notifications/${notificationId}/read`, {}, this.getAuthToken());
+      const response = await ExternalApiService.post(`/notifications/${notificationId}/read`, {});
 
       return {
         success: response.success,
@@ -85,7 +81,7 @@ export class NotificationsService {
   // Mark all notifications as read
   static async markAllAsRead() {
     try {
-      const response = await ExternalApiService.post('/notifications/read-all', {}, this.getAuthToken());
+      const response = await ExternalApiService.post('/notifications/read-all', {});
 
       return {
         success: response.success,
@@ -104,7 +100,7 @@ export class NotificationsService {
   // Delete notification
   static async deleteNotification(notificationId) {
     try {
-      const response = await ExternalApiService.delete(`/notifications/${notificationId}`, this.getAuthToken());
+      const response = await ExternalApiService.delete(`/notifications/${notificationId}`);
 
       return {
         success: response.success,
@@ -123,7 +119,7 @@ export class NotificationsService {
   // Create announcement (Admin only)
   static async createAnnouncement(announcementData) {
     try {
-      const response = await ExternalApiService.post('/notifications/announcement', announcementData, this.getAuthToken());
+      const response = await ExternalApiService.post('/notifications/announcement', announcementData);
 
       return {
         success: response.success,
@@ -142,7 +138,7 @@ export class NotificationsService {
   // Send targeted notification (Admin only)
   static async sendTargetedNotification(notificationData) {
     try {
-      const response = await ExternalApiService.post('/admin/notifications/send', notificationData, this.getAuthToken());
+      const response = await ExternalApiService.post('/admin/notifications/send', notificationData);
 
       return {
         success: response.success,
@@ -161,7 +157,7 @@ export class NotificationsService {
   // Get notification templates (Admin only)
   static async getNotificationTemplates() {
     try {
-      const response = await ExternalApiService.get('/admin/notifications/templates', this.getAuthToken());
+      const response = await ExternalApiService.get('/admin/notifications/templates');
 
       return {
         success: response.success,
@@ -180,7 +176,7 @@ export class NotificationsService {
   // Create notification template (Admin only)
   static async createNotificationTemplate(templateData) {
     try {
-      const response = await ExternalApiService.post('/admin/notifications/templates', templateData, this.getAuthToken());
+      const response = await ExternalApiService.post('/admin/notifications/templates', templateData);
 
       return {
         success: response.success,
@@ -208,7 +204,7 @@ export class NotificationsService {
       if (type) queryParams.append('type', type);
 
       const endpoint = `/admin/notifications/stats?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint, this.getAuthToken());
+      const response = await ExternalApiService.get(endpoint);
 
       return {
         success: response.success,
@@ -227,7 +223,7 @@ export class NotificationsService {
   // Update notification preferences
   static async updateNotificationPreferences(preferences) {
     try {
-      const response = await ExternalApiService.put('/notifications/preferences', preferences, this.getAuthToken());
+      const response = await ExternalApiService.put('/notifications/preferences', preferences);
 
       return {
         success: response.success,
@@ -246,7 +242,7 @@ export class NotificationsService {
   // Get notification preferences
   static async getNotificationPreferences() {
     try {
-      const response = await ExternalApiService.get('/notifications/preferences', this.getAuthToken());
+      const response = await ExternalApiService.get('/notifications/preferences');
 
       return {
         success: response.success,

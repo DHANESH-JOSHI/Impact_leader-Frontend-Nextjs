@@ -278,19 +278,9 @@ export class SystemMonitoringService {
   // Get system monitoring data from Impact Leaders API using stored token
   static async getSystemMonitoringFromAPI() {
     try {
-      const tokens = ImpactLeadersAuthService.getStoredTokens();
-      
-      if (!tokens.accessToken) {
-        return {
-          success: false,
-          message: 'No access token found. Please login first.'
-        };
-      }
+      console.log('🔧 SystemMonitoring: Making API call (token will be automatically injected by ExternalApiService)');
 
-      console.log('🔧 SystemMonitoring: Making API call with token:', tokens.accessToken ? 'Present' : 'Missing');
-      console.log('🔧 SystemMonitoring: Token will be sent as Authorization: Bearer [token]');
-
-      const response = await ExternalApiService.get('/admin/monitoring/system', tokens.accessToken);
+      const response = await ExternalApiService.get('/admin/monitoring/system');
       
       console.log('🔧 SystemMonitoring: API Response:', {
         success: response.success,
@@ -321,16 +311,8 @@ export class SystemMonitoringService {
   // Get API analytics from Impact Leaders API using stored token
   static async getAPIAnalyticsFromAPI() {
     try {
-      const tokens = ImpactLeadersAuthService.getStoredTokens();
-      
-      if (!tokens.accessToken) {
-        return {
-          success: false,
-          message: 'No access token found. Please login first.'
-        };
-      }
 
-      const response = await ExternalApiService.get('/admin/monitoring/api-analytics', tokens.accessToken);
+      const response = await ExternalApiService.get('/admin/monitoring/api-analytics');
       
       if (!response.success) {
         return {
@@ -385,28 +367,10 @@ export class SystemMonitoringService {
   // Test method to verify token and API connectivity
   static async testAPIConnection() {
     try {
-      const tokens = ImpactLeadersAuthService.getStoredTokens();
-      
-      console.log('🔧 Testing API Connection...');
-      console.log('🔧 Token status:', {
-        accessToken: tokens.accessToken ? 'Present' : 'Missing',
-        refreshToken: tokens.refreshToken ? 'Present' : 'Missing',
-        user: tokens.user ? `User: ${tokens.user.email}` : 'No user data'
-      });
-
-      if (!tokens.accessToken) {
-        return {
-          success: false,
-          message: 'No access token found. Please login first.',
-          debug: {
-            hasToken: false,
-            hasUser: !!tokens.user
-          }
-        };
-      }
+      console.log('🔧 Testing API Connection (ExternalApiService will handle authentication automatically)...');
 
       // Test a simple endpoint first
-      const response = await ExternalApiService.get('/auth/me', tokens.accessToken);
+      const response = await ExternalApiService.get('/auth/me');
       
       return {
         success: response.success,

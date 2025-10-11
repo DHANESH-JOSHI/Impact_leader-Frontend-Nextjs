@@ -277,7 +277,7 @@ export default function APIMonitoring() {
     try {
       const response = await fetch('/api/monitoring/system');
       const data = await response.json();
-      
+
       if (data.success) {
         setApiData(data.data);
       } else {
@@ -294,7 +294,7 @@ export default function APIMonitoring() {
     try {
       const response = await fetch('/api/monitoring/api-metrics');
       const data = await response.json();
-      
+
       if (data.success) {
         setRealtimeData(data.data);
       }

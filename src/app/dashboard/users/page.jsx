@@ -465,7 +465,7 @@ export default function UsersPage() {
             Math.ceil((api.total || transformed.length) / p.limit)
           ),
         }));
-        showToast(`Loaded ${transformed.length} users`, "success");
+        // showToast(`Loaded ${transformed.length} users`, "success");
       } else {
         setUsers(initialUsers);
         setPagination((p) => ({
@@ -653,7 +653,7 @@ export default function UsersPage() {
                 />
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* <div className="flex items-center gap-2">
                 <div className="relative">
                   <select
                     className="rounded-lg border px-3 py-2 text-sm"
@@ -695,7 +695,7 @@ export default function UsersPage() {
                 <div className="hidden md:flex items-center gap-1 text-gray-600">
                   <Filter className="h-4 w-4" />
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
         </motion.div>

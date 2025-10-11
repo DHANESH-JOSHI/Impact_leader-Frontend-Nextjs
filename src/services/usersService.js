@@ -2,10 +2,6 @@ import { ExternalApiService } from "./externalApiService";
 import { ImpactLeadersAuthService } from "./impactLeadersAuthService";
 
 export class UsersService {
-  static getAuthToken() {
-    const tokens = ImpactLeadersAuthService.getStoredTokens();
-    return tokens.token;
-  }
 
   // Get all users with pagination and filters
   static async getAllUsers(params = {}) {
@@ -42,7 +38,6 @@ export class UsersService {
       const endpoint = `/admin/users?${queryParams.toString()}`;
       const response = await ExternalApiService.get(
         endpoint,
-        this.getAuthToken()
       );
 
       // filter out "admin" role users
@@ -69,7 +64,6 @@ export class UsersService {
     try {
       const response = await ExternalApiService.get(
         `/users/${userId}`,
-        this.getAuthToken()
       );
 
       return {
@@ -93,7 +87,6 @@ export class UsersService {
       const response = await ExternalApiService.put(
         endpoint,
         profileData,
-        this.getAuthToken()
       );
 
       return {
@@ -120,7 +113,7 @@ export class UsersService {
       const response = await ExternalApiService.post(
         endpoint,
         formData,
-        this.getAuthToken(),
+        undefined,
         true
       );
 
@@ -143,7 +136,6 @@ export class UsersService {
     try {
       const response = await ExternalApiService.delete(
         `/users/${userId}`,
-        this.getAuthToken()
       );
 
       return {
@@ -169,7 +161,6 @@ export class UsersService {
       const response = await ExternalApiService.post(
         endpoint,
         {},
-        this.getAuthToken()
       );
 
       return {
@@ -194,7 +185,6 @@ export class UsersService {
         {
           privilege,
         },
-        this.getAuthToken()
       );
 
       return {
@@ -225,7 +215,6 @@ export class UsersService {
       const endpoint = `/admin/users/${userId}/activity?${queryParams.toString()}`;
       const response = await ExternalApiService.get(
         endpoint,
-        this.getAuthToken()
       );
 
       return {
@@ -255,7 +244,6 @@ export class UsersService {
       const endpoint = `/admin/users/stats?${queryParams.toString()}`;
       const response = await ExternalApiService.get(
         endpoint,
-        this.getAuthToken()
       );
 
       return {
@@ -282,7 +270,6 @@ export class UsersService {
           userIds,
           ...additionalData,
         },
-        this.getAuthToken()
       );
 
       return {
@@ -310,7 +297,6 @@ export class UsersService {
           format,
           filters,
         },
-        this.getAuthToken()
       );
 
       return {

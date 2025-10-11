@@ -2,10 +2,6 @@ import { ExternalApiService } from './externalApiService';
 import { ImpactLeadersAuthService } from './impactLeadersAuthService';
 
 export class QnAService {
-  static getAuthToken() {
-    const tokens = ImpactLeadersAuthService.getStoredTokens();
-    return tokens.accessToken;
-  }
 
   // Get all questions with pagination and filters
   static async getQuestions(params = {}) {
@@ -32,7 +28,7 @@ export class QnAService {
       if (tags) queryParams.append('tags', tags);
 
       const endpoint = `/qa/questions?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint, this.getAuthToken());
+      const response = await ExternalApiService.get(endpoint);
 
       return {
         success: response.success,
@@ -51,7 +47,7 @@ export class QnAService {
   // Get question by ID with answers
   static async getQuestionById(questionId) {
     try {
-      const response = await ExternalApiService.get(`/qa/questions/${questionId}`, this.getAuthToken());
+      const response = await ExternalApiService.get(`/qa/questions/${questionId}`);
 
       return {
         success: response.success,
@@ -70,7 +66,7 @@ export class QnAService {
   // Ask a new question
   static async askQuestion(questionData) {
     try {
-      const response = await ExternalApiService.post('/qa/questions', questionData, this.getAuthToken());
+      const response = await ExternalApiService.post('/qa/questions', questionData);
 
       return {
         success: response.success,
@@ -89,7 +85,7 @@ export class QnAService {
   // Update question (only by question author or admin)
   static async updateQuestion(questionId, updateData) {
     try {
-      const response = await ExternalApiService.put(`/qa/questions/${questionId}`, updateData, this.getAuthToken());
+      const response = await ExternalApiService.put(`/qa/questions/${questionId}`, updateData);
 
       return {
         success: response.success,
@@ -108,7 +104,7 @@ export class QnAService {
   // Delete question (admin only)
   static async deleteQuestion(questionId) {
     try {
-      const response = await ExternalApiService.delete(`/qa/questions/${questionId}`, this.getAuthToken());
+      const response = await ExternalApiService.delete(`/qa/questions/${questionId}`);
 
       return {
         success: response.success,
@@ -127,7 +123,7 @@ export class QnAService {
   // Answer a question
   static async answerQuestion(questionId, answerData) {
     try {
-      const response = await ExternalApiService.post(`/qa/questions/${questionId}/answers`, answerData, this.getAuthToken());
+      const response = await ExternalApiService.post(`/qa/questions/${questionId}/answers`, answerData);
 
       return {
         success: response.success,
@@ -146,7 +142,7 @@ export class QnAService {
   // Update answer
   static async updateAnswer(questionId, answerId, updateData) {
     try {
-      const response = await ExternalApiService.put(`/qa/questions/${questionId}/answers/${answerId}`, updateData, this.getAuthToken());
+      const response = await ExternalApiService.put(`/qa/questions/${questionId}/answers/${answerId}`, updateData);
 
       return {
         success: response.success,
@@ -165,7 +161,7 @@ export class QnAService {
   // Delete answer
   static async deleteAnswer(questionId, answerId) {
     try {
-      const response = await ExternalApiService.delete(`/qa/questions/${questionId}/answers/${answerId}`, this.getAuthToken());
+      const response = await ExternalApiService.delete(`/qa/questions/${questionId}/answers/${answerId}`);
 
       return {
         success: response.success,
@@ -184,7 +180,7 @@ export class QnAService {
   // Upvote question
   static async upvoteQuestion(questionId) {
     try {
-      const response = await ExternalApiService.post(`/qa/questions/${questionId}/upvote`, {}, this.getAuthToken());
+      const response = await ExternalApiService.post(`/qa/questions/${questionId}/upvote`, {});
 
       return {
         success: response.success,
@@ -203,7 +199,7 @@ export class QnAService {
   // Upvote answer
   static async upvoteAnswer(questionId, answerId) {
     try {
-      const response = await ExternalApiService.post(`/qa/questions/${questionId}/answers/${answerId}/upvote`, {}, this.getAuthToken());
+      const response = await ExternalApiService.post(`/qa/questions/${questionId}/answers/${answerId}/upvote`, {});
 
       return {
         success: response.success,
@@ -222,7 +218,7 @@ export class QnAService {
   // Mark answer as accepted (question author or admin)
   static async acceptAnswer(questionId, answerId) {
     try {
-      const response = await ExternalApiService.post(`/qa/questions/${questionId}/answers/${answerId}/accept`, {}, this.getAuthToken());
+      const response = await ExternalApiService.post(`/qa/questions/${questionId}/answers/${answerId}/accept`, {});
 
       return {
         success: response.success,
@@ -241,7 +237,7 @@ export class QnAService {
   // Get Q&A statistics (admin)
   static async getQnAStats() {
     try {
-      const response = await ExternalApiService.get('/qa/stats', this.getAuthToken());
+      const response = await ExternalApiService.get('/qa/stats');
 
       return {
         success: response.success,
@@ -260,7 +256,7 @@ export class QnAService {
   // Get trending questions
   static async getTrendingQuestions(limit = 10) {
     try {
-      const response = await ExternalApiService.get(`/qa/questions/trending?limit=${limit}`, this.getAuthToken());
+      const response = await ExternalApiService.get(`/qa/questions/trending?limit=${limit}`);
 
       return {
         success: response.success,
@@ -288,7 +284,7 @@ export class QnAService {
       });
 
       const endpoint = `/qa/questions?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint, this.getAuthToken());
+      const response = await ExternalApiService.get(endpoint);
 
       return {
         success: response.success,

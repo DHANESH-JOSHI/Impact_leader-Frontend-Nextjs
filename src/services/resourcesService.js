@@ -2,10 +2,6 @@ import { ExternalApiService } from './externalApiService';
 import { ImpactLeadersAuthService } from './impactLeadersAuthService';
 
 export class ResourcesService {
-  static getAuthToken() {
-    const tokens = ImpactLeadersAuthService.getStoredTokens();
-    return tokens.accessToken;
-  }
 
   // Get all resources with filters and pagination
   static async getAllResources(params = {}) {
@@ -32,7 +28,7 @@ export class ResourcesService {
       if (themes) queryParams.append('themes', themes);
 
       const endpoint = `/resources?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint, this.getAuthToken());
+      const response = await ExternalApiService.get(endpoint);
 
       return {
         success: response.success,
@@ -61,7 +57,7 @@ export class ResourcesService {
       if (themes) queryParams.append('themes', themes);
 
       const endpoint = `/resources?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint, this.getAuthToken());
+      const response = await ExternalApiService.get(endpoint);
 
       return {
         success: response.success,
@@ -98,7 +94,7 @@ export class ResourcesService {
         formData.append('file', file);
       }
 
-      const response = await ExternalApiService.post('/resources', formData, this.getAuthToken(), true);
+      const response = await ExternalApiService.post('/resources', formData, undefined, true);
 
       return {
         success: response.success,
@@ -134,7 +130,7 @@ export class ResourcesService {
         formData.append('file', file);
       }
 
-      const response = await ExternalApiService.post('/resources', formData, this.getAuthToken(), true);
+      const response = await ExternalApiService.post('/resources', formData, undefined, true);
 
       return {
         success: response.success,
@@ -170,7 +166,7 @@ export class ResourcesService {
         formData.append('file', file);
       }
 
-      const response = await ExternalApiService.post('/resources', formData, this.getAuthToken(), true);
+      const response = await ExternalApiService.post('/resources', formData, undefined, true);
 
       return {
         success: response.success,
@@ -206,7 +202,7 @@ export class ResourcesService {
         formData.append('file', file);
       }
 
-      const response = await ExternalApiService.post('/resources', formData, this.getAuthToken(), true);
+      const response = await ExternalApiService.post('/resources', formData, undefined, true);
 
       return {
         success: response.success,
@@ -225,7 +221,7 @@ export class ResourcesService {
   // Get resource by ID
   static async getResourceById(resourceId) {
     try {
-      const response = await ExternalApiService.get(`/resources/${resourceId}`, this.getAuthToken());
+      const response = await ExternalApiService.get(`/resources/${resourceId}`);
 
       return {
         success: response.success,
@@ -244,7 +240,7 @@ export class ResourcesService {
   // Download resource (generates download link)
   static async downloadResource(resourceId) {
     try {
-      const response = await ExternalApiService.get(`/resources/${resourceId}/download`, this.getAuthToken());
+      const response = await ExternalApiService.get(`/resources/${resourceId}/download`);
 
       return {
         success: response.success,
@@ -263,7 +259,7 @@ export class ResourcesService {
   // Update resource
   static async updateResource(resourceId, updateData) {
     try {
-      const response = await ExternalApiService.put(`/resources/${resourceId}`, updateData, this.getAuthToken());
+      const response = await ExternalApiService.put(`/resources/${resourceId}`, updateData);
 
       return {
         success: response.success,
@@ -282,7 +278,7 @@ export class ResourcesService {
   // Delete resource
   static async deleteResource(resourceId) {
     try {
-      const response = await ExternalApiService.delete(`/resources/${resourceId}`, this.getAuthToken());
+      const response = await ExternalApiService.delete(`/resources/${resourceId}`);
 
       return {
         success: response.success,
@@ -301,7 +297,7 @@ export class ResourcesService {
   // Get resource categories
   static async getResourceCategories() {
     try {
-      const response = await ExternalApiService.get('/resources/categories', this.getAuthToken());
+      const response = await ExternalApiService.get('/resources/categories');
 
       return {
         success: response.success,
@@ -320,7 +316,7 @@ export class ResourcesService {
   // Get resource statistics
   static async getResourceStats() {
     try {
-      const response = await ExternalApiService.get('/resources/stats', this.getAuthToken());
+      const response = await ExternalApiService.get('/resources/stats');
 
       return {
         success: response.success,
