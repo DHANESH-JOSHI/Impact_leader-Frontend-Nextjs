@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Imacpt Leader Admin Portal",
+  title: "Impact Leader Admin Portal",
   description: "Developed by Impact Leader | TechWithJoshi Private Limited",
 };
 

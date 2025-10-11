@@ -4,6 +4,7 @@ import { withAPITracking } from '@/lib/apiTrackingMiddleware';
 
 async function handler(request) {
   try {
+    console.log('here')
     const body = await request.json();
     const { email, password } = body;
 
