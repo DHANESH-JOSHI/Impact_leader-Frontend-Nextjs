@@ -48,8 +48,8 @@ export default function AddStoryModal({ isOpen, onClose, onAdd }) {
     title: "",
     content: "",
     image: "",
-    author: "",
-    status: "draft",
+    type: "text",
+    // status: "draft",
     duration: 24,
     isActive: false,
     tags: [],
@@ -141,8 +141,11 @@ export default function AddStoryModal({ isOpen, onClose, onAdd }) {
       newErrors.image = "Image is required";
     }
 
-    if (!formData.author.trim()) {
-      newErrors.author = "Author name is required";
+    // if (!formData.author.trim()) {
+    //   newErrors.author = "Author name is required";
+    // }
+    if (!formData.type) {
+      newErrors.type = "Story type is required";
     }
 
     if (formData.duration < 1 || formData.duration > 168) {
@@ -157,13 +160,39 @@ export default function AddStoryModal({ isOpen, onClose, onAdd }) {
     e.preventDefault();
 
     if (validateForm()) {
-      onAdd(formData);
+      console.log('🔍 Duration Debug - BEFORE conversion:', {
+        formDuration: formData.duration,
+        type: typeof formData.duration,
+        rawValue: formData.duration
+      });
+      const durationInMilliseconds = Number(formData.duration) * 3600000;
+    
+    console.log('🔍 Duration Debug - AFTER conversion:', {
+      hours: formData.duration,
+      milliseconds: durationInMilliseconds,
+      calculation: `${formData.duration} * 3600000 = ${durationInMilliseconds}`
+    });
+
+      const apiData = {
+        textContent: formData.title + (formData.content ? "\n\n" + formData.content : ""),
+        type: formData.type, // ADD THIS
+        duration: durationInMilliseconds, // Convert to milliseconds
+        mediaUrl: formData.image, // Change from 'image' to 'mediaUrl'
+        tags: formData.tags,
+        backgroundColor: "#000000", // Add default or make field
+        textColor: "#FFFFFF", // Add default or make field
+        fontFamily: "Arial", // Add default or make field
+        isActive: formData.isActive,
+      };
+
+      console.log('Sending to API:', apiData);
+      onAdd(apiData);
+
       setFormData({
         title: "",
         content: "",
         image: "",
-        author: "",
-        status: "draft",
+        type: "text",
         duration: 24,
         isActive: false,
         tags: [],
@@ -178,8 +207,9 @@ export default function AddStoryModal({ isOpen, onClose, onAdd }) {
       title: "",
       content: "",
       image: "",
-      author: "",
-      status: "draft",
+      // author: "",
+      // status: "draft",
+      type: "text",
       duration: 24,
       isActive: false,
       tags: [],
@@ -256,11 +286,10 @@ export default function AddStoryModal({ isOpen, onClose, onAdd }) {
                     value={formData.title}
                     onChange={handleInputChange}
                     placeholder="Enter your story title..."
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
-                      errors.title
-                        ? "border-red-500"
-                        : "border-gray-300 focus:border-transparent"
-                    }`}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all ${errors.title
+                      ? "border-red-500"
+                      : "border-gray-300 focus:border-transparent"
+                      }`}
                     style={{ focusRingColor: "#2691ce" }}
                   />
                   {errors.title && (
@@ -296,11 +325,10 @@ export default function AddStoryModal({ isOpen, onClose, onAdd }) {
                     onChange={handleInputChange}
                     placeholder="Write your story content..."
                     rows="4"
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 resize-none transition-all ${
-                      errors.content
-                        ? "border-red-500"
-                        : "border-gray-300 focus:border-transparent"
-                    }`}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 resize-none transition-all ${errors.content
+                      ? "border-red-500"
+                      : "border-gray-300 focus:border-transparent"
+                      }`}
                     style={{ focusRingColor: "#2691ce" }}
                   />
                   {errors.content && (
@@ -315,7 +343,7 @@ export default function AddStoryModal({ isOpen, onClose, onAdd }) {
                 </motion.div>
 
                 {/* Author Input */}
-                <motion.div
+                {/* <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 }}
@@ -336,11 +364,10 @@ export default function AddStoryModal({ isOpen, onClose, onAdd }) {
                     value={formData.author}
                     onChange={handleInputChange}
                     placeholder="Enter author name..."
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
-                      errors.author
-                        ? "border-red-500"
-                        : "border-gray-300 focus:border-transparent"
-                    }`}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all ${errors.author
+                      ? "border-red-500"
+                      : "border-gray-300 focus:border-transparent"
+                      }`}
                     style={{ focusRingColor: "#2691ce" }}
                   />
                   {errors.author && (
@@ -352,7 +379,7 @@ export default function AddStoryModal({ isOpen, onClose, onAdd }) {
                       {errors.author}
                     </motion.p>
                   )}
-                </motion.div>
+                </motion.div> */}
 
                 {/* Tags Input */}
                 <motion.div
@@ -482,71 +509,98 @@ export default function AddStoryModal({ isOpen, onClose, onAdd }) {
                   )}
                 </motion.div>
 
-                {/* Settings Row */}
-                <motion.div
-                  className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.6 }}
-                >
-                  <div>
-                    <label
-                      className="flex items-center text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
-                    >
-                      <FiCalendar
-                        className="w-4 h-4 mr-2"
-                        style={{ color: "#2691ce" }}
-                      />
-                      Status
-                    </label>
-                    <select
-                      name="status"
-                      value={formData.status}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all"
-                      style={{ focusRingColor: "#2691ce" }}
-                    >
-                      <option value="draft">Draft</option>
-                      <option value="published">Published</option>
-                      <option value="scheduled">Scheduled</option>
-                    </select>
-                  </div>
+               {/* Settings Row - Update to 3 columns */}
+<motion.div
+  className="grid grid-cols-1 md:grid-cols-3 gap-4"
+  initial={{ opacity: 0, x: -20 }}
+  animate={{ opacity: 1, x: 0 }}
+  transition={{ delay: 0.6 }}
+>
+  {/* Status Field - Keep but map to isActive */}
+  <div>
+    <label
+      className="flex items-center text-sm font-medium mb-2"
+      style={{ color: "#040606" }}
+    >
+      <FiCalendar
+        className="w-4 h-4 mr-2"
+        style={{ color: "#2691ce" }}
+      />
+      Status
+    </label>
+    <select
+      name="status"
+      value={formData.status}
+      onChange={handleInputChange}
+      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all"
+      style={{ focusRingColor: "#2691ce" }}
+    >
+      <option value="draft">Draft</option>
+      <option value="published">Published</option>
+      <option value="scheduled">Scheduled</option>
+    </select>
+  </div>
 
-                  <div>
-                    <label
-                      className="flex items-center text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
-                    >
-                      <FiClock
-                        className="w-4 h-4 mr-2"
-                        style={{ color: "#2691ce" }}
-                      />
-                      Duration (Hours)
-                    </label>
-                    <input
-                      type="number"
-                      name="duration"
-                      value={formData.duration}
-                      onChange={handleInputChange}
-                      min="1"
-                      max="168"
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all ${
-                        errors.duration ? "border-red-500" : "border-gray-300"
-                      }`}
-                      style={{ focusRingColor: "#2691ce" }}
-                    />
-                    {errors.duration && (
-                      <motion.p
-                        className="text-red-500 text-sm mt-1"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                      >
-                        {errors.duration}
-                      </motion.p>
-                    )}
-                  </div>
-                </motion.div>
+  {/* Story Type Field - NEW */}
+  <div>
+    <label
+      className="flex items-center text-sm font-medium mb-2"
+      style={{ color: "#040606" }}
+    >
+      <FiFileText
+        className="w-4 h-4 mr-2"
+        style={{ color: "#2691ce" }}
+      />
+      Story Type
+    </label>
+    <select
+      name="type"
+      value={formData.type}
+      onChange={handleInputChange}
+      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all"
+      style={{ focusRingColor: "#2691ce" }}
+    >
+      <option value="text">Text</option>
+      <option value="image">Image</option>
+      <option value="video">Video</option>
+    </select>
+  </div>
+
+  {/* Duration Field */}
+  <div>
+    <label
+      className="flex items-center text-sm font-medium mb-2"
+      style={{ color: "#040606" }}
+    >
+      <FiClock
+        className="w-4 h-4 mr-2"
+        style={{ color: "#2691ce" }}
+      />
+      Duration (Hours)
+    </label>
+    <input
+      type="number"
+      name="duration"
+      value={formData.duration}
+      onChange={handleInputChange}
+      min="1"
+      max="168"
+      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all ${
+        errors.duration ? "border-red-500" : "border-gray-300"
+      }`}
+      style={{ focusRingColor: "#2691ce" }}
+    />
+    {errors.duration && (
+      <motion.p
+        className="text-red-500 text-sm mt-1"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        {errors.duration}
+      </motion.p>
+    )}
+  </div>
+</motion.div>
 
                 {/* Active Toggle */}
                 <motion.div

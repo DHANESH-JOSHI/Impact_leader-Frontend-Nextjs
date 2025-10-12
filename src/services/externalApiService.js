@@ -65,7 +65,9 @@ export class ExternalApiService {
       let responseData;
 
       try {
+
         responseData = await response.json();
+        // console.log("responseData:", responseData);
       } catch (parseError) {
         responseData = { message: "Invalid response format" };
       }

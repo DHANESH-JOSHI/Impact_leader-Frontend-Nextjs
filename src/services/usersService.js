@@ -39,7 +39,6 @@ export class UsersService {
       const response = await ExternalApiService.get(
         endpoint
       );
-      console.log("here",response)
 
       // filter out "admin" role users
       const filteredUsers = response?.data?.data?.filter(

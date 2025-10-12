@@ -434,7 +434,6 @@ export default function UsersPage() {
         sortBy,
         sortOrder,
       });
-      console.log("Result:", result)
       if (result?.success) {
         const api = result.data;
 
@@ -636,7 +635,6 @@ export default function UsersPage() {
         <ChevronDown className="h-4 w-4 inline" />
       )
     ) : null;
-  console.log("users:", users)
 
   return (
     <motion.div

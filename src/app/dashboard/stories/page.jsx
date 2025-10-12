@@ -157,7 +157,8 @@ const getStoredAuth = () => {
     return null;
   }
 };
-const getToken = () => getStoredAuth()?.token ?? null;
+console.log("🔑 Stored Auth:", getStoredAuth());
+const getToken = () => getStoredAuth()?.value?.accessToken ?? null;
 
 /* --------------------------------- Page ---------------------------------- */
 export default function StoriesPage() {
@@ -296,6 +297,7 @@ export default function StoriesPage() {
 
     const caption = story?.caption || story?.title || "";
     const textContent = story?.textContent || story?.content || "";
+    const imageUrl = story?.mediaUrl || story?.media?.url || null;
 
     return {
       id: story?._id || story?.id || `${Date.now()}-${Math.random()}`, // ensure stable id for table ops
@@ -303,15 +305,15 @@ export default function StoriesPage() {
         caption ||
         (textContent ? textContent.slice(0, 50) + "..." : "Untitled Story"),
       content: textContent,
-      image: story?.media?.url || null,
+      image: imageUrl,
       author,
       status: story?.isActive ? "published" : "draft",
       views:
         typeof story?.viewCount === "number"
           ? story.viewCount
           : Array.isArray(story?.views)
-          ? story.views.length
-          : 0,
+            ? story.views.length
+            : 0,
       likes: story?.likes || 0,
       tags: Array.isArray(story?.tags) ? story.tags : [],
       createdAt: story?.createdAt || null,
@@ -351,67 +353,72 @@ export default function StoriesPage() {
   const handleAddStory = async (newStoryData) => {
     try {
       setLoading(true);
+  
+      console.log('📥 Received from form:', newStoryData);
+  
       let result;
-
+  
+      // Use the data as-is from modal (it's already formatted correctly)
+      const baseStoryData = {
+        textContent: newStoryData.textContent, // Use the textContent from modal
+        type: newStoryData.type,
+        duration: newStoryData.duration, // Already in milliseconds from modal
+        tags: newStoryData.tags || [],
+        backgroundColor: newStoryData.backgroundColor || "#000000",
+        textColor: newStoryData.textColor || "#FFFFFF",
+        fontFamily: newStoryData.fontFamily || "Arial",
+        isActive: newStoryData.isActive || false
+      };
+  
+      console.log('📤 Base story data:', baseStoryData);
+  
       if (newStoryData.mediaFile) {
+        // For file uploads
         if (newStoryData.type === "image") {
           result = await StoriesService.createImageStory(
-            {
-              content: newStoryData.content || newStoryData.title,
-              title: newStoryData.title,
-              backgroundColor: newStoryData.backgroundColor,
-              fontFamily: newStoryData.fontFamily,
-              duration: newStoryData.duration,
-              tags: newStoryData.tags,
-            },
+            baseStoryData,
             newStoryData.mediaFile
           );
         } else if (newStoryData.type === "video") {
           result = await StoriesService.createVideoStory(
-            {
-              content: newStoryData.content || newStoryData.title,
-              title: newStoryData.title,
-              duration: newStoryData.duration,
-              tags: newStoryData.tags,
-            },
+            baseStoryData,
             newStoryData.mediaFile
           );
         }
       } else {
-        result = await StoriesService.createTextStory({
-          content: newStoryData.content || newStoryData.title,
-          title: newStoryData.title,
-          backgroundColor: newStoryData.backgroundColor || "#2c3e50",
-          fontFamily: newStoryData.fontFamily || "Arial",
-          duration: newStoryData.duration || 24,
-          tags: newStoryData.tags || [],
-        });
+        // For stories with URLs or text stories
+        if (newStoryData.type === "image") {
+          // For image stories with URL - use mediaUrl field
+          const imageStoryData = {
+            ...baseStoryData,
+            mediaUrl: newStoryData.mediaUrl || newStoryData.image // Map image to mediaUrl
+          };
+          console.log('🖼️ Image story data:', imageStoryData);
+          result = await StoriesService.createTextStory(imageStoryData);
+        } else {
+          // For text stories
+          console.log('📝 Text story data:', baseStoryData);
+          result = await StoriesService.createTextStory(baseStoryData);
+        }
       }
-
+  
+      console.log('📨 API Response:', result);
+  
       if (result?.success) {
         setIsAddModalOpen(false);
         await loadStories();
-        showToast(
-          `Story "${newStoryData.title}" created successfully. ✅`,
-          "success"
-        );
+        showToast(`Story created successfully! ✅`, "success");
       } else {
-        showToast(
-          `Failed to create story: ${result?.message || "Unknown error"}. ❌`,
-          "error"
-        );
+        const errorMsg = result?.message || "Unknown error";
+        showToast(`Failed: ${errorMsg} ❌`, "error");
       }
     } catch (error) {
       console.error("Add story error:", error);
-      showToast(
-        "There was a problem creating the story. Please try again. ❌",
-        "error"
-      );
+      showToast("There was a problem creating the story. Please try again. ❌", "error");
     } finally {
       setLoading(false);
     }
   };
-
   const handleEditStory = async (updatedStoryData) => {
     try {
       setLoading(true);
@@ -614,11 +621,10 @@ export default function StoriesPage() {
               <div className="flex border border-gray-300 rounded-lg overflow-hidden">
                 <motion.button
                   onClick={() => handleViewModeChange("cards")}
-                  className={`p-2 ${
-                    viewMode === "cards"
+                  className={`p-2 ${viewMode === "cards"
                       ? "text-white"
                       : "bg-white hover:bg-gray-50"
-                  }`}
+                    }`}
                   style={{
                     backgroundColor: viewMode === "cards" ? "#2691ce" : "white",
                     color: viewMode === "cards" ? "white" : "#646464",
@@ -629,11 +635,10 @@ export default function StoriesPage() {
                 </motion.button>
                 <motion.button
                   onClick={() => handleViewModeChange("table")}
-                  className={`p-2 ${
-                    viewMode === "table"
+                  className={`p-2 ${viewMode === "table"
                       ? "text-white"
                       : "bg-white hover:bg-gray-50"
-                  }`}
+                    }`}
                   style={{
                     backgroundColor: viewMode === "table" ? "#2691ce" : "white",
                     color: viewMode === "table" ? "white" : "#646464",
