@@ -56,6 +56,7 @@ export default function PostsCardView({
   onEditPost,
   onDeletePost,
 }) {
+  console.log("posts:",posts)
   // Utility functions
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {

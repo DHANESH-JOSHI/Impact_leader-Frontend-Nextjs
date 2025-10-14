@@ -6,10 +6,7 @@ import {
   X,
   Save,
   FileText,
-  User,
   Tag,
-  Calendar,
-  Eye,
   Star,
 } from "lucide-react";
 
@@ -52,9 +49,8 @@ export default function AddPostModal({
 }) {
   const [formData, setFormData] = useState({
     title: "",
-    excerpt: "",
+    excerpt: "", // Keep for UI but don't send to API
     content: "",
-    author: "",
     category: categories[0] || "",
     status: "draft",
     tags: "",
@@ -104,16 +100,14 @@ export default function AddPostModal({
       newErrors.excerpt = "Excerpt is required";
     } else if (formData.excerpt.length < 10) {
       newErrors.excerpt = "Excerpt must be at least 10 characters long";
+    } else if (formData.excerpt.length > 200) {
+      newErrors.excerpt = "Excerpt must be less than 200 characters";
     }
 
     if (!formData.content.trim()) {
       newErrors.content = "Content is required";
     } else if (formData.content.length < 50) {
       newErrors.content = "Content must be at least 50 characters long";
-    }
-
-    if (!formData.author.trim()) {
-      newErrors.author = "Author name is required";
     }
 
     if (!formData.category) {
@@ -135,34 +129,46 @@ export default function AddPostModal({
 
     setIsSubmitting(true);
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
+    // Transform data to match API structure
     const postData = {
-      ...formData,
-      tags: formData.tags
+      title: formData.title,
+      content: formData.content,
+      // Note: excerpt is NOT sent to API - it will be generated from content
+      type: formData.category,
+      themes: formData.tags
         .split(",")
         .map((tag) => tag.trim())
         .filter((tag) => tag),
+      isPublic: formData.status === "published",
+      isPinned: formData.featured,
+      status: formData.status,
+      allowComments: true,
+      // author is automatically added from authenticated user
     };
 
-    onSubmit(postData);
-
-    // Reset form
-    setFormData({
-      title: "",
-      excerpt: "",
-      content: "",
-      author: "",
-      category: categories[0] || "",
-      status: "draft",
-      tags: "",
-      featured: false,
-    });
-    setTagInput("");
-    setParsedTags([]);
-    setErrors({});
-    setIsSubmitting(false);
+    console.log("Submitting to API:", postData);
+    
+    try {
+      await onSubmit(postData);
+      
+      // Reset form only on successful submission
+      setFormData({
+        title: "",
+        excerpt: "",
+        content: "",
+        category: categories[0] || "",
+        status: "draft",
+        tags: "",
+        featured: false,
+      });
+      setTagInput("");
+      setParsedTags([]);
+      setErrors({});
+    } catch (error) {
+      console.error("Form submission error:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Handle modal close
@@ -172,7 +178,6 @@ export default function AddPostModal({
         title: "",
         excerpt: "",
         content: "",
-        author: "",
         category: categories[0] || "",
         status: "draft",
         tags: "",
@@ -315,88 +320,51 @@ export default function AddPostModal({
                   </div>
                 </div>
 
-                {/* Author and Category */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 }}
+                {/* Category - Full Width */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: "#040606" }}
                   >
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
-                    >
-                      <User className="inline h-4 w-4 mr-1" />
-                      Author Name *
-                    </label>
-                    <input
-                      type="text"
-                      name="author"
-                      value={formData.author}
-                      onChange={handleInputChange}
-                      placeholder="Enter author name..."
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${
-                        errors.author ? "border-red-500" : "border-gray-300"
-                      }`}
-                      style={{ focusRingColor: "#2691ce" }}
-                      disabled={isSubmitting}
-                    />
-                    {errors.author && (
-                      <motion.p
-                        className="text-red-500 text-sm mt-1"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                      >
-                        {errors.author}
-                      </motion.p>
-                    )}
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 }}
+                    <Tag className="inline h-4 w-4 mr-1" />
+                    Category *
+                  </label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${
+                      errors.category ? "border-red-500" : "border-gray-300"
+                    }`}
+                    style={{ focusRingColor: "#2691ce" }}
+                    disabled={isSubmitting}
                   >
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
+                    {categories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.category && (
+                    <motion.p
+                      className="text-red-500 text-sm mt-1"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
                     >
-                      <Tag className="inline h-4 w-4 mr-1" />
-                      Category *
-                    </label>
-                    <select
-                      name="category"
-                      value={formData.category}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${
-                        errors.category ? "border-red-500" : "border-gray-300"
-                      }`}
-                      style={{ focusRingColor: "#2691ce" }}
-                      disabled={isSubmitting}
-                    >
-                      {categories.map((category) => (
-                        <option key={category} value={category}>
-                          {category}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.category && (
-                      <motion.p
-                        className="text-red-500 text-sm mt-1"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                      >
-                        {errors.category}
-                      </motion.p>
-                    )}
-                  </motion.div>
-                </div>
+                      {errors.category}
+                    </motion.p>
+                  )}
+                </motion.div>
 
                 {/* Status */}
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 }}
+                  transition={{ delay: 0.4 }}
                 >
                   <label
                     className="block text-sm font-medium mb-2"
@@ -438,17 +406,20 @@ export default function AddPostModal({
                   </div>
                 </motion.div>
 
-                {/* Excerpt */}
+                {/* Excerpt - Keep for UI but not sent to API */}
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.6 }}
+                  transition={{ delay: 0.5 }}
                 >
                   <label
                     className="block text-sm font-medium mb-2"
                     style={{ color: "#040606" }}
                   >
                     Post Excerpt *
+                    <span className="text-xs text-gray-500 ml-2">
+                      (For preview only - not stored in database)
+                    </span>
                   </label>
                   <textarea
                     name="excerpt"
@@ -486,7 +457,7 @@ export default function AddPostModal({
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.7 }}
+                  transition={{ delay: 0.6 }}
                 >
                   <label
                     className="block text-sm font-medium mb-2"
@@ -517,7 +488,7 @@ export default function AddPostModal({
                       </motion.p>
                     ) : (
                       <p className="text-xs" style={{ color: "#646464" }}>
-                        The main content of your post
+                        The main content of your post (stored in database)
                       </p>
                     )}
                     <span className="text-xs" style={{ color: "#646464" }}>
@@ -530,7 +501,7 @@ export default function AddPostModal({
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.8 }}
+                  transition={{ delay: 0.7 }}
                 >
                   <label
                     className="block text-sm font-medium mb-2"
@@ -568,7 +539,7 @@ export default function AddPostModal({
                     </motion.div>
                   )}
                   <p className="text-xs mt-1" style={{ color: "#646464" }}>
-                    Separate multiple tags with commas
+                    Separate multiple tags with commas - will be saved as "themes" in database
                   </p>
                 </motion.div>
               </form>

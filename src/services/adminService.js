@@ -167,7 +167,7 @@ export class AdminService {
       );
 
       console.log("Get pending approvals response:", response);
-
+      
       return {
         success: response.success,
         data: response.data,

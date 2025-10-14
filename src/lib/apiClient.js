@@ -38,11 +38,6 @@ class ApiClient {
       }
     });
 
-    console.log('🔧 [buildURL Debug]');
-    console.log('  - this.baseURL:', this.baseURL);
-    console.log('  - endpoint:', endpoint);
-    console.log('  - Final URL:', url.toString());
-
     return url.toString();
   }
 

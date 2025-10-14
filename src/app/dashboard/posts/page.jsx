@@ -306,9 +306,10 @@ export default function PostsPage() {
       });
 
       if (result.success) {
-        const apiData = result.data;
+        console.log(result.data.data,": hey")
+        const apiData = result.data.data;
         // Transform API response to match our UI expectations
-        const transformedPosts = apiData.posts?.map(post => ({
+        const transformedPosts = apiData?.map(post => ({
           id: post._id,
           title: post.title || 'Untitled Post',
           excerpt: post.content?.slice(0, 150) + '...' || 'No content available',
@@ -392,28 +393,38 @@ export default function PostsPage() {
     try {
       setLoading(true);
       showToast("Creating new post...", "info");
-
+  
+      // Transform data to match API structure
+      const postData = {
+        title: newPost.title,
+        content: newPost.content,
+        type: newPost.category || 'announcement',
+        themes: newPost.tags || [], // Changed from 'theme' to 'themes' array
+        isPublic: newPost.status === 'published',
+        isPinned: newPost.featured || false, // Added featured post mapping
+        status: newPost.status, // Added status field
+        allowComments: true // Added as required by API
+      };
+  
       let result;
-
+  
       // Check if there are images to upload
       if (newPost.images && newPost.images.length > 0) {
-        result = await PostsService.createPostWithImages({
-          title: newPost.title,
-          content: newPost.content,
-          type: newPost.category || 'announcement',
-          theme: newPost.tags && newPost.tags.length > 0 ? newPost.tags[0] : undefined,
-          isPublic: newPost.status === 'published'
-        }, newPost.images);
-      } else {
-        result = await PostsService.createPost({
-          title: newPost.title,
-          content: newPost.content,
-          type: newPost.category || 'announcement',
-          theme: newPost.tags && newPost.tags.length > 0 ? newPost.tags[0] : undefined,
-          isPublic: newPost.status === 'published'
+        // Use FormData for images
+        const formData = new FormData();
+        formData.append('postData', JSON.stringify(postData));
+        
+        // Append each image file
+        newPost.images.forEach((image, index) => {
+          formData.append('images', image);
         });
+  
+        result = await PostsService.createPostWithImages(formData);
+      } else {
+        // Send regular JSON data when no images
+        result = await PostsService.createPost(postData);
       }
-
+  
       if (result.success) {
         setIsAddModalOpen(false);
         loadPosts(); // Reload posts to show the new one
@@ -428,7 +439,6 @@ export default function PostsPage() {
       setLoading(false);
     }
   };
-
   const handleViewPost = (post) => {
     setSelectedPost(post);
     setIsViewModalOpen(true);

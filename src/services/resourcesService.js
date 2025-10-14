@@ -29,7 +29,7 @@ export class ResourcesService {
 
       const endpoint = `/resources?${queryParams.toString()}`;
       const response = await ExternalApiService.get(endpoint);
-
+      console.log("Resources response:", response);
       return {
         success: response.success,
         data: response.data,

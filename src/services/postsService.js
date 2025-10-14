@@ -18,7 +18,7 @@ export class PostsService {
       };
 
       const response = await apiClient.get(POSTS.BASE, { params: queryParams });
-
+      console.log("response :",response)
       return {
         success: response.success,
         data: response.data,

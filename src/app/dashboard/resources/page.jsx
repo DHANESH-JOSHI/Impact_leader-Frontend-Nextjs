@@ -422,7 +422,9 @@ export default function ResourcesPage() {
       });
 
       if (result?.success) {
+      
         const api = result.data;
+        console.log(api)
         const transformed =
           api.resources?.map((r) => ({
             id: r._id,

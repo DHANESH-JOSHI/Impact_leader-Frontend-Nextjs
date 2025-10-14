@@ -225,7 +225,7 @@ export default function ViewResourceModal({
           onClick={handleClose}
         >
           <motion.div
-            className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden"
+            className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[96vh] overflow-hidden"
             variants={modalVariants}
             onClick={(e) => e.stopPropagation()}
           >
