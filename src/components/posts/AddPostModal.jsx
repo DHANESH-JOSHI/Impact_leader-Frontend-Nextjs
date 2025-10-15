@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -49,18 +49,27 @@ export default function AddPostModal({
 }) {
   const [formData, setFormData] = useState({
     title: "",
-    excerpt: "", // Keep for UI but don't send to API
+    excerpt: "",
     content: "",
-    category: categories[0] || "",
+    category: "",
     status: "draft",
-    tags: "",
+    tags: [],
     featured: false,
   });
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tagInput, setTagInput] = useState("");
-  const [parsedTags, setParsedTags] = useState([]);
+
+  // Initialize category when categories prop changes
+  useEffect(() => {
+    if (categories.length > 0 && !formData.category) {
+      setFormData(prev => ({
+        ...prev,
+        category: categories[0]
+      }));
+    }
+  }, [categories, formData.category]);
 
   // Handle input changes
   const handleInputChange = (e) => {
@@ -75,15 +84,40 @@ export default function AddPostModal({
     }
   };
 
-  // Handle tag input
-  const handleTagInput = (e) => {
-    setTagInput(e.target.value);
-    const tags = e.target.value
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter((tag) => tag);
-    setParsedTags(tags);
-    setFormData((prev) => ({ ...prev, tags: e.target.value }));
+  // Handle tag input with Enter key
+  const handleAddTag = (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const newTag = tagInput.trim();
+      
+      if (newTag && !formData.tags.includes(newTag)) {
+        setFormData(prev => ({
+          ...prev,
+          tags: [...prev.tags, newTag]
+        }));
+        setTagInput("");
+      }
+    }
+  };
+
+  // Remove tag
+  const removeTag = (tagToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      tags: prev.tags.filter(tag => tag !== tagToRemove)
+    }));
+  };
+
+  // Handle tag input blur (add tag when user leaves the field)
+  const handleTagBlur = () => {
+    const newTag = tagInput.trim();
+    if (newTag && !formData.tags.includes(newTag)) {
+      setFormData(prev => ({
+        ...prev,
+        tags: [...prev.tags, newTag]
+      }));
+      setTagInput("");
+    }
   };
 
   // Validate form data
@@ -133,17 +167,12 @@ export default function AddPostModal({
     const postData = {
       title: formData.title,
       content: formData.content,
-      // Note: excerpt is NOT sent to API - it will be generated from content
       type: formData.category,
-      themes: formData.tags
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter((tag) => tag),
+      themes: formData.tags, // Now using the tags array directly
       isPublic: formData.status === "published",
       isPinned: formData.featured,
       status: formData.status,
       allowComments: true,
-      // author is automatically added from authenticated user
     };
 
     console.log("Submitting to API:", postData);
@@ -158,11 +187,10 @@ export default function AddPostModal({
         content: "",
         category: categories[0] || "",
         status: "draft",
-        tags: "",
+        tags: [],
         featured: false,
       });
       setTagInput("");
-      setParsedTags([]);
       setErrors({});
     } catch (error) {
       console.error("Form submission error:", error);
@@ -180,11 +208,10 @@ export default function AddPostModal({
         content: "",
         category: categories[0] || "",
         status: "draft",
-        tags: "",
+        tags: [],
         featured: false,
       });
       setTagInput("");
-      setParsedTags([]);
       setErrors({});
       onClose();
     }
@@ -343,6 +370,7 @@ export default function AddPostModal({
                     style={{ focusRingColor: "#2691ce" }}
                     disabled={isSubmitting}
                   >
+                    <option value="">Select a category</option>
                     {categories.map((category) => (
                       <option key={category} value={category}>
                         {category}
@@ -406,11 +434,64 @@ export default function AddPostModal({
                   </div>
                 </motion.div>
 
-                {/* Excerpt - Keep for UI but not sent to API */}
+                {/* Tags Input */}
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.5 }}
+                >
+                  <label
+                    className="flex items-center text-sm font-medium mb-2"
+                    style={{ color: "#040606" }}
+                  >
+                    <Tag className="w-4 h-4 mr-2" style={{ color: "#2691ce" }} />
+                    Tags (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyPress={handleAddTag}
+                    onBlur={handleTagBlur}
+                    placeholder="Enter tags and press Enter or comma..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
+                    style={{ focusRingColor: "#2691ce" }}
+                    disabled={isSubmitting}
+                  />
+                  {formData.tags.length > 0 && (
+                    <motion.div
+                      className="flex flex-wrap gap-2 mt-2"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      {formData.tags.map((tag, index) => (
+                        <motion.span
+                          key={tag}
+                          className="px-3 py-1 text-sm rounded-full text-white cursor-pointer flex items-center gap-1"
+                          style={{ backgroundColor: "#2691ce" }}
+                          onClick={() => removeTag(tag)}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: index * 0.1 }}
+                        >
+                          {tag} 
+                          <span className="ml-1 text-xs">×</span>
+                        </motion.span>
+                      ))}
+                    </motion.div>
+                  )}
+                  <p className="text-xs mt-1" style={{ color: "#646464" }}>
+                    Press Enter or comma to add tags. Click on tags to remove them.
+                  </p>
+                </motion.div>
+
+                {/* Excerpt */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.6 }}
                 >
                   <label
                     className="block text-sm font-medium mb-2"
@@ -457,7 +538,7 @@ export default function AddPostModal({
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.6 }}
+                  transition={{ delay: 0.7 }}
                 >
                   <label
                     className="block text-sm font-medium mb-2"
@@ -495,52 +576,6 @@ export default function AddPostModal({
                       {formData.content.length} characters
                     </span>
                   </div>
-                </motion.div>
-
-                {/* Tags */}
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.7 }}
-                >
-                  <label
-                    className="block text-sm font-medium mb-2"
-                    style={{ color: "#040606" }}
-                  >
-                    Tags (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={tagInput}
-                    onChange={handleTagInput}
-                    placeholder="Enter tags separated by commas (e.g., react, javascript, tutorial)"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                    style={{ focusRingColor: "#2691ce" }}
-                    disabled={isSubmitting}
-                  />
-                  {parsedTags.length > 0 && (
-                    <motion.div
-                      className="flex flex-wrap gap-2 mt-2"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                    >
-                      {parsedTags.map((tag, index) => (
-                        <motion.span
-                          key={tag}
-                          className="px-3 py-1 text-sm rounded-full text-white"
-                          style={{ backgroundColor: "#2691ce" }}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: index * 0.1 }}
-                        >
-                          {tag}
-                        </motion.span>
-                      ))}
-                    </motion.div>
-                  )}
-                  <p className="text-xs mt-1" style={{ color: "#646464" }}>
-                    Separate multiple tags with commas - will be saved as "themes" in database
-                  </p>
                 </motion.div>
               </form>
             </div>

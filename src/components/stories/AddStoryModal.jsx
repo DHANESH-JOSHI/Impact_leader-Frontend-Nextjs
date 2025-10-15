@@ -1,16 +1,14 @@
-import React, { useState } from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  FiX,
-  FiUpload,
-  FiImage,
-  FiCalendar,
-  FiClock,
-  FiUser,
-  FiType,
-  FiFileText,
-  FiTag,
-} from "react-icons/fi";
+  X,
+  Save,
+  FileText,
+  Tag,
+  Star,
+} from "lucide-react";
 
 const modalVariants = {
   hidden: {
@@ -43,22 +41,37 @@ const backdropVariants = {
   exit: { opacity: 0 },
 };
 
-export default function AddStoryModal({ isOpen, onClose, onAdd }) {
+export default function AddPostModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  categories,
+}) {
   const [formData, setFormData] = useState({
     title: "",
+    excerpt: "",
     content: "",
-    image: "",
-    type: "text",
-    // status: "draft",
-    duration: 24,
-    isActive: false,
+    category: "",
+    status: "draft",
     tags: [],
+    featured: false,
   });
 
-  const [imagePreview, setImagePreview] = useState("");
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [tagInput, setTagInput] = useState("");
 
+  // Initialize category when categories prop changes
+  useEffect(() => {
+    if (categories.length > 0 && !formData.category) {
+      setFormData(prev => ({
+        ...prev,
+        category: categories[0]
+      }));
+    }
+  }, [categories, formData.category]);
+
+  // Handle input changes
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -67,157 +80,141 @@ export default function AddStoryModal({ isOpen, onClose, onAdd }) {
     }));
 
     if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setErrors((prev) => ({
-          ...prev,
-          image: "Image size should be less than 5MB",
-        }));
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target.result);
-        setFormData((prev) => ({
-          ...prev,
-          image: e.target.result,
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleImageUrl = (e) => {
-    const url = e.target.value;
-    setFormData((prev) => ({
-      ...prev,
-      image: url,
-    }));
-    setImagePreview(url);
-  };
-
+  // Handle tag input with Enter key
   const handleAddTag = (e) => {
-    if (e.key === "Enter" && tagInput.trim()) {
+    if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
-      if (!formData.tags.includes(tagInput.trim().toLowerCase())) {
-        setFormData((prev) => ({
+      const newTag = tagInput.trim();
+      
+      if (newTag && !formData.tags.includes(newTag)) {
+        setFormData(prev => ({
           ...prev,
-          tags: [...prev.tags, tagInput.trim().toLowerCase()],
+          tags: [...prev.tags, newTag]
         }));
+        setTagInput("");
       }
+    }
+  };
+
+  // Remove tag
+  const removeTag = (tagToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      tags: prev.tags.filter(tag => tag !== tagToRemove)
+    }));
+  };
+
+  // Handle tag input blur (add tag when user leaves the field)
+  const handleTagBlur = () => {
+    const newTag = tagInput.trim();
+    if (newTag && !formData.tags.includes(newTag)) {
+      setFormData(prev => ({
+        ...prev,
+        tags: [...prev.tags, newTag]
+      }));
       setTagInput("");
     }
   };
 
-  const removeTag = (tagToRemove) => {
-    setFormData((prev) => ({
-      ...prev,
-      tags: prev.tags.filter((tag) => tag !== tagToRemove),
-    }));
-  };
-
+  // Validate form data
   const validateForm = () => {
     const newErrors = {};
 
     if (!formData.title.trim()) {
       newErrors.title = "Title is required";
+    } else if (formData.title.length < 3) {
+      newErrors.title = "Title must be at least 3 characters long";
+    }
+
+    if (!formData.excerpt.trim()) {
+      newErrors.excerpt = "Excerpt is required";
+    } else if (formData.excerpt.length < 10) {
+      newErrors.excerpt = "Excerpt must be at least 10 characters long";
+    } else if (formData.excerpt.length > 200) {
+      newErrors.excerpt = "Excerpt must be less than 200 characters";
     }
 
     if (!formData.content.trim()) {
       newErrors.content = "Content is required";
+    } else if (formData.content.length < 50) {
+      newErrors.content = "Content must be at least 50 characters long";
     }
 
-    if (!formData.image.trim()) {
-      newErrors.image = "Image is required";
+    if (!formData.category) {
+      newErrors.category = "Category is required";
     }
 
-    // if (!formData.author.trim()) {
-    //   newErrors.author = "Author name is required";
-    // }
-    if (!formData.type) {
-      newErrors.type = "Story type is required";
-    }
-
-    if (formData.duration < 1 || formData.duration > 168) {
-      newErrors.duration = "Duration should be between 1 to 168 hours";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  // Handle form submission
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (validateForm()) {
-      console.log('🔍 Duration Debug - BEFORE conversion:', {
-        formDuration: formData.duration,
-        type: typeof formData.duration,
-        rawValue: formData.duration
-      });
-      const durationInMilliseconds = Number(formData.duration) * 3600000;
+    const newErrors = validateForm();
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    // Transform data to match API structure
+    const postData = {
+      title: formData.title,
+      content: formData.content,
+      type: formData.category,
+      themes: formData.tags, // Now using the tags array directly
+      isPublic: formData.status === "published",
+      isPinned: formData.featured,
+      status: formData.status,
+      allowComments: true,
+    };
+
+    console.log("Submitting to API:", postData);
     
-    console.log('🔍 Duration Debug - AFTER conversion:', {
-      hours: formData.duration,
-      milliseconds: durationInMilliseconds,
-      calculation: `${formData.duration} * 3600000 = ${durationInMilliseconds}`
-    });
-
-      const apiData = {
-        textContent: formData.title + (formData.content ? "\n\n" + formData.content : ""),
-        type: formData.type, // ADD THIS
-        duration: durationInMilliseconds, // Convert to milliseconds
-        mediaUrl: formData.image, // Change from 'image' to 'mediaUrl'
-        tags: formData.tags,
-        backgroundColor: "#000000", // Add default or make field
-        textColor: "#FFFFFF", // Add default or make field
-        fontFamily: "Arial", // Add default or make field
-        isActive: formData.isActive,
-      };
-
-      console.log('Sending to API:', apiData);
-      onAdd(apiData);
-
+    try {
+      await onSubmit(postData);
+      
+      // Reset form only on successful submission
       setFormData({
         title: "",
+        excerpt: "",
         content: "",
-        image: "",
-        type: "text",
-        duration: 24,
-        isActive: false,
+        category: categories[0] || "",
+        status: "draft",
         tags: [],
+        featured: false,
       });
-      setImagePreview("");
+      setTagInput("");
       setErrors({});
+    } catch (error) {
+      console.error("Form submission error:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  // Handle modal close
   const handleClose = () => {
-    setFormData({
-      title: "",
-      content: "",
-      image: "",
-      // author: "",
-      // status: "draft",
-      type: "text",
-      duration: 24,
-      isActive: false,
-      tags: [],
-    });
-    setImagePreview("");
-    setErrors({});
-    setTagInput("");
-    onClose();
+    if (!isSubmitting) {
+      setFormData({
+        title: "",
+        excerpt: "",
+        content: "",
+        category: categories[0] || "",
+        status: "draft",
+        tags: [],
+        featured: false,
+      });
+      setTagInput("");
+      setErrors({});
+      onClose();
+    }
   };
 
   return (
@@ -236,7 +233,7 @@ export default function AddStoryModal({ isOpen, onClose, onAdd }) {
           onClick={handleClose}
         >
           <motion.div
-            className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden"
+            className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden"
             variants={modalVariants}
             onClick={(e) => e.stopPropagation()}
           >
@@ -245,166 +242,221 @@ export default function AddStoryModal({ isOpen, onClose, onAdd }) {
               className="flex items-center justify-between p-6 border-b border-gray-200"
               style={{ backgroundColor: "#f8fafc" }}
             >
-              <h2
-                className="text-xl font-semibold"
-                style={{ color: "#040606" }}
-              >
-                Add New Story
-              </h2>
+              <div className="flex items-center space-x-3">
+                <div
+                  className="p-2 rounded-lg"
+                  style={{ backgroundColor: "#eff6ff" }}
+                >
+                  <FileText className="h-6 w-6" style={{ color: "#2691ce" }} />
+                </div>
+                <div>
+                  <h2
+                    className="text-xl font-semibold"
+                    style={{ color: "#040606" }}
+                  >
+                    Create New Post
+                  </h2>
+                  <p className="text-sm" style={{ color: "#646464" }}>
+                    Add a new blog post or article
+                  </p>
+                </div>
+              </div>
               <motion.button
                 onClick={handleClose}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                disabled={isSubmitting}
               >
-                <FiX className="w-5 h-5" style={{ color: "#646464" }} />
+                <X className="h-5 w-5" style={{ color: "#646464" }} />
               </motion.button>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-6 overflow-y-auto max-h-[70vh]">
+            {/* Modal Content */}
+            <div className="p-6 max-h-[calc(90vh-140px)] overflow-y-auto">
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Title Input */}
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  <label
-                    className="flex items-center text-sm font-medium mb-2"
-                    style={{ color: "#040606" }}
-                  >
-                    <FiType
-                      className="w-4 h-4 mr-2"
-                      style={{ color: "#2691ce" }}
-                    />
-                    Story Title
-                  </label>
-                  <input
-                    type="text"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleInputChange}
-                    placeholder="Enter your story title..."
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all ${errors.title
-                      ? "border-red-500"
-                      : "border-gray-300 focus:border-transparent"
-                      }`}
-                    style={{ focusRingColor: "#2691ce" }}
-                  />
-                  {errors.title && (
-                    <motion.p
-                      className="text-red-500 text-sm mt-1"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
+                {/* Title and Featured */}
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                  <div className="lg:col-span-3">
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 }}
                     >
-                      {errors.title}
-                    </motion.p>
-                  )}
-                </motion.div>
+                      <label
+                        className="block text-sm font-medium mb-2"
+                        style={{ color: "#040606" }}
+                      >
+                        Post Title *
+                      </label>
+                      <input
+                        type="text"
+                        name="title"
+                        value={formData.title}
+                        onChange={handleInputChange}
+                        placeholder="Enter an engaging post title..."
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${
+                          errors.title ? "border-red-500" : "border-gray-300"
+                        }`}
+                        style={{ focusRingColor: "#2691ce" }}
+                        disabled={isSubmitting}
+                      />
+                      {errors.title && (
+                        <motion.p
+                          className="text-red-500 text-sm mt-1"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                        >
+                          {errors.title}
+                        </motion.p>
+                      )}
+                    </motion.div>
+                  </div>
 
-                {/* Content Input */}
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <label
-                    className="flex items-center text-sm font-medium mb-2"
-                    style={{ color: "#040606" }}
-                  >
-                    <FiFileText
-                      className="w-4 h-4 mr-2"
-                      style={{ color: "#2691ce" }}
-                    />
-                    Story Content
-                  </label>
-                  <textarea
-                    name="content"
-                    value={formData.content}
-                    onChange={handleInputChange}
-                    placeholder="Write your story content..."
-                    rows="4"
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 resize-none transition-all ${errors.content
-                      ? "border-red-500"
-                      : "border-gray-300 focus:border-transparent"
-                      }`}
-                    style={{ focusRingColor: "#2691ce" }}
-                  />
-                  {errors.content && (
-                    <motion.p
-                      className="text-red-500 text-sm mt-1"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
+                  <div className="lg:col-span-1">
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2 }}
                     >
-                      {errors.content}
-                    </motion.p>
-                  )}
-                </motion.div>
+                      <label
+                        className="block text-sm font-medium mb-2"
+                        style={{ color: "#040606" }}
+                      >
+                        Featured Post
+                      </label>
+                      <div className="flex items-center space-x-2 p-3 border border-gray-300 rounded-lg">
+                        <input
+                          type="checkbox"
+                          name="featured"
+                          checked={formData.featured}
+                          onChange={handleInputChange}
+                          className="w-4 h-4 rounded focus:ring-2"
+                          style={{
+                            color: "#2691ce",
+                            focusRingColor: "#2691ce",
+                          }}
+                          disabled={isSubmitting}
+                        />
+                        <Star className="h-4 w-4 text-yellow-500" />
+                        <span className="text-sm" style={{ color: "#646464" }}>
+                          Featured
+                        </span>
+                      </div>
+                    </motion.div>
+                  </div>
+                </div>
 
-                {/* Author Input */}
-                {/* <motion.div
+                {/* Category - Full Width */}
+                <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 }}
                 >
                   <label
-                    className="flex items-center text-sm font-medium mb-2"
+                    className="block text-sm font-medium mb-2"
                     style={{ color: "#040606" }}
                   >
-                    <FiUser
-                      className="w-4 h-4 mr-2"
-                      style={{ color: "#2691ce" }}
-                    />
-                    Author Name
+                    <Tag className="inline h-4 w-4 mr-1" />
+                    Category *
                   </label>
-                  <input
-                    type="text"
-                    name="author"
-                    value={formData.author}
+                  <select
+                    name="category"
+                    value={formData.category}
                     onChange={handleInputChange}
-                    placeholder="Enter author name..."
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all ${errors.author
-                      ? "border-red-500"
-                      : "border-gray-300 focus:border-transparent"
-                      }`}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${
+                      errors.category ? "border-red-500" : "border-gray-300"
+                    }`}
                     style={{ focusRingColor: "#2691ce" }}
-                  />
-                  {errors.author && (
+                    disabled={isSubmitting}
+                  >
+                    <option value="">Select a category</option>
+                    {categories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.category && (
                     <motion.p
                       className="text-red-500 text-sm mt-1"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                     >
-                      {errors.author}
+                      {errors.category}
                     </motion.p>
                   )}
-                </motion.div> */}
+                </motion.div>
 
-                {/* Tags Input */}
+                {/* Status */}
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.4 }}
                 >
                   <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: "#040606" }}
+                  >
+                    Publication Status
+                  </label>
+                  <div className="flex items-center space-x-4">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="status"
+                        value="draft"
+                        checked={formData.status === "draft"}
+                        onChange={handleInputChange}
+                        className="w-4 h-4"
+                        style={{ accentColor: "#2691ce" }}
+                        disabled={isSubmitting}
+                      />
+                      <span className="text-sm" style={{ color: "#646464" }}>
+                        Draft
+                      </span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="status"
+                        value="published"
+                        checked={formData.status === "published"}
+                        onChange={handleInputChange}
+                        className="w-4 h-4"
+                        style={{ accentColor: "#2691ce" }}
+                        disabled={isSubmitting}
+                      />
+                      <span className="text-sm" style={{ color: "#646464" }}>
+                        Published
+                      </span>
+                    </label>
+                  </div>
+                </motion.div>
+
+                {/* Tags Input */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <label
                     className="flex items-center text-sm font-medium mb-2"
                     style={{ color: "#040606" }}
                   >
-                    <FiTag
-                      className="w-4 h-4 mr-2"
-                      style={{ color: "#2691ce" }}
-                    />
-                    Tags
+                    <Tag className="w-4 h-4 mr-2" style={{ color: "#2691ce" }} />
+                    Tags (Optional)
                   </label>
                   <input
                     type="text"
                     value={tagInput}
                     onChange={(e) => setTagInput(e.target.value)}
                     onKeyPress={handleAddTag}
-                    placeholder="Enter tags and press Enter..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all"
+                    onBlur={handleTagBlur}
+                    placeholder="Enter tags and press Enter or comma..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
                     style={{ focusRingColor: "#2691ce" }}
+                    disabled={isSubmitting}
                   />
                   {formData.tags.length > 0 && (
                     <motion.div
@@ -415,7 +467,7 @@ export default function AddStoryModal({ isOpen, onClose, onAdd }) {
                       {formData.tags.map((tag, index) => (
                         <motion.span
                           key={tag}
-                          className="px-3 py-1 text-sm rounded-full text-white cursor-pointer"
+                          className="px-3 py-1 text-sm rounded-full text-white cursor-pointer flex items-center gap-1"
                           style={{ backgroundColor: "#2691ce" }}
                           onClick={() => removeTag(tag)}
                           whileHover={{ scale: 1.05 }}
@@ -424,229 +476,149 @@ export default function AddStoryModal({ isOpen, onClose, onAdd }) {
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ delay: index * 0.1 }}
                         >
-                          {tag} ×
+                          {tag} 
+                          <span className="ml-1 text-xs">×</span>
                         </motion.span>
                       ))}
                     </motion.div>
                   )}
+                  <p className="text-xs mt-1" style={{ color: "#646464" }}>
+                    Press Enter or comma to add tags. Click on tags to remove them.
+                  </p>
                 </motion.div>
 
-                {/* Image Upload Section */}
+                {/* Excerpt */}
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 }}
+                  transition={{ delay: 0.6 }}
                 >
                   <label
-                    className="flex items-center text-sm font-medium mb-2"
+                    className="block text-sm font-medium mb-2"
                     style={{ color: "#040606" }}
                   >
-                    <FiImage
-                      className="w-4 h-4 mr-2"
-                      style={{ color: "#2691ce" }}
-                    />
-                    Story Image
+                    Post Excerpt *
+                    <span className="text-xs text-gray-500 ml-2">
+                      (For preview only - not stored in database)
+                    </span>
                   </label>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
-                        <div className="text-center">
-                          <FiUpload
-                            className="w-8 h-8 mx-auto mb-2"
-                            style={{ color: "#646464" }}
-                          />
-                          <p className="text-sm" style={{ color: "#646464" }}>
-                            Click to upload file
-                          </p>
-                          <p className="text-xs" style={{ color: "#646464" }}>
-                            PNG, JPG, GIF up to 5MB
-                          </p>
-                        </div>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          className="hidden"
-                        />
-                      </label>
-                    </div>
-
-                    <div>
-                      <input
-                        type="url"
-                        placeholder="Or paste image URL..."
-                        onChange={handleImageUrl}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all"
-                        style={{ focusRingColor: "#2691ce" }}
-                      />
-                    </div>
+                  <textarea
+                    name="excerpt"
+                    value={formData.excerpt}
+                    onChange={handleInputChange}
+                    placeholder="Write a compelling excerpt that summarizes your post..."
+                    rows={3}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none ${
+                      errors.excerpt ? "border-red-500" : "border-gray-300"
+                    }`}
+                    style={{ focusRingColor: "#2691ce" }}
+                    disabled={isSubmitting}
+                  />
+                  <div className="flex justify-between items-center mt-1">
+                    {errors.excerpt ? (
+                      <motion.p
+                        className="text-red-500 text-sm"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        {errors.excerpt}
+                      </motion.p>
+                    ) : (
+                      <p className="text-xs" style={{ color: "#646464" }}>
+                        This will be displayed in post previews
+                      </p>
+                    )}
+                    <span className="text-xs" style={{ color: "#646464" }}>
+                      {formData.excerpt.length}/200
+                    </span>
                   </div>
-
-                  {imagePreview && (
-                    <motion.div
-                      className="mt-4"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="w-full h-48 object-cover rounded-lg border"
-                      />
-                    </motion.div>
-                  )}
-
-                  {errors.image && (
-                    <motion.p
-                      className="text-red-500 text-sm mt-1"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                    >
-                      {errors.image}
-                    </motion.p>
-                  )}
                 </motion.div>
 
-               {/* Settings Row - Update to 3 columns */}
-<motion.div
-  className="grid grid-cols-1 md:grid-cols-3 gap-4"
-  initial={{ opacity: 0, x: -20 }}
-  animate={{ opacity: 1, x: 0 }}
-  transition={{ delay: 0.6 }}
->
-  {/* Status Field - Keep but map to isActive */}
-  <div>
-    <label
-      className="flex items-center text-sm font-medium mb-2"
-      style={{ color: "#040606" }}
-    >
-      <FiCalendar
-        className="w-4 h-4 mr-2"
-        style={{ color: "#2691ce" }}
-      />
-      Status
-    </label>
-    <select
-      name="status"
-      value={formData.status}
-      onChange={handleInputChange}
-      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all"
-      style={{ focusRingColor: "#2691ce" }}
-    >
-      <option value="draft">Draft</option>
-      <option value="published">Published</option>
-      <option value="scheduled">Scheduled</option>
-    </select>
-  </div>
-
-  {/* Story Type Field - NEW */}
-  <div>
-    <label
-      className="flex items-center text-sm font-medium mb-2"
-      style={{ color: "#040606" }}
-    >
-      <FiFileText
-        className="w-4 h-4 mr-2"
-        style={{ color: "#2691ce" }}
-      />
-      Story Type
-    </label>
-    <select
-      name="type"
-      value={formData.type}
-      onChange={handleInputChange}
-      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all"
-      style={{ focusRingColor: "#2691ce" }}
-    >
-      <option value="text">Text</option>
-      <option value="image">Image</option>
-      <option value="video">Video</option>
-    </select>
-  </div>
-
-  {/* Duration Field */}
-  <div>
-    <label
-      className="flex items-center text-sm font-medium mb-2"
-      style={{ color: "#040606" }}
-    >
-      <FiClock
-        className="w-4 h-4 mr-2"
-        style={{ color: "#2691ce" }}
-      />
-      Duration (Hours)
-    </label>
-    <input
-      type="number"
-      name="duration"
-      value={formData.duration}
-      onChange={handleInputChange}
-      min="1"
-      max="168"
-      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all ${
-        errors.duration ? "border-red-500" : "border-gray-300"
-      }`}
-      style={{ focusRingColor: "#2691ce" }}
-    />
-    {errors.duration && (
-      <motion.p
-        className="text-red-500 text-sm mt-1"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-      >
-        {errors.duration}
-      </motion.p>
-    )}
-  </div>
-</motion.div>
-
-                {/* Active Toggle */}
+                {/* Content */}
                 <motion.div
-                  className="flex items-center"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.7 }}
                 >
-                  <input
-                    type="checkbox"
-                    name="isActive"
-                    checked={formData.isActive}
-                    onChange={handleInputChange}
-                    className="rounded border-gray-300 focus:ring-2"
-                    style={{ color: "#2691ce", focusRingColor: "#2691ce" }}
-                  />
-                  <label className="ml-2 text-sm" style={{ color: "#040606" }}>
-                    Make story active immediately
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: "#040606" }}
+                  >
+                    Post Content *
                   </label>
+                  <textarea
+                    name="content"
+                    value={formData.content}
+                    onChange={handleInputChange}
+                    placeholder="Write your full post content here..."
+                    rows={12}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none ${
+                      errors.content ? "border-red-500" : "border-gray-300"
+                    }`}
+                    style={{ focusRingColor: "#2691ce" }}
+                    disabled={isSubmitting}
+                  />
+                  <div className="flex justify-between items-center mt-1">
+                    {errors.content ? (
+                      <motion.p
+                        className="text-red-500 text-sm"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        {errors.content}
+                      </motion.p>
+                    ) : (
+                      <p className="text-xs" style={{ color: "#646464" }}>
+                        The main content of your post (stored in database)
+                      </p>
+                    )}
+                    <span className="text-xs" style={{ color: "#646464" }}>
+                      {formData.content.length} characters
+                    </span>
+                  </div>
                 </motion.div>
               </form>
             </div>
 
             {/* Modal Footer */}
             <div
-              className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3"
+              className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200"
               style={{ backgroundColor: "#f8fafc" }}
             >
               <motion.button
                 type="button"
                 onClick={handleClose}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 style={{ color: "#646464" }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                disabled={isSubmitting}
               >
                 Cancel
               </motion.button>
               <motion.button
                 onClick={handleSubmit}
-                className="px-4 py-2 text-white rounded-lg hover:opacity-90 transition-colors"
+                disabled={isSubmitting}
+                className={`px-6 py-2 text-white rounded-lg font-medium transition-all flex items-center space-x-2 ${
+                  isSubmitting
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:shadow-md"
+                }`}
                 style={{ backgroundColor: "#2691ce" }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={!isSubmitting ? { scale: 1.02 } : {}}
+                whileTap={!isSubmitting ? { scale: 0.98 } : {}}
               >
-                Add Story
+                {isSubmitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Creating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    <span>Create Post</span>
+                  </>
+                )}
               </motion.button>
             </div>
           </motion.div>

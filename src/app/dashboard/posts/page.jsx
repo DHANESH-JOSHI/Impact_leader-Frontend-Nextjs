@@ -306,7 +306,7 @@ export default function PostsPage() {
       });
 
       if (result.success) {
-        console.log(result.data.data,": hey")
+        // console.log(result.data.data,": hey")
         const apiData = result.data.data;
         // Transform API response to match our UI expectations
         const transformedPosts = apiData?.map(post => ({
@@ -314,7 +314,7 @@ export default function PostsPage() {
           title: post.title || 'Untitled Post',
           excerpt: post.content?.slice(0, 150) + '...' || 'No content available',
           content: post.content || '',
-          author: post.author?.name || post.author?.username || 'Unknown',
+          author: post.author?.name ||`${post.author?.firstName} ${post.author?.lastName}` || post.author?.username || 'Unknown',
           category: post.type || 'General',
           status: post.isPublic ? 'published' : 'draft',
           publishDate: post.createdAt ? new Date(post.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],

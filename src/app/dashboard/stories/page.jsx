@@ -157,7 +157,7 @@ const getStoredAuth = () => {
     return null;
   }
 };
-console.log("🔑 Stored Auth:", getStoredAuth());
+// console.log("🔑 Stored Auth:", getStoredAuth());
 const getToken = () => getStoredAuth()?.value?.accessToken ?? null;
 
 /* --------------------------------- Page ---------------------------------- */
