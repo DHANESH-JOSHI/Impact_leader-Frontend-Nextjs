@@ -318,10 +318,8 @@ export default function ApprovalsPage() {
   const transform = (raw) => {
     // Normalize unknown API shapes safely
     const arr = Array.isArray(raw) ? raw : raw?.items || raw?.data || [];
-
-    return arr.map((x, idx) => {
-      const registration = x.registrationData || {};
-
+    return arr.approvals.map((x, idx) => {
+      const registration = x || {};
       return {
         id: x.id || x._id || `user_${idx}`,
         // For user registrations, we use the same ID for contentId
@@ -363,7 +361,7 @@ export default function ApprovalsPage() {
     try {
       const res = await AdminService.getPendingApprovals();
       if (res?.success) {
-        const list = transform(res.data.data);
+        const list = transform(res.data);
         // console.log("List : ",list)
         setItems(list);
         showToast(`Loaded ${list.length} pending approvals`, "success");
@@ -735,6 +733,7 @@ export default function ApprovalsPage() {
                   </tr>
                 ) : (
                   currentPageItems.map((it) => (
+                    
                     <tr
                       key={`${it.contentType}_${it.contentId}`}
                       className="border-t hover:bg-gray-50"
@@ -743,9 +742,9 @@ export default function ApprovalsPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-gray-500" />
-                          <div>
+                          <div> 
                             <div className="font-medium text-gray-900">
-                              {it.userData?.fullName || it.authorName}
+                              {it.userData?.fullName || it.fullName}
                             </div>
                           </div>
                         </div>

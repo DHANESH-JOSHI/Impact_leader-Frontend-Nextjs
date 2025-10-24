@@ -63,7 +63,7 @@ export default function AddPostModal({
 
   // Initialize category when categories prop changes
   useEffect(() => {
-    if (categories.length > 0 && !formData.category) {
+    if (categories && !formData.category) {
       setFormData(prev => ({
         ...prev,
         category: categories[0]

@@ -274,32 +274,34 @@ export default function QnaPage() {
         sortOrder: sortOrder,
         ...params
       });
-
+      
       if (result.success) {
-        const apiData = result.data;
+        const apiData = result.data.data;
+        console.log("result: ",apiData)
         // Transform API response to match our UI expectations
-        const transformedQnaData = apiData.questions?.map(qna => ({
+        const transformedQnaData = apiData?.map(qna => ({
           id: qna._id,
-          question: qna.question || 'Untitled Question',
-          answer: qna.answers && qna.answers.length > 0 ? qna.answers[0].answer : '',
+          question: qna.title || qna.content || 'Untitled Question', // FIX: Use title/content from API
+          answer: qna.answer || qna.content || '', // FIX: Adjust based on actual API fields
           category: qna.category || 'General',
           tags: qna.tags || [],
-          author: qna.author?.name || qna.author?.username || 'Anonymous',
+          author: qna.author?.firstName || qna.author?.lastName || 'Anonymous', // FIX: Use firstName/lastName from API
           status: qna.status || 'active',
           priority: qna.priority || 'medium',
           difficulty: qna.difficulty || 'medium',
           createdAt: qna.createdAt,
           updatedAt: qna.updatedAt,
           views: qna.views || 0,
-          likes: qna.upvotes || 0,
+          likes: qna.upvotes?.length || qna.upvotes || 0, // FIX: upvotes might be an array
           helpful: qna.helpful || 0,
           notHelpful: qna.notHelpful || 0,
-          isAnswered: qna.answers && qna.answers.length > 0,
-          answerCount: qna.answers ? qna.answers.length : 0,
-          acceptedAnswer: qna.answers && qna.answers.length > 0 ? qna.answers[0] : null
+          isAnswered: !!(qna.answer || qna.answers), // FIX: Check if answer exists
+          answerCount: qna.answerCount || 0,
+          acceptedAnswer: qna.acceptedAnswer || null
         })) || [];
-
+  
         setQnaData(transformedQnaData);
+
         setPagination(prev => ({
           ...prev,
           total: apiData.total || 0,
@@ -381,29 +383,29 @@ export default function QnaPage() {
     try {
       setLoading(true);
       showToast("Creating new question...", "info");
-
-      const result = await QnAService.askQuestion({
-        question: newQuestion.question,
-        category: newQuestion.category,
+  
+      // Debug: log what we're receiving from the form
+      console.log("Form data received:", newQuestion);
+  
+      // Map form data to API structure
+      const apiData = {
+        title: newQuestion.question,
+        content: newQuestion.answer || "",
         tags: newQuestion.tags || [],
-        priority: newQuestion.priority || 'medium'
-      });
-
+        category: newQuestion.category || "General",
+        status: newQuestion.status || "open"
+      };
+  
+      // Debug: log what we're sending to API
+      console.log("Data being sent to API:", apiData);
+  
+      const result = await QnAService.askQuestion(apiData);
+  
+      console.log("API Response:", result);
+  
       if (result.success) {
-        // If there's an answer provided, add it
-        if (newQuestion.answer && newQuestion.answer.trim() !== "") {
-          const answerResult = await QnAService.answerQuestion(result.data._id, {
-            answer: newQuestion.answer
-          });
-          
-          if (!answerResult.success) {
-            showToast("Question created but answer failed to add!", "warning");
-          }
-        }
-
         setIsAddModalOpen(false);
-        loadQnaData(); // Reload to show the new question
-
+        loadQnaData();
         showToast(`"${newQuestion.question}" successfully created! ✅`, "success");
       } else {
         showToast(`Failed to create question: ${result.message} ❌`, "error");

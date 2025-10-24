@@ -52,10 +52,10 @@ export default function AddQuestionModal({
   const [formData, setFormData] = useState({
     question: "",
     answer: "",
-    category: categories[0] || "",
+    category: "General", // Default category
     tags: "",
-    author: "",
-    status: "draft",
+    author: "Admin", // Default author
+    status: "open", // Changed to match API
     priority: "medium",
     difficulty: "easy",
     featured: false,
@@ -90,7 +90,7 @@ export default function AddQuestionModal({
     setFormData((prev) => ({ ...prev, tags: e.target.value }));
   };
 
-  // Validate form
+  // Validate form - removed category validation
   const validateForm = () => {
     const newErrors = {};
 
@@ -100,13 +100,15 @@ export default function AddQuestionModal({
       newErrors.question = "Question must be at least 10 characters long";
     }
 
-    if (!formData.author.trim()) {
-      newErrors.author = "Author name is required";
-    }
+    // Author is optional now since backend handles it
+    // if (!formData.author.trim()) {
+    //   newErrors.author = "Author name is required";
+    // }
 
-    if (!formData.category) {
-      newErrors.category = "Category is required";
-    }
+    // Category validation removed since it's not in API
+    // if (!formData.category) {
+    //   newErrors.category = "Category is required";
+    // }
 
     return newErrors;
   };
@@ -123,27 +125,24 @@ export default function AddQuestionModal({
 
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Use parsedTags directly instead of splitting formData.tags
+    const finalTags = parsedTags.length > 0 ? parsedTags : [formData.category.toLowerCase()];
 
     const questionData = {
       ...formData,
-      tags: formData.tags
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter((tag) => tag),
+      tags: finalTags,
     };
-
+    console.log(questionData)
     onSubmit(questionData);
 
     // Reset form
     setFormData({
       question: "",
       answer: "",
-      category: categories[0] || "",
+      category: "General",
       tags: "",
-      author: "",
-      status: "draft",
+      author: "Admin",
+      status: "open",
       priority: "medium",
       difficulty: "easy",
       featured: false,
@@ -159,10 +158,10 @@ export default function AddQuestionModal({
       setFormData({
         question: "",
         answer: "",
-        category: categories[0] || "",
+        category: "General",
         tags: "",
-        author: "",
-        status: "draft",
+        author: "Admin",
+        status: "open",
         priority: "medium",
         difficulty: "easy",
         featured: false,
@@ -173,6 +172,12 @@ export default function AddQuestionModal({
       onClose();
     }
   };
+
+  // Default categories if none provided
+  const defaultCategories = ["General", "Technical", "Billing", "Account", "Support"];
+  const availableCategories = categories && categories.length > 0 ?
+    categories.filter(cat => cat !== "all") :
+    defaultCategories;
 
   return (
     <AnimatePresence>
@@ -190,7 +195,7 @@ export default function AddQuestionModal({
           onClick={handleClose}
         >
           <motion.div
-            className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
+            className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden"
             variants={modalVariants}
             onClick={(e) => e.stopPropagation()}
           >
@@ -253,9 +258,8 @@ export default function AddQuestionModal({
                     onChange={handleInputChange}
                     placeholder="Enter the question here..."
                     rows={3}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none ${
-                      errors.question ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none ${errors.question ? "border-red-500" : "border-gray-300"
+                      }`}
                     style={{ focusRingColor: "#2691ce" }}
                     disabled={isSubmitting}
                   />
@@ -309,7 +313,7 @@ export default function AddQuestionModal({
                       style={{ color: "#040606" }}
                     >
                       <User className="inline h-4 w-4 mr-1" />
-                      Author *
+                      Author
                     </label>
                     <input
                       type="text"
@@ -317,9 +321,8 @@ export default function AddQuestionModal({
                       value={formData.author}
                       onChange={handleInputChange}
                       placeholder="Enter author name..."
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${
-                        errors.author ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${errors.author ? "border-red-500" : "border-gray-300"
+                        }`}
                       style={{ focusRingColor: "#2691ce" }}
                       disabled={isSubmitting}
                     />
@@ -332,6 +335,9 @@ export default function AddQuestionModal({
                         {errors.author}
                       </motion.p>
                     )}
+                    <p className="text-xs mt-1" style={{ color: "#646464" }}>
+                      Leave empty to use default author
+                    </p>
                   </motion.div>
 
                   <motion.div
@@ -344,33 +350,25 @@ export default function AddQuestionModal({
                       style={{ color: "#040606" }}
                     >
                       <Tag className="inline h-4 w-4 mr-1" />
-                      Category *
+                      Category
                     </label>
                     <select
                       name="category"
                       value={formData.category}
                       onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${
-                        errors.category ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
                       style={{ focusRingColor: "#2691ce" }}
                       disabled={isSubmitting}
                     >
-                      {categories.map((category) => (
+                      {availableCategories.map((category) => (
                         <option key={category} value={category}>
                           {category}
                         </option>
                       ))}
                     </select>
-                    {errors.category && (
-                      <motion.p
-                        className="text-red-500 text-sm mt-1"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                      >
-                        {errors.category}
-                      </motion.p>
-                    )}
+                    <p className="text-xs mt-1" style={{ color: "#646464" }}>
+                      Used for organization and filtering
+                    </p>
                   </motion.div>
                 </div>
 
@@ -420,6 +418,7 @@ export default function AddQuestionModal({
                       style={{ focusRingColor: "#2691ce" }}
                       disabled={isSubmitting}
                     >
+                      <option value="open">Open</option>
                       <option value="draft">Draft</option>
                       <option value="published">Published</option>
                       <option value="archived">Archived</option>
@@ -464,15 +463,34 @@ export default function AddQuestionModal({
                   >
                     Tags (Optional)
                   </label>
-                  <input
-                    type="text"
-                    value={tagInput}
-                    onChange={handleTagInput}
-                    placeholder="Enter tags separated by commas (e.g., password, login, security)"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                    style={{ focusRingColor: "#2691ce" }}
-                    disabled={isSubmitting}
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ',') {
+                          e.preventDefault();
+                          const newTag = tagInput.trim();
+                          if (newTag && !parsedTags.includes(newTag)) {
+                            const updatedTags = [...parsedTags, newTag];
+                            setParsedTags(updatedTags);
+                            setFormData((prev) => ({
+                              ...prev,
+                              tags: updatedTags.join(',')
+                            }));
+                          }
+                          setTagInput('');
+                        }
+                      }}
+                      placeholder="Type tag and press Enter or comma to add..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
+                      style={{ focusRingColor: "#2691ce" }}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+
+                  {/* Display added tags */}
                   {parsedTags.length > 0 && (
                     <motion.div
                       className="flex flex-wrap gap-2 mt-2"
@@ -482,19 +500,33 @@ export default function AddQuestionModal({
                       {parsedTags.map((tag, index) => (
                         <motion.span
                           key={tag}
-                          className="px-3 py-1 text-sm rounded-full text-white"
+                          className="px-3 py-1 text-sm rounded-full text-white flex items-center gap-1"
                           style={{ backgroundColor: "#2691ce" }}
                           initial={{ opacity: 0, scale: 0.8 }}
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ delay: index * 0.1 }}
                         >
                           #{tag}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updatedTags = parsedTags.filter(t => t !== tag);
+                              setParsedTags(updatedTags);
+                              setFormData((prev) => ({
+                                ...prev,
+                                tags: updatedTags.join(',')
+                              }));
+                            }}
+                            className="hover:text-gray-200 text-xs"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
                         </motion.span>
                       ))}
                     </motion.div>
                   )}
                   <p className="text-xs mt-1" style={{ color: "#646464" }}>
-                    Tags help users find questions more easily
+                    Type tag and press Enter or comma to add. Tags help users find questions more easily.
                   </p>
                 </motion.div>
 
@@ -558,11 +590,10 @@ export default function AddQuestionModal({
               <motion.button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className={`px-6 py-2 text-white rounded-lg font-medium transition-all flex items-center space-x-2 ${
-                  isSubmitting
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:shadow-md"
-                }`}
+                className={`px-6 py-2 text-white rounded-lg font-medium transition-all flex items-center space-x-2 ${isSubmitting
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:shadow-md"
+                  }`}
                 style={{ backgroundColor: "#2691ce" }}
                 whileHover={!isSubmitting ? { scale: 1.02 } : {}}
                 whileTap={!isSubmitting ? { scale: 0.98 } : {}}
