@@ -164,6 +164,7 @@ const getToken = () => getStoredAuth()?.value?.accessToken ?? null;
 export default function StoriesPage() {
   const { toasts, showToast, hideToast } = useToast();
 
+  const [categories, setCategories] = useState(["General", "Travel", "Lifestyle", "Work", "Technology"]);
   const [stories, setStories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState("cards");
@@ -705,6 +706,7 @@ export default function StoriesPage() {
           setIsAddModalOpen(false);
         }}
         onAdd={handleAddStory}
+        categories={categories} 
       />
 
       <EditStoryModal

@@ -50,7 +50,7 @@ export default function AddResourceModal({
   isOpen,
   onClose,
   onSubmit,
-  categories,
+  categories = [],
 }) {
   const [formData, setFormData] = useState({
     title: "",
@@ -158,7 +158,6 @@ export default function AddResourceModal({
 
     return newErrors;
   };
-
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -171,41 +170,58 @@ export default function AddResourceModal({
 
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      // Prepare the data for API submission
+      const resourceData = {
+        title: formData.title,
+        description: formData.description,
+        type: formData.type,
+        category: formData.category,
+        tags: formData.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter((tag) => tag),
+        isPublic: formData.status === "published",
+        featured: formData.featured,
+        // Include file if uploaded
+        ...(selectedFile && { file: selectedFile }),
+        // Include URL if provided (for external resources)
+        ...(formData.fileUrl && { fileUrl: formData.fileUrl }),
+      };
 
-    const resourceData = {
-      ...formData,
-      tags: formData.tags
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter((tag) => tag),
-    };
+      console.log("📤 Submitting resource data:", resourceData);
 
-    onSubmit(resourceData);
+      // Call the API through the onSubmit prop (which should handle the actual API call)
+      await onSubmit(resourceData);
 
-    // Reset form
-    setFormData({
-      title: "",
-      description: "",
-      type: "video",
-      fileUrl: "",
-      fileName: "",
-      fileSize: 0,
-      duration: 0,
-      category: categories[0] || "",
-      tags: "",
-      author: "",
-      status: "draft",
-      thumbnail: "",
-      featured: false,
-    });
-    setSelectedFile(null);
-    setUploadProgress(0);
-    setErrors({});
-    setIsSubmitting(false);
+      // Reset form only after successful submission
+      setFormData({
+        title: "",
+        description: "",
+        type: "video",
+        fileUrl: "",
+        fileName: "",
+        fileSize: 0,
+        duration: 0,
+        category: categories[0] || "",
+        tags: "",
+        author: "",
+        status: "draft",
+        thumbnail: "",
+        featured: false,
+      });
+      setSelectedFile(null);
+      setUploadProgress(0);
+      setErrors({});
+
+    } catch (error) {
+      console.error("❌ Form submission error:", error);
+      // Handle error (show toast, set error state, etc.)
+      setErrors({ submit: "Failed to create resource. Please try again." });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-
   const handleClose = () => {
     if (!isSubmitting) {
       setFormData({
@@ -254,7 +270,7 @@ export default function AddResourceModal({
           onClick={handleClose}
         >
           <motion.div
-            className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
+            className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden"
             variants={modalVariants}
             onClick={(e) => e.stopPropagation()}
           >
@@ -426,9 +442,8 @@ export default function AddResourceModal({
                       value={formData.title}
                       onChange={handleInputChange}
                       placeholder="Enter resource title..."
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${
-                        errors.title ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${errors.title ? "border-red-500" : "border-gray-300"
+                        }`}
                       style={{ focusRingColor: "#2691ce" }}
                       disabled={isSubmitting}
                     />
@@ -461,9 +476,8 @@ export default function AddResourceModal({
                       value={formData.author}
                       onChange={handleInputChange}
                       placeholder="Enter author name..."
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${
-                        errors.author ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${errors.author ? "border-red-500" : "border-gray-300"
+                        }`}
                       style={{ focusRingColor: "#2691ce" }}
                       disabled={isSubmitting}
                     />
@@ -497,9 +511,8 @@ export default function AddResourceModal({
                     onChange={handleInputChange}
                     placeholder="Describe your resource..."
                     rows={4}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none ${
-                      errors.description ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none ${errors.description ? "border-red-500" : "border-gray-300"
+                      }`}
                     style={{ focusRingColor: "#2691ce" }}
                     disabled={isSubmitting}
                   />
@@ -532,18 +545,15 @@ export default function AddResourceModal({
                       name="category"
                       value={formData.category}
                       onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${
-                        errors.category ? "border-red-500" : "border-gray-300"
-                      }`}
-                      style={{ focusRingColor: "#2691ce" }}
-                      disabled={isSubmitting}
                     >
-                      {categories.map((category) => (
+                      <option value="">Select a category</option>
+                      {categories && categories.map((category) => (
                         <option key={category} value={category}>
                           {category}
                         </option>
                       ))}
                     </select>
+
                     {errors.category && (
                       <motion.p
                         className="text-red-500 text-sm mt-1"
@@ -654,11 +664,10 @@ export default function AddResourceModal({
               <motion.button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className={`px-6 py-2 text-white rounded-lg font-medium transition-all flex items-center space-x-2 ${
-                  isSubmitting
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:shadow-md"
-                }`}
+                className={`px-6 py-2 text-white rounded-lg font-medium transition-all flex items-center space-x-2 ${isSubmitting
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:shadow-md"
+                  }`}
                 style={{ backgroundColor: "#2691ce" }}
                 whileHover={!isSubmitting ? { scale: 1.02 } : {}}
                 whileTap={!isSubmitting ? { scale: 0.98 } : {}}

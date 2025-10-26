@@ -45,7 +45,7 @@ export default function AddPostModal({
   isOpen,
   onClose,
   onSubmit,
-  categories,
+  categories = [],
 }) {
   const [formData, setFormData] = useState({
     title: "",
@@ -63,7 +63,7 @@ export default function AddPostModal({
 
   // Initialize category when categories prop changes
   useEffect(() => {
-    if (categories.length > 0 && !formData.category) {
+    if (categories && categories.length > 0 && !formData.category) {
       setFormData(prev => ({
         ...prev,
         category: categories[0]
@@ -89,7 +89,7 @@ export default function AddPostModal({
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
       const newTag = tagInput.trim();
-      
+
       if (newTag && !formData.tags.includes(newTag)) {
         setFormData(prev => ({
           ...prev,
@@ -176,10 +176,10 @@ export default function AddPostModal({
     };
 
     console.log("Submitting to API:", postData);
-    
+
     try {
       await onSubmit(postData);
-      
+
       // Reset form only on successful submission
       setFormData({
         title: "",
@@ -295,9 +295,8 @@ export default function AddPostModal({
                         value={formData.title}
                         onChange={handleInputChange}
                         placeholder="Enter an engaging post title..."
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${
-                          errors.title ? "border-red-500" : "border-gray-300"
-                        }`}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${errors.title ? "border-red-500" : "border-gray-300"
+                          }`}
                         style={{ focusRingColor: "#2691ce" }}
                         disabled={isSubmitting}
                       />
@@ -364,19 +363,19 @@ export default function AddPostModal({
                     name="category"
                     value={formData.category}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${
-                      errors.category ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${errors.category ? "border-red-500" : "border-gray-300"
+                      }`}
                     style={{ focusRingColor: "#2691ce" }}
                     disabled={isSubmitting}
                   >
                     <option value="">Select a category</option>
-                    {categories.map((category) => (
+                    {categories && categories.map((category) => ( // Add null check
                       <option key={category} value={category}>
                         {category}
                       </option>
                     ))}
                   </select>
+
                   {errors.category && (
                     <motion.p
                       className="text-red-500 text-sm mt-1"
@@ -476,7 +475,7 @@ export default function AddPostModal({
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ delay: index * 0.1 }}
                         >
-                          {tag} 
+                          {tag}
                           <span className="ml-1 text-xs">×</span>
                         </motion.span>
                       ))}
@@ -508,9 +507,8 @@ export default function AddPostModal({
                     onChange={handleInputChange}
                     placeholder="Write a compelling excerpt that summarizes your post..."
                     rows={3}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none ${
-                      errors.excerpt ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none ${errors.excerpt ? "border-red-500" : "border-gray-300"
+                      }`}
                     style={{ focusRingColor: "#2691ce" }}
                     disabled={isSubmitting}
                   />
@@ -552,9 +550,8 @@ export default function AddPostModal({
                     onChange={handleInputChange}
                     placeholder="Write your full post content here..."
                     rows={12}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none ${
-                      errors.content ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none ${errors.content ? "border-red-500" : "border-gray-300"
+                      }`}
                     style={{ focusRingColor: "#2691ce" }}
                     disabled={isSubmitting}
                   />
@@ -599,11 +596,10 @@ export default function AddPostModal({
               <motion.button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className={`px-6 py-2 text-white rounded-lg font-medium transition-all flex items-center space-x-2 ${
-                  isSubmitting
+                className={`px-6 py-2 text-white rounded-lg font-medium transition-all flex items-center space-x-2 ${isSubmitting
                     ? "opacity-50 cursor-not-allowed"
                     : "hover:shadow-md"
-                }`}
+                  }`}
                 style={{ backgroundColor: "#2691ce" }}
                 whileHover={!isSubmitting ? { scale: 1.02 } : {}}
                 whileTap={!isSubmitting ? { scale: 0.98 } : {}}

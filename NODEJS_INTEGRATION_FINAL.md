@@ -47,7 +47,7 @@ src/app/api → src/app/api_backup_not_used
 const response = await fetch("/api/auth/impact-leaders/login", {...});
 
 // NEW (Direct Node.js call)
-const response = await fetch(process.env.NEXT_PUBLIC_API_BASE_URL + "/api/v1/auth/login", {...});
+const response = await fetch(process.env.NEXT_PUBLIC_API_BASE_URL + "api/v1/auth/login", {...});
 ```
 
 ---

@@ -65,24 +65,26 @@ export class ExternalApiService {
       let responseData;
 
       try {
-
         responseData = await response.json();
-        // console.log("responseData:", responseData);
       } catch (parseError) {
         responseData = { message: "Invalid response format" };
       }
 
+      // 🚨 ADD THIS - Log the full error response for debugging
       if (!response.ok) {
         console.error(
           '[ExternalApiService] API Error', response.status + ':',
           responseData.message || ('HTTP error! status: ' + response.status)
         );
+        console.error('[ExternalApiService] 🔍 Full error response:', responseData); // ← ADD THIS LINE
+        console.error('[ExternalApiService] 🔍 Validation errors:', responseData.errors); // ← ADD THIS LINE
+        
         return {
           success: false,
-          message:
-            responseData.message || ('HTTP error! status: ' + response.status),
+          message: responseData.message || ('HTTP error! status: ' + response.status),
           status: response.status,
           data: responseData,
+          errors: responseData.errors, // ← ADD THIS TOO
         };
       }
 
@@ -100,6 +102,8 @@ export class ExternalApiService {
       };
     }
   }
+
+
 
   static async get(endpoint, token = null, skipAuth = false) {
     return this.makeRequest(endpoint, { method: "GET", token, skipAuth });
