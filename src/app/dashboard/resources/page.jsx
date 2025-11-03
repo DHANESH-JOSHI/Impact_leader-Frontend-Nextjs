@@ -359,7 +359,6 @@ const cardVariants = {
 =========================== */
 export default function ResourcesPage() {
   const { toasts, showToast, hideToast } = useToast();
-
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -383,6 +382,29 @@ export default function ResourcesPage() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedResource, setSelectedResource] = useState(null);
+
+// Add this line after your categories useMemo to ensure it always has values
+const categories = useMemo(
+  () => {
+    const uniqueCategories = Array.from(
+      new Set(
+        resources
+          .map((r) => r.category)
+          .filter(Boolean)
+          .filter(c => c !== "all" && c !== "")
+      )
+    );
+    
+    // Fallback categories if none found
+    return uniqueCategories.length > 0 
+      ? ["all", ...uniqueCategories]
+      : ["all", "General", "Web Development", "Productivity", "Study", "Cloud Computing"];
+  },
+  [resources]
+);
+const modalCategories = useMemo(() => {
+  return categories.filter((c) => c !== "all" && c !== "");
+}, [categories]);
 
   // Debounce ref for search
   const searchDebounceRef = useRef(null);
@@ -422,9 +444,10 @@ export default function ResourcesPage() {
       });
 
       if (result?.success) {
-        const api = result.data;
+      
+        const api = result.data.data;
         const transformed =
-          api.resources?.map((r) => ({
+          api?.map((r) => ({
             id: r._id,
             title: r.title || "Untitled Resource",
             description: r.description || "No description available.",
@@ -530,81 +553,35 @@ export default function ResourcesPage() {
     try {
       setLoading(true);
       showToast("Uploading resource…", "info");
+      console.log("🔍 Checking createResource method:", !!ResourcesService.createResource);
 
+      // Clean and validate data before sending
+      const cleanPayload = {
+        title: payload.title?.trim() || "Untitled Resource",
+        description: payload.description?.trim() || "No description",
+        category: payload.category?.trim() || "General",
+        type: payload.type || "document",
+        tags: payload.tags || [],
+        themes: payload.themes || [],
+        isPublic: payload.isPublic || false,
+        featured: payload.featured || false,
+      };
+  
+      console.log("🧹 Cleaned payload:", cleanPayload);
+  
       let res;
-      if (payload.type === "video" && payload.file) {
-        res = await ResourcesService.uploadVideoResource(
-          {
-            title: payload.title,
-            description: payload.description,
-            category: payload.category,
-            tags: payload.tags || [],
-            themes: payload.themes || [],
-          },
-          payload.file
-        );
-      } else if (payload.type === "audio" && payload.file) {
-        res = await ResourcesService.uploadAudioResource(
-          {
-            title: payload.title,
-            description: payload.description,
-            category: payload.category,
-            tags: payload.tags || [],
-            themes: payload.themes || [],
-          },
-          payload.file
-        );
-      } else if (payload.type === "image" && payload.file) {
-        res = await ResourcesService.uploadImageResource(
-          {
-            title: payload.title,
-            description: payload.description,
-            category: payload.category,
-            tags: payload.tags || [],
-            themes: payload.themes || [],
-          },
-          payload.file
-        );
-      } else if (payload.file) {
-        res = await ResourcesService.uploadDocumentResource(
-          {
-            title: payload.title,
-            description: payload.description,
-            category: payload.category,
-            tags: payload.tags || [],
-            themes: payload.themes || [],
-          },
-          payload.file
-        );
+      if (payload.file) {
+        res = await ResourcesService.uploadDocumentResource(cleanPayload, payload.file);
       } else {
-        // Metadata-only create
-        res = await ResourcesService.createResource?.({
-          title: payload.title,
-          description: payload.description,
-          category: payload.category,
-          type: payload.type || "document",
-          tags: payload.tags || [],
-        });
+        res = await ResourcesService.createResource(cleanPayload);
       }
-
+  
       if (res?.success) {
         setIsAddModalOpen(false);
         await loadResources();
-        const label =
-          payload.type === "video"
-            ? "Video"
-            : payload.type === "audio"
-            ? "Audio"
-            : "Document";
-        showToast(
-          `${label} “${payload.title}” uploaded successfully`,
-          "success"
-        );
+        showToast(`"${cleanPayload.title}" uploaded successfully`, "success");
       } else {
-        showToast(
-          `Upload failed${res?.message ? `: ${res.message}` : ""}`,
-          "error"
-        );
+        showToast(`Upload failed: ${res?.message}`, "error");
       }
     } catch (e) {
       console.error("Add resource error:", e);
@@ -613,7 +590,6 @@ export default function ResourcesPage() {
       setLoading(false);
     }
   };
-
   const handleViewResource = (resource) => {
     setSelectedResource(resource);
     setIsViewModalOpen(true);
@@ -765,13 +741,6 @@ export default function ResourcesPage() {
     // You can trigger actual download in the child component’s click handler.
   };
 
-  const categories = useMemo(
-    () => [
-      "all",
-      ...Array.from(new Set(resources.map((r) => r.category).filter(Boolean))),
-    ],
-    [resources]
-  );
   const types = ["all", "video", "audio", "document"];
 
   return (
@@ -865,7 +834,7 @@ export default function ResourcesPage() {
             showToast("Upload canceled", "info");
           }}
           onSubmit={handleAddResource}
-          categories={categories.filter((c) => c !== "all")}
+          categories={modalCategories}
         />
 
         <ViewResourceModal

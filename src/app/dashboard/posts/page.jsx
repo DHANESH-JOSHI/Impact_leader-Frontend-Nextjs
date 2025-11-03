@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, AlertCircle, X, Info, AlertTriangle } from "lucide-react";
+import { CheckCircle, AlertCircle, X } from "lucide-react";
 import PostsHeader from "@/components/posts/PostsHeader";
 import PostsCardView from "@/components/posts/PostsCardView";
 import PostsTableView from "@/components/posts/PostsTableView";
@@ -27,15 +27,11 @@ const Toast = ({ message, type, onClose, isVisible }) => {
   const getToastStyles = () => {
     switch (type) {
       case "success":
-        return "bg-green-500 border-green-600 shadow-green-500/20";
+        return "bg-green-600 border-green-700 shadow-lg";
       case "error":
-        return "bg-red-500 border-red-600 shadow-red-500/20";
-      case "info":
-        return "bg-blue-500 border-blue-600 shadow-blue-500/20";
-      case "warning":
-        return "bg-yellow-500 border-yellow-600 shadow-yellow-500/20";
+        return "bg-red-600 border-red-700 shadow-lg";
       default:
-        return "bg-gray-500 border-gray-600 shadow-gray-500/20";
+        return "bg-gray-600 border-gray-700 shadow-lg";
     }
   };
 
@@ -45,10 +41,6 @@ const Toast = ({ message, type, onClose, isVisible }) => {
         return <CheckCircle className="h-5 w-5 text-white" />;
       case "error":
         return <AlertCircle className="h-5 w-5 text-white" />;
-      case "info":
-        return <Info className="h-5 w-5 text-white" />;
-      case "warning":
-        return <AlertTriangle className="h-5 w-5 text-white" />;
       default:
         return <AlertCircle className="h-5 w-5 text-white" />;
     }
@@ -56,14 +48,14 @@ const Toast = ({ message, type, onClose, isVisible }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 300, scale: 0.3 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 300, scale: 0.5 }}
+      initial={{ opacity: 0, y: -50 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -50 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
       className="fixed top-4 right-4 z-50"
     >
       <div
-        className={`${getToastStyles()} border rounded-lg shadow-2xl p-4 min-w-[300px] max-w-[400px] backdrop-blur-sm`}
+        className={`${getToastStyles()} border rounded-lg p-4 min-w-[320px] max-w-[420px]`}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -82,13 +74,15 @@ const Toast = ({ message, type, onClose, isVisible }) => {
   );
 };
 
-// Custom hook for toast management
+// Custom hook for toast management - only success and error types
 const useToast = () => {
   const [toasts, setToasts] = useState([]);
 
-  const showToast = (message, type = "info") => {
+  const showToast = (message, type = "error") => {
+    // Only allow 'success' or 'error' types
+    const validType = type === "success" ? "success" : "error";
     const id = Date.now() + Math.random();
-    const newToast = { id, message, type, isVisible: true };
+    const newToast = { id, message, type: validType, isVisible: true };
 
     setToasts((prev) => [...prev, newToast]);
 
@@ -306,14 +300,15 @@ export default function PostsPage() {
       });
 
       if (result.success) {
-        const apiData = result.data;
+        // console.log(result.data.data,": hey")
+        const apiData = result.data.data;
         // Transform API response to match our UI expectations
-        const transformedPosts = apiData.posts?.map(post => ({
+        const transformedPosts = apiData?.map(post => ({
           id: post._id,
           title: post.title || 'Untitled Post',
           excerpt: post.content?.slice(0, 150) + '...' || 'No content available',
           content: post.content || '',
-          author: post.author?.name || post.author?.username || 'Unknown',
+          author: post.author?.name ||`${post.author?.firstName} ${post.author?.lastName}` || post.author?.username || 'Unknown',
           category: post.type || 'General',
           status: post.isPublic ? 'published' : 'draft',
           publishDate: post.createdAt ? new Date(post.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
@@ -392,28 +387,38 @@ export default function PostsPage() {
     try {
       setLoading(true);
       showToast("Creating new post...", "info");
-
+  
+      // Transform data to match API structure
+      const postData = {
+        title: newPost.title,
+        content: newPost.content,
+        type: newPost.category || 'announcement',
+        themes: newPost.tags || [], // Changed from 'theme' to 'themes' array
+        isPublic: newPost.status === 'published',
+        isPinned: newPost.featured || false, // Added featured post mapping
+        status: newPost.status, // Added status field
+        allowComments: true // Added as required by API
+      };
+  
       let result;
-
+  
       // Check if there are images to upload
       if (newPost.images && newPost.images.length > 0) {
-        result = await PostsService.createPostWithImages({
-          title: newPost.title,
-          content: newPost.content,
-          type: newPost.category || 'announcement',
-          theme: newPost.tags && newPost.tags.length > 0 ? newPost.tags[0] : undefined,
-          isPublic: newPost.status === 'published'
-        }, newPost.images);
-      } else {
-        result = await PostsService.createPost({
-          title: newPost.title,
-          content: newPost.content,
-          type: newPost.category || 'announcement',
-          theme: newPost.tags && newPost.tags.length > 0 ? newPost.tags[0] : undefined,
-          isPublic: newPost.status === 'published'
+        // Use FormData for images
+        const formData = new FormData();
+        formData.append('postData', JSON.stringify(postData));
+        
+        // Append each image file
+        newPost.images.forEach((image, index) => {
+          formData.append('images', image);
         });
+  
+        result = await PostsService.createPostWithImages(formData);
+      } else {
+        // Send regular JSON data when no images
+        result = await PostsService.createPost(postData);
       }
-
+  
       if (result.success) {
         setIsAddModalOpen(false);
         loadPosts(); // Reload posts to show the new one
@@ -428,7 +433,6 @@ export default function PostsPage() {
       setLoading(false);
     }
   };
-
   const handleViewPost = (post) => {
     setSelectedPost(post);
     setIsViewModalOpen(true);

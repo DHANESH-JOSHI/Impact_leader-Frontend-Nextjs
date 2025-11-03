@@ -129,7 +129,10 @@ export default function ViewPostModal({ isOpen, onClose, post, onEdit }) {
     return readingTime;
   };
 
-  if (!post) return null;
+  if (!post){ return null;}
+  else{
+    console.log("post:",post)
+  }
 
   return (
     <AnimatePresence>

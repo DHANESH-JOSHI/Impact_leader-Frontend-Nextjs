@@ -2,14 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  CheckCircle,
-  AlertCircle,
-  X,
-  Info,
-  AlertTriangle,
-  HelpCircle,
-} from "lucide-react";
+import { CheckCircle, AlertCircle, X } from "lucide-react";
 import QnaHeader from "@/components/qna/QnaHeader";
 import QnaCardView from "@/components/qna/QnaCardView";
 import QnaTableView from "@/components/qna/QnaTableView";
@@ -32,37 +25,25 @@ const Toast = ({ message, type, onClose, isVisible }) => {
 
   if (!isVisible) return null;
 
-  // Different toast types ke liye different colors
+  // Only success and error toast types
   const getToastStyles = () => {
     switch (type) {
       case "success":
-        return "bg-green-500 border-green-600 shadow-green-500/20";
+        return "bg-green-600 border-green-700 shadow-lg";
       case "error":
-        return "bg-red-500 border-red-600 shadow-red-500/20";
-      case "info":
-        return "bg-blue-500 border-blue-600 shadow-blue-500/20";
-      case "warning":
-        return "bg-yellow-500 border-yellow-600 shadow-yellow-500/20";
-      case "question":
-        return "bg-purple-500 border-purple-600 shadow-purple-500/20";
+        return "bg-red-600 border-red-700 shadow-lg";
       default:
-        return "bg-gray-500 border-gray-600 shadow-gray-500/20";
+        return "bg-gray-600 border-gray-700 shadow-lg";
     }
   };
 
-  // Har toast type ke liye alag icon
+  // Only success and error icons
   const getIcon = () => {
     switch (type) {
       case "success":
         return <CheckCircle className="h-5 w-5 text-white" />;
       case "error":
         return <AlertCircle className="h-5 w-5 text-white" />;
-      case "info":
-        return <Info className="h-5 w-5 text-white" />;
-      case "warning":
-        return <AlertTriangle className="h-5 w-5 text-white" />;
-      case "question":
-        return <HelpCircle className="h-5 w-5 text-white" />;
       default:
         return <AlertCircle className="h-5 w-5 text-white" />;
     }
@@ -70,14 +51,14 @@ const Toast = ({ message, type, onClose, isVisible }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 300, scale: 0.3 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 300, scale: 0.5 }}
+      initial={{ opacity: 0, y: -50 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -50 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
       className="fixed top-4 right-4 z-50"
     >
       <div
-        className={`${getToastStyles()} border rounded-lg shadow-2xl p-4 min-w-[320px] max-w-[420px] backdrop-blur-sm`}
+        className={`${getToastStyles()} border rounded-lg p-4 min-w-[320px] max-w-[420px]`}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -96,13 +77,15 @@ const Toast = ({ message, type, onClose, isVisible }) => {
   );
 };
 
-// Custom hook toast manage karne ke liye
+// Custom hook toast manage karne ke liye - only success and error types
 const useToast = () => {
   const [toasts, setToasts] = useState([]);
 
-  const showToast = (message, type = "info") => {
+  const showToast = (message, type = "error") => {
+    // Only allow 'success' or 'error' types
+    const validType = type === "success" ? "success" : "error";
     const id = Date.now() + Math.random();
-    const newToast = { id, message, type, isVisible: true };
+    const newToast = { id, message, type: validType, isVisible: true };
 
     setToasts((prev) => [...prev, newToast]);
 
@@ -130,7 +113,6 @@ const initialQnaData = [
     tags: ["password", "account", "login", "security"],
     author: "Admin",
     status: "published",
-    priority: "high",
     isAnswered: true,
     createdAt: "2024-01-15T10:30:00Z",
     updatedAt: "2024-01-15T12:45:00Z",
@@ -237,8 +219,6 @@ export default function QnaPage() {
   const [viewMode, setViewMode] = useState("card");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [filterPriority, setFilterPriority] = useState("all");
   const [filterAnswered, setFilterAnswered] = useState("all");
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
@@ -246,7 +226,7 @@ export default function QnaPage() {
     page: 1,
     limit: 20,
     total: 0,
-    totalPages: 0
+    totalPages: 0,
   });
 
   // modal khulne bandh krne ke states hai ye
@@ -268,60 +248,60 @@ export default function QnaPage() {
         page: pagination.page,
         limit: pagination.limit,
         search: searchQuery || undefined,
-        category: filterCategory !== 'all' ? filterCategory : undefined,
+        category: filterCategory !== "all" ? filterCategory : undefined,
         tags: undefined,
         sortBy: sortBy,
         sortOrder: sortOrder,
-        ...params
+        ...params,
       });
 
       if (result.success) {
-        const apiData = result.data;
+        const apiData = result.data.data;
+        console.log("result: ", apiData);
         // Transform API response to match our UI expectations
-        const transformedQnaData = apiData.questions?.map(qna => ({
-          id: qna._id,
-          question: qna.question || 'Untitled Question',
-          answer: qna.answers && qna.answers.length > 0 ? qna.answers[0].answer : '',
-          category: qna.category || 'General',
-          tags: qna.tags || [],
-          author: qna.author?.name || qna.author?.username || 'Anonymous',
-          status: qna.status || 'active',
-          priority: qna.priority || 'medium',
-          difficulty: qna.difficulty || 'medium',
-          createdAt: qna.createdAt,
-          updatedAt: qna.updatedAt,
-          views: qna.views || 0,
-          likes: qna.upvotes || 0,
-          helpful: qna.helpful || 0,
-          notHelpful: qna.notHelpful || 0,
-          isAnswered: qna.answers && qna.answers.length > 0,
-          answerCount: qna.answers ? qna.answers.length : 0,
-          acceptedAnswer: qna.answers && qna.answers.length > 0 ? qna.answers[0] : null
-        })) || [];
+        const transformedQnaData =
+          apiData?.map((qna) => ({
+            id: qna._id,
+            question: qna.title || qna.content || "Untitled Question", // FIX: Use title/content from API
+            answer: qna.answer || qna.content || "", // FIX: Adjust based on actual API fields
+            category: qna.category || "General",
+            tags: qna.tags || [],
+            author:
+              qna.author?.firstName || qna.author?.lastName || "Anonymous", // FIX: Use firstName/lastName from API
+            status: qna.status || "active",
+            createdAt: qna.createdAt,
+            updatedAt: qna.updatedAt,
+            views: qna.views || 0,
+            likes: qna.upvotes?.length || qna.upvotes || 0, // FIX: upvotes might be an array
+            helpful: qna.helpful || 0,
+            notHelpful: qna.notHelpful || 0,
+            isAnswered: !!(qna.answer || qna.answers), // FIX: Check if answer exists
+            answerCount: qna.answerCount || 0,
+            acceptedAnswer: qna.acceptedAnswer || null,
+          })) || [];
 
         setQnaData(transformedQnaData);
-        setPagination(prev => ({
+
+        setPagination((prev) => ({
           ...prev,
           total: apiData.total || 0,
-          totalPages: Math.ceil((apiData.total || 0) / pagination.limit)
+          totalPages: Math.ceil((apiData.total || 0) / pagination.limit),
         }));
 
-        showToast(`${transformedQnaData.length} questions loaded successfully! 💬`, "success");
+        // Data loaded successfully - no toast needed for initial load
       } else {
         // Fallback to mock data if API fails
         setQnaData(initialQnaData);
-        showToast("Using demo data - API connection issue! 🔌", "warning");
       }
     } catch (error) {
-      console.error('Failed to load Q&A data:', error);
+      console.error("Failed to load Q&A data:", error);
       setQnaData(initialQnaData);
-      showToast("Failed to load questions - using demo data! ❌", "error");
+      showToast("Failed to load questions", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  
   // yhn se sare filters aur search ka kaam hota hai
   const filteredQnaData = qnaData.filter((item) => {
     const matchesSearch =
@@ -336,12 +316,6 @@ export default function QnaPage() {
       filterCategory === "all" ||
       item.category.toLowerCase() === filterCategory.toLowerCase();
 
-    const matchesStatus =
-      filterStatus === "all" || item.status === filterStatus;
-
-    const matchesPriority =
-      filterPriority === "all" || item.priority === filterPriority;
-
     const matchesAnswered =
       filterAnswered === "all" ||
       (filterAnswered === "answered" && item.isAnswered) ||
@@ -350,8 +324,6 @@ export default function QnaPage() {
     return (
       matchesSearch &&
       matchesCategory &&
-      matchesStatus &&
-      matchesPriority &&
       matchesAnswered
     );
   });
@@ -376,59 +348,45 @@ export default function QnaPage() {
     }
   });
 
-  // Naya question add karne ka function with toast
+  // Naya question add karne ka function
   const handleAddQuestion = async (newQuestion) => {
     try {
       setLoading(true);
-      showToast("Creating new question...", "info");
 
-      const result = await QnAService.askQuestion({
-        question: newQuestion.question,
-        category: newQuestion.category,
+      const apiData = {
+        title: newQuestion.question,
+        content: newQuestion.answer || "",
         tags: newQuestion.tags || [],
-        priority: newQuestion.priority || 'medium'
-      });
+        category: newQuestion.category || "General",
+        status: newQuestion.status || "open",
+      };
+
+      const result = await QnAService.askQuestion(apiData);
 
       if (result.success) {
-        // If there's an answer provided, add it
-        if (newQuestion.answer && newQuestion.answer.trim() !== "") {
-          const answerResult = await QnAService.answerQuestion(result.data._id, {
-            answer: newQuestion.answer
-          });
-          
-          if (!answerResult.success) {
-            showToast("Question created but answer failed to add!", "warning");
-          }
-        }
-
         setIsAddModalOpen(false);
-        loadQnaData(); // Reload to show the new question
-
-        showToast(`"${newQuestion.question}" successfully created! ✅`, "success");
+        loadQnaData();
+        showToast("Question created successfully", "success");
       } else {
-        showToast(`Failed to create question: ${result.message} ❌`, "error");
+        showToast(`Failed to create question: ${result.message}`, "error");
       }
     } catch (error) {
-      console.error('Add question error:', error);
-      showToast("Question add karne mein kuch problem hui. Please try again! ❌", "error");
+      console.error("Add question error:", error);
+      showToast("Failed to create question", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  // question view krne ka function with toast
+  // question view krne ka function
   const handleViewQna = (qna) => {
     setSelectedQna(qna);
     setIsViewModalOpen(true);
-    showToast(`"${qna.question}" ko dekh rahe hain 👀`, "info");
   };
 
-  // edit krne ka function with toast
+  // edit krne ka function
   const handleEditQna = async (updatedQna) => {
     try {
-      showToast("Question update kar rahe hain... ⏳", "info");
-
-      // API call simulate kar rahe hain
       await new Promise((resolve) => setTimeout(resolve, 800));
 
       setQnaData((prev) =>
@@ -444,100 +402,58 @@ export default function QnaPage() {
         )
       );
 
-      showToast(`Question successfully update ho gaya! 🎉`, "success");
+      showToast("Question updated successfully", "success");
     } catch (error) {
-      showToast("Update karne mein problem hui. Please try again! ❌", "error");
+      showToast("Failed to update question", "error");
     }
   };
 
-  // delete krne ka function with toast
+  // delete krne ka function
   const handleDeleteQna = (qnaId) => {
     const qnaToDelete = qnaData.find((q) => q.id === qnaId);
     setSelectedQna(qnaToDelete);
     setIsDeleteModalOpen(true);
-    showToast(
-      `"${qnaToDelete?.question}" delete karne ke liye ready kar rahe hain ⚠️`,
-      "warning"
-    );
   };
 
-  // delete confirm krne ka function with toast
+  // delete confirm krne ka function
   const confirmDelete = async () => {
     if (selectedQna) {
       try {
-        showToast("Question delete kar rahe hain... ⏳", "info");
-
-        // API call simulate kar rahe hain
         await new Promise((resolve) => setTimeout(resolve, 500));
 
         setQnaData((prev) => prev.filter((qna) => qna.id !== selectedQna.id));
         setIsDeleteModalOpen(false);
 
-        showToast(
-          `"${selectedQna.question}" successfully delete ho gaya! 🗑️`,
-          "success"
-        );
+        showToast("Question deleted successfully", "success");
         setSelectedQna(null);
       } catch (error) {
-        showToast(
-          "Delete karne mein problem hui. Please try again! ❌",
-          "error"
-        );
+        showToast("Failed to delete question", "error");
       }
     }
   };
 
-  // View mode change karne ka function with toast
+  // View mode change karne ka function
   const handleViewModeChange = (mode) => {
     setViewMode(mode);
-    const modeText = mode === "card" ? "Card" : "Table";
-    showToast(`${modeText} view mein switch kar diya! 🔄`, "info");
   };
 
-  // Search handle karne ka function with toast
+  // Search handle karne ka function
   const handleSearchChange = (query) => {
     setSearchQuery(query);
-    if (query.length > 2) {
-      showToast(
-        `"${query}" ke liye ${filteredQnaData.length} questions mile! 🔍`,
-        "info"
-      );
-    }
   };
 
-  // Category filter change karne ka function with toast
+  // Category filter change karne ka function
   const handleCategoryFilter = (category) => {
     setFilterCategory(category);
-    const categoryText = category === "all" ? "Saare Categories" : category;
-    showToast(`${categoryText} category select kiya! 🏷️`, "info");
   };
 
-  // Status filter change karne ka function with toast
-  const handleStatusFilter = (status) => {
-    setFilterStatus(status);
-    const statusText = status === "all" ? "Saare Status" : status;
-    showToast(`${statusText} status select kiya! 📊`, "info");
-  };
-
-  // Priority filter change karne ka function with toast
-  const handlePriorityFilter = (priority) => {
-    setFilterPriority(priority);
-    const priorityText = priority === "all" ? "Saari Priorities" : priority;
-    showToast(`${priorityText} priority select kiya! 🚨`, "info");
-  };
-
-  // Answered filter change karne ka function with toast
+  // Answered filter change karne ka function
   const handleAnsweredFilter = (answered) => {
     setFilterAnswered(answered);
-    let answeredText = "Saare Questions";
-    if (answered === "answered") answeredText = "Answered Questions";
-    if (answered === "unanswered") answeredText = "Unanswered Questions";
-    showToast(`${answeredText} select kiye! ✅`, "info");
   };
 
   // filter dropdown ke liye unique categories nikal rhe hai
   const categories = ["all", ...new Set(qnaData.map((qna) => qna.category))];
-  const priorities = ["all", "low", "medium", "high"];
 
   return (
     <motion.div
@@ -575,10 +491,6 @@ export default function QnaPage() {
             setSearchQuery={handleSearchChange}
             filterCategory={filterCategory}
             setFilterCategory={handleCategoryFilter}
-            filterStatus={filterStatus}
-            setFilterStatus={handleStatusFilter}
-            filterPriority={filterPriority}
-            setFilterPriority={handlePriorityFilter}
             filterAnswered={filterAnswered}
             setFilterAnswered={handleAnsweredFilter}
             sortBy={sortBy}
@@ -586,13 +498,8 @@ export default function QnaPage() {
             sortOrder={sortOrder}
             setSortOrder={setSortOrder}
             categories={categories}
-            priorities={priorities}
             onAddQuestion={() => {
               setIsAddModalOpen(true);
-              showToast(
-                "Naya question add karne ka form khol rahe hain! ➕",
-                "info"
-              );
             }}
             totalQuestions={filteredQnaData.length}
           />
@@ -627,7 +534,6 @@ export default function QnaPage() {
           isOpen={isAddModalOpen}
           onClose={() => {
             setIsAddModalOpen(false);
-            showToast("Question add karna cancel kar diya! ❌", "info");
           }}
           onSubmit={handleAddQuestion}
           categories={categories.filter((cat) => cat !== "all")}
@@ -638,7 +544,6 @@ export default function QnaPage() {
           isOpen={isViewModalOpen}
           onClose={() => {
             setIsViewModalOpen(false);
-            showToast("Question view band kar diya! 👋", "info");
           }}
           qna={selectedQna}
           onEdit={handleEditQna}
@@ -650,7 +555,6 @@ export default function QnaPage() {
           onClose={() => {
             setIsDeleteModalOpen(false);
             setSelectedQna(null);
-            showToast("Delete cancel kar diya! Safe hai ab! 😅", "info");
           }}
           onConfirm={confirmDelete}
           questionTitle={selectedQna?.question}

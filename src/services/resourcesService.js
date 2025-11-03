@@ -29,7 +29,7 @@ export class ResourcesService {
 
       const endpoint = `/resources?${queryParams.toString()}`;
       const response = await ExternalApiService.get(endpoint);
-
+      // console.log("Resources response:", response);
       return {
         success: response.success,
         data: response.data,
@@ -72,44 +72,103 @@ export class ResourcesService {
       };
     }
   }
+// Create resource (metadata only - without file)
+static async createResource(resourceData) {
+  try {
+    console.log("📝 Creating metadata-only resource:", resourceData);
+    
+    const response = await ExternalApiService.post('/resources', resourceData);
 
-  // Upload document resource (PDF, DOC, XLS, etc.)
-  static async uploadDocumentResource(resourceData, file) {
-    try {
-      const formData = new FormData();
-      
-      // Add resource metadata
-      Object.keys(resourceData).forEach(key => {
-        if (key === 'themes' || key === 'tags') {
-          // Handle arrays - convert to JSON string
-          formData.append(key, JSON.stringify(resourceData[key]));
-        } else {
-          formData.append(key, resourceData[key]);
-        }
-      });
-
-      formData.append('type', 'document');
-      
-      if (file) {
-        formData.append('file', file);
+    return {
+      success: response.success,
+      data: response.data,
+      message: response.message
+    };
+  } catch (error) {
+    console.error('Create resource error:', error);
+    return {
+      success: false,
+      message: error.message
+    };
+  }
+}
+// Upload document resource (PDF, DOC, XLS, etc.)
+static async uploadDocumentResource(resourceData, file) {
+  try {
+    const formData = new FormData();
+    
+    console.log("🔍 Original resourceData:", resourceData);
+    
+    // Add resource metadata
+    Object.keys(resourceData).forEach(key => {
+      if (Array.isArray(resourceData[key])) {
+        resourceData[key].forEach(item => {
+          formData.append(key, item);
+        });
+      } else {
+        formData.append(key, resourceData[key]);
       }
+    });
+    
+    if (file) {
+      formData.append('file', file);
+    }
 
-      const response = await ExternalApiService.post('/resources', formData, undefined, true);
-
+    // 🚨 CRITICAL: Debug FormData contents
+    console.log("📦 FormData entries (BEFORE sending):");
+    const entries = [];
+    for (let [key, value] of formData.entries()) {
+      console.log(`  ${key}:`, value);
+      entries.push({ key, value });
+    }
+    
+    // Check for duplicate 'type' fields
+    const typeEntries = entries.filter(entry => entry.key === 'type');
+    if (typeEntries.length > 1) {
+      console.error("🚨 DUPLICATE TYPE FIELDS FOUND:", typeEntries);
+      // Remove all type entries and add only one
+      const cleanFormData = new FormData();
+      let typeAdded = false;
+      
+      for (let [key, value] of formData.entries()) {
+        if (key === 'type') {
+          if (!typeAdded) {
+            cleanFormData.append(key, value);
+            typeAdded = true;
+          }
+        } else {
+          cleanFormData.append(key, value);
+        }
+      }
+      
+      console.log("🧹 Cleaned FormData:");
+      for (let [key, value] of cleanFormData.entries()) {
+        console.log(`  ${key}:`, value);
+      }
+      
+      const response = await ExternalApiService.post('/resources', cleanFormData, undefined, true);
       return {
         success: response.success,
         data: response.data,
         message: response.message
       };
-    } catch (error) {
-      console.error('Upload document resource error:', error);
-      return {
-        success: false,
-        message: error.message
-      };
     }
-  }
 
+    const response = await ExternalApiService.post('/resources', formData, undefined, true);
+
+    return {
+      success: response.success,
+      data: response.data,
+      message: response.message
+    };
+  } catch (error) {
+    console.error('Upload document resource error:', error);
+    return {
+      success: false,
+      message: error.message
+    };
+  }
+}
   // Upload video resource
   static async uploadVideoResource(resourceData, file) {
     try {
@@ -124,7 +183,7 @@ export class ResourcesService {
         }
       });
 
-      formData.append('type', 'video');
+      // formData.append('type', 'video');
       
       if (file) {
         formData.append('file', file);
@@ -160,7 +219,8 @@ export class ResourcesService {
         }
       });
 
-      formData.append('type', 'audio');
+      // formData.append('type', 'audio');
+
       
       if (file) {
         formData.append('file', file);
@@ -196,7 +256,7 @@ export class ResourcesService {
         }
       });
 
-      formData.append('type', 'image');
+      // formData.append('type', 'image');
       
       if (file) {
         formData.append('file', file);

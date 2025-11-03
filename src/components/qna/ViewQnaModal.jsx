@@ -238,7 +238,7 @@ export default function ViewQnaModal({ isOpen, onClose, qna, onEdit }) {
             </div>
 
             {/* Modal Content */}
-            <div className="max-h-[calc(90vh-140px)] overflow-y-auto">
+            <div className="max-h-[calc(90vh-180px)] overflow-y-auto">
               {isEditMode ? (
                 /* Edit Mode Interface */
                 <div className="p-6 space-y-6">

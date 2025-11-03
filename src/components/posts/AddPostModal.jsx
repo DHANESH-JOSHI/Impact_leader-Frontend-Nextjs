@@ -1,15 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
   Save,
   FileText,
-  User,
   Tag,
-  Calendar,
-  Eye,
   Star,
 } from "lucide-react";
 
@@ -48,23 +45,31 @@ export default function AddPostModal({
   isOpen,
   onClose,
   onSubmit,
-  categories,
+  categories = [],
 }) {
   const [formData, setFormData] = useState({
     title: "",
     excerpt: "",
     content: "",
-    author: "",
-    category: categories[0] || "",
+    category: "",
     status: "draft",
-    tags: "",
+    tags: [],
     featured: false,
   });
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tagInput, setTagInput] = useState("");
-  const [parsedTags, setParsedTags] = useState([]);
+
+  // Initialize category when categories prop changes
+  useEffect(() => {
+    if (categories && categories.length > 0 && !formData.category) {
+      setFormData(prev => ({
+        ...prev,
+        category: categories[0]
+      }));
+    }
+  }, [categories, formData.category]);
 
   // Handle input changes
   const handleInputChange = (e) => {
@@ -79,15 +84,40 @@ export default function AddPostModal({
     }
   };
 
-  // Handle tag input
-  const handleTagInput = (e) => {
-    setTagInput(e.target.value);
-    const tags = e.target.value
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter((tag) => tag);
-    setParsedTags(tags);
-    setFormData((prev) => ({ ...prev, tags: e.target.value }));
+  // Handle tag input with Enter key
+  const handleAddTag = (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const newTag = tagInput.trim();
+
+      if (newTag && !formData.tags.includes(newTag)) {
+        setFormData(prev => ({
+          ...prev,
+          tags: [...prev.tags, newTag]
+        }));
+        setTagInput("");
+      }
+    }
+  };
+
+  // Remove tag
+  const removeTag = (tagToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      tags: prev.tags.filter(tag => tag !== tagToRemove)
+    }));
+  };
+
+  // Handle tag input blur (add tag when user leaves the field)
+  const handleTagBlur = () => {
+    const newTag = tagInput.trim();
+    if (newTag && !formData.tags.includes(newTag)) {
+      setFormData(prev => ({
+        ...prev,
+        tags: [...prev.tags, newTag]
+      }));
+      setTagInput("");
+    }
   };
 
   // Validate form data
@@ -104,16 +134,14 @@ export default function AddPostModal({
       newErrors.excerpt = "Excerpt is required";
     } else if (formData.excerpt.length < 10) {
       newErrors.excerpt = "Excerpt must be at least 10 characters long";
+    } else if (formData.excerpt.length > 200) {
+      newErrors.excerpt = "Excerpt must be less than 200 characters";
     }
 
     if (!formData.content.trim()) {
       newErrors.content = "Content is required";
     } else if (formData.content.length < 50) {
       newErrors.content = "Content must be at least 50 characters long";
-    }
-
-    if (!formData.author.trim()) {
-      newErrors.author = "Author name is required";
     }
 
     if (!formData.category) {
@@ -135,34 +163,40 @@ export default function AddPostModal({
 
     setIsSubmitting(true);
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
+    // Transform data to match API structure
     const postData = {
-      ...formData,
-      tags: formData.tags
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter((tag) => tag),
+      title: formData.title,
+      content: formData.content,
+      type: formData.category,
+      themes: formData.tags, // Now using the tags array directly
+      isPublic: formData.status === "published",
+      isPinned: formData.featured,
+      status: formData.status,
+      allowComments: true,
     };
 
-    onSubmit(postData);
+    console.log("Submitting to API:", postData);
 
-    // Reset form
-    setFormData({
-      title: "",
-      excerpt: "",
-      content: "",
-      author: "",
-      category: categories[0] || "",
-      status: "draft",
-      tags: "",
-      featured: false,
-    });
-    setTagInput("");
-    setParsedTags([]);
-    setErrors({});
-    setIsSubmitting(false);
+    try {
+      await onSubmit(postData);
+
+      // Reset form only on successful submission
+      setFormData({
+        title: "",
+        excerpt: "",
+        content: "",
+        category: categories[0] || "",
+        status: "draft",
+        tags: [],
+        featured: false,
+      });
+      setTagInput("");
+      setErrors({});
+    } catch (error) {
+      console.error("Form submission error:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Handle modal close
@@ -172,14 +206,12 @@ export default function AddPostModal({
         title: "",
         excerpt: "",
         content: "",
-        author: "",
         category: categories[0] || "",
         status: "draft",
-        tags: "",
+        tags: [],
         featured: false,
       });
       setTagInput("");
-      setParsedTags([]);
       setErrors({});
       onClose();
     }
@@ -201,7 +233,7 @@ export default function AddPostModal({
           onClick={handleClose}
         >
           <motion.div
-            className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
+            className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden"
             variants={modalVariants}
             onClick={(e) => e.stopPropagation()}
           >
@@ -263,9 +295,8 @@ export default function AddPostModal({
                         value={formData.title}
                         onChange={handleInputChange}
                         placeholder="Enter an engaging post title..."
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${
-                          errors.title ? "border-red-500" : "border-gray-300"
-                        }`}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${errors.title ? "border-red-500" : "border-gray-300"
+                          }`}
                         style={{ focusRingColor: "#2691ce" }}
                         disabled={isSubmitting}
                       />
@@ -315,88 +346,52 @@ export default function AddPostModal({
                   </div>
                 </div>
 
-                {/* Author and Category */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 }}
+                {/* Category - Full Width */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: "#040606" }}
                   >
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
-                    >
-                      <User className="inline h-4 w-4 mr-1" />
-                      Author Name *
-                    </label>
-                    <input
-                      type="text"
-                      name="author"
-                      value={formData.author}
-                      onChange={handleInputChange}
-                      placeholder="Enter author name..."
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${
-                        errors.author ? "border-red-500" : "border-gray-300"
+                    <Tag className="inline h-4 w-4 mr-1" />
+                    Category *
+                  </label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${errors.category ? "border-red-500" : "border-gray-300"
                       }`}
-                      style={{ focusRingColor: "#2691ce" }}
-                      disabled={isSubmitting}
-                    />
-                    {errors.author && (
-                      <motion.p
-                        className="text-red-500 text-sm mt-1"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                      >
-                        {errors.author}
-                      </motion.p>
-                    )}
-                  </motion.div>
+                    style={{ focusRingColor: "#2691ce" }}
+                    disabled={isSubmitting}
+                  >
+                    <option value="">Select a category</option>
+                    {categories && categories.map((category) => ( // Add null check
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
 
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 }}
-                  >
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
+                  {errors.category && (
+                    <motion.p
+                      className="text-red-500 text-sm mt-1"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
                     >
-                      <Tag className="inline h-4 w-4 mr-1" />
-                      Category *
-                    </label>
-                    <select
-                      name="category"
-                      value={formData.category}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${
-                        errors.category ? "border-red-500" : "border-gray-300"
-                      }`}
-                      style={{ focusRingColor: "#2691ce" }}
-                      disabled={isSubmitting}
-                    >
-                      {categories.map((category) => (
-                        <option key={category} value={category}>
-                          {category}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.category && (
-                      <motion.p
-                        className="text-red-500 text-sm mt-1"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                      >
-                        {errors.category}
-                      </motion.p>
-                    )}
-                  </motion.div>
-                </div>
+                      {errors.category}
+                    </motion.p>
+                  )}
+                </motion.div>
 
                 {/* Status */}
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 }}
+                  transition={{ delay: 0.4 }}
                 >
                   <label
                     className="block text-sm font-medium mb-2"
@@ -438,6 +433,59 @@ export default function AddPostModal({
                   </div>
                 </motion.div>
 
+                {/* Tags Input */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <label
+                    className="flex items-center text-sm font-medium mb-2"
+                    style={{ color: "#040606" }}
+                  >
+                    <Tag className="w-4 h-4 mr-2" style={{ color: "#2691ce" }} />
+                    Tags (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyPress={handleAddTag}
+                    onBlur={handleTagBlur}
+                    placeholder="Enter tags and press Enter or comma..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
+                    style={{ focusRingColor: "#2691ce" }}
+                    disabled={isSubmitting}
+                  />
+                  {formData.tags.length > 0 && (
+                    <motion.div
+                      className="flex flex-wrap gap-2 mt-2"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      {formData.tags.map((tag, index) => (
+                        <motion.span
+                          key={tag}
+                          className="px-3 py-1 text-sm rounded-full text-white cursor-pointer flex items-center gap-1"
+                          style={{ backgroundColor: "#2691ce" }}
+                          onClick={() => removeTag(tag)}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: index * 0.1 }}
+                        >
+                          {tag}
+                          <span className="ml-1 text-xs">×</span>
+                        </motion.span>
+                      ))}
+                    </motion.div>
+                  )}
+                  <p className="text-xs mt-1" style={{ color: "#646464" }}>
+                    Press Enter or comma to add tags. Click on tags to remove them.
+                  </p>
+                </motion.div>
+
                 {/* Excerpt */}
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
@@ -449,6 +497,9 @@ export default function AddPostModal({
                     style={{ color: "#040606" }}
                   >
                     Post Excerpt *
+                    <span className="text-xs text-gray-500 ml-2">
+                      (For preview only - not stored in database)
+                    </span>
                   </label>
                   <textarea
                     name="excerpt"
@@ -456,9 +507,8 @@ export default function AddPostModal({
                     onChange={handleInputChange}
                     placeholder="Write a compelling excerpt that summarizes your post..."
                     rows={3}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none ${
-                      errors.excerpt ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none ${errors.excerpt ? "border-red-500" : "border-gray-300"
+                      }`}
                     style={{ focusRingColor: "#2691ce" }}
                     disabled={isSubmitting}
                   />
@@ -500,9 +550,8 @@ export default function AddPostModal({
                     onChange={handleInputChange}
                     placeholder="Write your full post content here..."
                     rows={12}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none ${
-                      errors.content ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none ${errors.content ? "border-red-500" : "border-gray-300"
+                      }`}
                     style={{ focusRingColor: "#2691ce" }}
                     disabled={isSubmitting}
                   />
@@ -517,59 +566,13 @@ export default function AddPostModal({
                       </motion.p>
                     ) : (
                       <p className="text-xs" style={{ color: "#646464" }}>
-                        The main content of your post
+                        The main content of your post (stored in database)
                       </p>
                     )}
                     <span className="text-xs" style={{ color: "#646464" }}>
                       {formData.content.length} characters
                     </span>
                   </div>
-                </motion.div>
-
-                {/* Tags */}
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.8 }}
-                >
-                  <label
-                    className="block text-sm font-medium mb-2"
-                    style={{ color: "#040606" }}
-                  >
-                    Tags (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={tagInput}
-                    onChange={handleTagInput}
-                    placeholder="Enter tags separated by commas (e.g., react, javascript, tutorial)"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                    style={{ focusRingColor: "#2691ce" }}
-                    disabled={isSubmitting}
-                  />
-                  {parsedTags.length > 0 && (
-                    <motion.div
-                      className="flex flex-wrap gap-2 mt-2"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                    >
-                      {parsedTags.map((tag, index) => (
-                        <motion.span
-                          key={tag}
-                          className="px-3 py-1 text-sm rounded-full text-white"
-                          style={{ backgroundColor: "#2691ce" }}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: index * 0.1 }}
-                        >
-                          {tag}
-                        </motion.span>
-                      ))}
-                    </motion.div>
-                  )}
-                  <p className="text-xs mt-1" style={{ color: "#646464" }}>
-                    Separate multiple tags with commas
-                  </p>
                 </motion.div>
               </form>
             </div>
@@ -593,11 +596,10 @@ export default function AddPostModal({
               <motion.button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className={`px-6 py-2 text-white rounded-lg font-medium transition-all flex items-center space-x-2 ${
-                  isSubmitting
+                className={`px-6 py-2 text-white rounded-lg font-medium transition-all flex items-center space-x-2 ${isSubmitting
                     ? "opacity-50 cursor-not-allowed"
                     : "hover:shadow-md"
-                }`}
+                  }`}
                 style={{ backgroundColor: "#2691ce" }}
                 whileHover={!isSubmitting ? { scale: 1.02 } : {}}
                 whileTap={!isSubmitting ? { scale: 0.98 } : {}}

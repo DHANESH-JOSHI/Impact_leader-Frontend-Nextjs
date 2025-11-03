@@ -52,21 +52,21 @@ const Toast = ({ message, type, onClose, isVisible }) => {
     type === "success"
       ? "bg-green-500 border-green-600 shadow-green-500/20"
       : type === "error"
-      ? "bg-red-500 border-red-600 shadow-red-500/20"
-      : type === "warning"
-      ? "bg-yellow-500 border-yellow-600 shadow-yellow-500/20"
-      : type === "info"
-      ? "bg-blue-500 border-blue-600 shadow-blue-500/20"
-      : "bg-gray-500 border-gray-600 shadow-gray-500/20";
+        ? "bg-red-500 border-red-600 shadow-red-500/20"
+        : type === "warning"
+          ? "bg-yellow-500 border-yellow-600 shadow-yellow-500/20"
+          : type === "info"
+            ? "bg-blue-500 border-blue-600 shadow-blue-500/20"
+            : "bg-gray-500 border-gray-600 shadow-gray-500/20";
 
   const Icon =
     type === "success"
       ? CheckCircle
       : type === "error"
-      ? AlertCircle
-      : type === "warning"
-      ? AlertTriangle
-      : Info;
+        ? AlertCircle
+        : type === "warning"
+          ? AlertTriangle
+          : Info;
 
   return (
     <motion.div
@@ -205,10 +205,10 @@ const ViewItemModal = ({ isOpen, onClose, item }) => {
     item.contentType === "post"
       ? FileText
       : item.contentType === "resource"
-      ? BookOpen
-      : item.contentType === "qna"
-      ? MessageSquare
-      : Image; // story or other
+        ? BookOpen
+        : item.contentType === "qna"
+          ? MessageSquare
+          : Image; // story or other
 
   return (
     <ModalWrapper isOpen={isOpen} onClose={onClose} title="Submission Details">
@@ -317,27 +317,43 @@ export default function ApprovalsPage() {
 
   const transform = (raw) => {
     // Normalize unknown API shapes safely
-    // Expecting array at response.data; if it’s an object with list + total, we’ll adapt
     const arr = Array.isArray(raw) ? raw : raw?.items || raw?.data || [];
-    return arr.map((x, idx) => ({
-      id: x.id || x._id || x.contentId || `tmp_${idx}`,
-      contentId: x.contentId || x.id || x._id || `tmp_${idx}`,
-      contentType:
-        (x.contentType || x.type || "").toString().toLowerCase() || "post",
-      title: x.title || x.name || "(Untitled)",
-      snippet: x.snippet || x.preview || x.excerpt || "",
-      authorName:
-        x.authorName ||
-        x.author?.name ||
-        `${x.author?.firstName || ""} ${x.author?.lastName || ""}`.trim() ||
-        "Unknown",
-      authorHandle:
-        x.authorHandle || x.author?.username || x.author?.handle || "unknown",
-      submittedAt: x.submittedAt || x.createdAt || new Date().toISOString(), // fallback
-      tags: x.tags || [],
-      // keep original for potential deep-linking
-      _raw: x,
-    }));
+    return arr.approvals.map((x, idx) => {
+      const registration = x || {};
+      return {
+        id: x.id || x._id || `user_${idx}`,
+        // For user registrations, we use the same ID for contentId
+        contentId: x.id || x._id || `user_${idx}`,
+        // User registrations are a different type - we'll call them "user-registration"
+        contentType: "user-registration",
+        // Use company name as title or fallback to user name
+        title: registration.companyName || `${registration.firstName || ''} ${registration.lastName || ''}`.trim() || "User Registration",
+        // Use designation as snippet
+        snippet: registration.designation || "Pending user registration",
+        // User information
+        authorName: `${registration.firstName || ''} ${registration.lastName || ''}`.trim() || "Unknown User",
+        authorHandle: registration.email || "no-email",
+        submittedAt: x.submittedAt || x.createdAt || new Date().toISOString(),
+        // Use themes if available, otherwise empty array
+        tags: x.themes || [],
+
+        // Additional user-specific fields for the UI
+        userData: {
+          email: registration.email,
+          firstName: registration.firstName,
+          lastName: registration.lastName,
+          fullName: `${registration.firstName || ''} ${registration.lastName || ''}`.trim(),
+          designation: registration.designation,
+          companyName: registration.companyName,
+          organizationType: registration.organizationType,
+          themes: x.themes || [],
+          daysPending: x.daysPending || 0
+        },
+
+        // keep original for potential deep-linking
+        _raw: x,
+      };
+    });
   };
 
   const loadPending = async () => {
@@ -346,6 +362,7 @@ export default function ApprovalsPage() {
       const res = await AdminService.getPendingApprovals();
       if (res?.success) {
         const list = transform(res.data);
+        // console.log("List : ",list)
         setItems(list);
         showToast(`Loaded ${list.length} pending approvals`, "success");
       } else {
@@ -453,23 +470,54 @@ export default function ApprovalsPage() {
     // optimistic remove from list
     const prev = items;
     setItems((cur) => cur.filter((x) => x.contentId !== item.contentId));
-    showToast("Approving…", "info");
+    showToast("Approving user…", "info");
 
     try {
-      const res = await AdminService.approveContent(
-        item.contentType,
-        item.contentId,
-        {} // approvalData (e.g., notes) can be added here
-      );
-      if (res?.success) {
-        showToast(`Approved: “${item.title}”`, "success");
+      // For user registrations, use the approveUser method
+      if (item.contentType === "user-registration") {
+        const userId = item.id || item.contentId;
+
+        const res = await AdminService.approveUser(userId, {
+          // You can add any additional approval data here if needed
+          approvedBy: "admin", // or get current admin user ID
+          approvedAt: new Date().toISOString(),
+        });
+
+        if (res?.success) {
+          showToast(`User approved successfully: ${item.userData?.fullName || item.authorName}`, "success");
+
+          // Optionally, you can also grant auto-approve privilege after basic approval
+          try {
+            const privilegeRes = await AdminService.grantAutoApprovePrivilege(userId);
+            if (privilegeRes?.success) {
+              showToast(`Auto-approve privilege granted to user`, "success");
+            }
+          } catch (privilegeError) {
+            console.warn("Could not grant auto-approve privilege:", privilegeError);
+            // Don't rollback the main approval if privilege grant fails
+          }
+        } else {
+          setItems(prev); // rollback
+          showToast(res?.message || "User approval failed", "error");
+        }
       } else {
-        setItems(prev); // rollback
-        showToast(res?.message || "Approve failed", "error");
+        // For regular content approvals (posts, resources, etc.)
+        const res = await AdminService.approveContent(
+          item.contentType,
+          item.contentId,
+          {} // approvalData (e.g., notes) can be added here
+        );
+        if (res?.success) {
+          showToast(`Approved: “${item.title}”`, "success");
+        } else {
+          setItems(prev); // rollback
+          showToast(res?.message || "Approve failed", "error");
+        }
       }
     } catch (e) {
       setItems(prev); // rollback
       showToast("Approve error — rolled back", "error");
+      console.error("Approve error:", e);
     }
   };
 
@@ -478,7 +526,6 @@ export default function ApprovalsPage() {
     setRejectTarget(item);
     setIsRejectModalOpen(true);
   };
-
   const confirmReject = async (reason) => {
     const item = rejectTarget;
     if (!item) return;
@@ -486,14 +533,22 @@ export default function ApprovalsPage() {
 
     const prev = items;
     setItems((cur) => cur.filter((x) => x.contentId !== item.contentId));
-    showToast("Rejecting…", "info");
+    showToast("Rejecting user registration…", "info");
 
     try {
-      const res = await AdminService.rejectContent(
-        item.contentType,
-        item.contentId,
-        { reason }
-      );
+      let res;
+
+      // Use appropriate rejection method based on content type
+      if (item.contentType === "user-registration") {
+        res = await AdminService.rejectUser(item.id || item.contentId, reason);
+      } else {
+        res = await AdminService.rejectContent(
+          item.contentType,
+          item.contentId,
+          { reason }
+        );
+      }
+
       if (res?.success) {
         showToast(`Rejected: “${item.title}”`, "success");
       } else {
@@ -611,22 +666,45 @@ export default function ApprovalsPage() {
                 <tr>
                   <th
                     className="text-left px-4 py-3 cursor-pointer"
-                    onClick={() => toggleSort("type")}
+                    onClick={() => toggleSort("name")}
                   >
-                    Type <SortIcon col="type" />
+                    User <SortIcon col="name" />
                   </th>
                   <th
                     className="text-left px-4 py-3 cursor-pointer"
-                    onClick={() => toggleSort("title")}
+                    onClick={() => toggleSort("email")}
                   >
-                    Title <SortIcon col="title" />
+                    Email <SortIcon col="email" />
                   </th>
-                  <th className="text-left px-4 py-3">Author</th>
+                  <th
+                    className="text-left px-4 py-3 cursor-pointer"
+                    onClick={() => toggleSort("designation")}
+                  >
+                    Designation <SortIcon col="designation" />
+                  </th>
+                  <th
+                    className="text-left px-4 py-3 cursor-pointer"
+                    onClick={() => toggleSort("company")}
+                  >
+                    Company <SortIcon col="company" />
+                  </th>
+                  <th
+                    className="text-left px-4 py-3 cursor-pointer"
+                    onClick={() => toggleSort("organizationType")}
+                  >
+                    Org Type <SortIcon col="organizationType" />
+                  </th>
                   <th
                     className="text-left px-4 py-3 cursor-pointer"
                     onClick={() => toggleSort("submittedAt")}
                   >
                     Submitted <SortIcon col="submittedAt" />
+                  </th>
+                  <th
+                    className="text-left px-4 py-3 cursor-pointer"
+                    onClick={() => toggleSort("daysPending")}
+                  >
+                    Days Pending <SortIcon col="daysPending" />
                   </th>
                   <th className="text-right px-4 py-3">Actions</th>
                 </tr>
@@ -635,78 +713,121 @@ export default function ApprovalsPage() {
                 {loading ? (
                   <tr>
                     <td
-                      colSpan={9}
+                      colSpan={8}
                       className="px-4 py-10 text-center text-gray-600"
                     >
                       <div className="inline-flex items-center">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                        <span className="ml-3">Loading approvals…</span>
+                        <span className="ml-3">Loading user registrations…</span>
                       </div>
                     </td>
                   </tr>
                 ) : currentPageItems.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={9}
+                      colSpan={8}
                       className="px-4 py-10 text-center text-gray-600"
                     >
-                      Nothing pending. Serene silence—the best SLA.
+                      No pending user registrations.
                     </td>
                   </tr>
                 ) : (
                   currentPageItems.map((it) => (
+                    
                     <tr
                       key={`${it.contentType}_${it.contentId}`}
-                      className="border-t"
+                      className="border-t hover:bg-gray-50"
                     >
+                      {/* User Column */}
                       <td className="px-4 py-3">
-                        <div className="inline-flex items-center gap-2 capitalize">
-                          <TypeIcon type={it.contentType} />
-                          {it.contentType}
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-gray-500" />
+                          <div> 
+                            <div className="font-medium text-gray-900">
+                              {it.userData?.fullName || it.fullName}
+                            </div>
+                          </div>
                         </div>
                       </td>
+
+                      {/* Email Column */}
                       <td className="px-4 py-3">
-                        <div className="font-medium">{it.title}</div>
-                        <div className="text-xs text-gray-500 line-clamp-1">
-                          {it.snippet || "—"}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2 text-sm">
-                          <User className="h-4 w-4" />
-                          <span className="font-medium">{it.authorName}</span>
-                          <span className="text-gray-500">
-                            @{it.authorHandle}
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-gray-500" />
+                          <span className="text-gray-700 text-sm">
+                            {it.userData?.email || it.authorHandle}
                           </span>
                         </div>
                       </td>
+
+                      {/* Designation Column */}
                       <td className="px-4 py-3">
-                        {it.submittedAt
-                          ? new Date(it.submittedAt).toISOString().split("T")[0]
-                          : "—"}
+                        <div className="text-sm text-gray-700">
+                          {it.userData?.designation || "Not specified"}
+                        </div>
                       </td>
+
+                      {/* Company Column */}
+                      <td className="px-4 py-3">
+                        <div className="text-sm text-gray-700">
+                          {it.userData?.companyName || "Not specified"}
+                        </div>
+                      </td>
+
+                      {/* Organization Type Column */}
+                      <td className="px-4 py-3">
+                        <div className="text-sm text-gray-700 capitalize">
+                          {it.userData?.organizationType || "unknown"}
+                        </div>
+                      </td>
+
+                      {/* Submitted Date Column */}
+                      <td className="px-4 py-3">
+                        <div className="text-sm text-gray-700">
+                          {it.submittedAt
+                            ? new Date(it.submittedAt).toISOString().split("T")[0]
+                            : "—"}
+                        </div>
+                      </td>
+
+                      {/* Days Pending Column */}
+                      <td className="px-4 py-3">
+                        <div className="text-sm">
+                          <span className={`px-2 py-1 rounded-full text-xs ${it.userData?.daysPending > 7
+                              ? "bg-red-100 text-red-800"
+                              : it.userData?.daysPending > 3
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-green-100 text-green-800"
+                            }`}>
+                            {it.userData?.daysPending || 0} days
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Actions Column */}
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-2">
                           <button
-                            className="p-2 rounded-md border hover:bg-gray-50"
+                            className="p-2 rounded-md border hover:bg-gray-50 transition-colors"
                             onClick={() => handleView(it)}
-                            title="View"
+                            title="View Details"
                           >
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-4 w-4 text-gray-600" />
                           </button>
                           <button
-                            className="p-2 rounded-md border hover:bg-green-50 hover:border-green-300"
+                            className="p-2 rounded-md border hover:bg-green-50 hover:border-green-300 transition-colors"
                             onClick={() => handleApprove(it)}
-                            title="Approve"
+                            title={it.contentType === "user-registration" ? "Approve User Registration" : "Approve Content"}
                           >
-                            <Check className="h-4 w-4" />
+                            <Check className="h-4 w-4 text-green-600" />
                           </button>
+
                           <button
-                            className="p-2 rounded-md border hover:bg-red-50 hover:border-red-300"
+                            className="p-2 rounded-md border hover:bg-red-50 hover:border-red-300 transition-colors"
                             onClick={() => requestReject(it)}
-                            title="Reject"
+                            title={it.contentType === "user-registration" ? "Reject User Registration" : "Reject Content"}
                           >
-                            <XCircle className="h-4 w-4" />
+                            <XCircle className="h-4 w-4 text-red-600" />
                           </button>
                         </div>
                       </td>
@@ -727,14 +848,14 @@ export default function ApprovalsPage() {
               <button
                 onClick={() => goPage(-1)}
                 disabled={page <= 1}
-                className="px-3 py-2 rounded-md border disabled:opacity-50"
+                className="px-3 py-2 rounded-md border disabled:opacity-50 hover:bg-gray-50 transition-colors"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <button
                 onClick={() => goPage(1)}
                 disabled={page >= totalPages}
-                className="px-3 py-2 rounded-md border disabled:opacity-50"
+                className="px-3 py-2 rounded-md border disabled:opacity-50 hover:bg-gray-50 transition-colors"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -747,7 +868,7 @@ export default function ApprovalsPage() {
                     limit: Number(e.target.value),
                   }))
                 }
-                className="ml-2 rounded-md border px-2 py-2 text-sm"
+                className="ml-2 rounded-md border px-2 py-2 text-sm hover:bg-gray-50 transition-colors"
                 title="Rows per page"
               >
                 {[10, 20, 50].map((n) => (

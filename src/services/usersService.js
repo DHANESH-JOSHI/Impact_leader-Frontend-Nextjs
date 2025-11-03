@@ -37,7 +37,7 @@ export class UsersService {
 
       const endpoint = `/admin/users?${queryParams.toString()}`;
       const response = await ExternalApiService.get(
-        endpoint,
+        endpoint
       );
 
       // filter out "admin" role users

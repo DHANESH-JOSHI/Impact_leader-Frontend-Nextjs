@@ -2,6 +2,8 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import AddUserModal from "@/components/impact-leaders/users/AddUserModal";
+import ViewUserModal from "@/components/impact-leaders/users/ViewUserModal";
 import {
   CheckCircle,
   AlertCircle,
@@ -206,153 +208,154 @@ const ModalWrapper = ({ isOpen, onClose, children, title }) => {
   );
 };
 
-const AddUserModal = ({ isOpen, onClose, onSubmit }) => {
-  const [form, setForm] = useState({
-    name: "",
-    username: "",
-    email: "",
-    role: "viewer",
-    status: "invited",
-  });
-  const update = (k, v) => setForm((p) => ({ ...p, [k]: v }));
+// const AddUserModal = ({ isOpen, onClose, onSubmit }) => {
+//   const [form, setForm] = useState({
+//     name: "",
+//     username: "",
+//     email: "",
+//     role: "viewer",
+//     status: "invited",
+//   });
+//   const update = (k, v) => setForm((p) => ({ ...p, [k]: v }));
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(form);
-  };
+//   const handleSubmit = (e) => {
+//     e.preventDefault();
+//     onSubmit(form);
+//   };
 
-  return (
-    <ModalWrapper isOpen={isOpen} onClose={onClose} title="Add New User">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Full Name</label>
-            <input
-              className="w-full rounded-md border px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-              value={form.name}
-              onChange={(e) => update("name", e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Username</label>
-            <input
-              className="w-full rounded-md border px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-              value={form.username}
-              onChange={(e) => update("username", e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
-            <input
-              type="email"
-              className="w-full rounded-md border px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-              value={form.email}
-              onChange={(e) => update("email", e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Role</label>
-            <select
-              className="w-full rounded-md border px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-              value={form.role}
-              onChange={(e) => update("role", e.target.value)}
-            >
-              <option value="admin">Admin</option>
-              <option value="editor">Editor</option>
-              <option value="author">Author</option>
-              <option value="viewer">Viewer</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Status</label>
-            <select
-              className="w-full rounded-md border px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-              value={form.status}
-              onChange={(e) => update("status", e.target.value)}
-            >
-              <option value="active">Active</option>
-              <option value="invited">Invited</option>
-              <option value="suspended">Suspended</option>
-            </select>
-          </div>
-        </div>
-        <div className="flex justify-end gap-3 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-md border"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
-          >
-            <UserPlus className="h-4 w-4" />
-            Create User
-          </button>
-        </div>
-      </form>
-    </ModalWrapper>
-  );
-};
+//   return (
+//     <ModalWrapper isOpen={isOpen} onClose={onClose} title="Add New User">
+//       <form onSubmit={handleSubmit} className="space-y-4">
+//         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//           <div>
+//             <label className="block text-sm font-medium mb-1">Full Name</label>
+//             <input
+//               className="w-full rounded-md border px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+//               value={form.name}
+//               onChange={(e) => update("name", e.target.value)}
+//               required
+//             />
+//           </div>
+//           <div>
+//             <label className="block text-sm font-medium mb-1">Username</label>
+//             <input
+//               className="w-full rounded-md border px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+//               value={form.username}
+//               onChange={(e) => update("username", e.target.value)}
+//               required
+//             />
+//           </div>
+//           <div>
+//             <label className="block text-sm font-medium mb-1">Email</label>
+//             <input
+//               type="email"
+//               className="w-full rounded-md border px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+//               value={form.email}
+//               onChange={(e) => update("email", e.target.value)}
+//               required
+//             />
+//           </div>
+//           <div>
+//             <label className="block text-sm font-medium mb-1">Role</label>
+//             <select
+//               className="w-full rounded-md border px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+//               value={form.role}
+//               onChange={(e) => update("role", e.target.value)}
+//             >
+//               <option value="admin">Admin</option>
+//               <option value="editor">Editor</option>
+//               <option value="author">Author</option>
+//               <option value="viewer">Viewer</option>
+//             </select>
+//           </div>
+//           <div>
+//             <label className="block text-sm font-medium mb-1">Status</label>
+//             <select
+//               className="w-full rounded-md border px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+//               value={form.status}
+//               onChange={(e) => update("status", e.target.value)}
+//             >
+//               <option value="active">Active</option>
+//               <option value="invited">Invited</option>
+//               <option value="suspended">Suspended</option>
+//             </select>
+//           </div>
+//         </div>
+//         <div className="flex justify-end gap-3 pt-2">
+//           <button
+//             type="button"
+//             onClick={onClose}
+//             className="px-4 py-2 rounded-md border"
+//           >
+//             Cancel
+//           </button>
+//           <button
+//             type="submit"
+//             className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
+//           >
+//             <UserPlus className="h-4 w-4" />
+//             Create User
+//           </button>
+//         </div>
+//       </form>
+//       {/* <AddNewUser/> */}
+//     </ModalWrapper>
+//   );
+// };
 
-const ViewUserModal = ({ isOpen, onClose, user, onEdit }) => {
-  if (!user) return null;
-  return (
-    <ModalWrapper isOpen={isOpen} onClose={onClose} title="Directory Details">
-      <div className="flex gap-4">
-        <img
-          src={user.avatar}
-          alt={user.name}
-          className="h-16 w-16 rounded-full object-cover"
-        />
-        <div className="space-y-1">
-          <div className="text-lg font-semibold">{user.name}</div>
-          <div className="text-sm text-gray-600">@{user.username}</div>
-          <div className="flex items-center gap-2 text-sm text-gray-700">
-            <Mail className="h-4 w-4" /> {user.email}
-          </div>
-          {/* <div className="flex items-center gap-2 text-sm text-gray-700">
-            <Shield className="h-4 w-4" /> Role:{" "}
-            <span className="font-medium">{user.role}</span>
-          </div> */}
-          <div className="flex items-center gap-2 text-sm text-gray-700">
-            <Calendar className="h-4 w-4" /> Joined: {user.createdAt}
-          </div>
-          <div className="text-sm text-gray-700">
-            Last Active: {user.lastActive || "—"}
-          </div>
-          {/* <div className="text-sm text-gray-700">
-            Posts: {user.posts} · Followers: {user.followers}
-          </div> */}
-        </div>
-      </div>
-      <div className="flex justify-end gap-3 mt-6">
-        <button
-          onClick={() =>
-            onEdit({
-              ...user,
-              role: user.role === "viewer" ? "author" : "viewer",
-            })
-          }
-          className="px-4 py-2 rounded-md border flex items-center gap-2"
-        >
-          <Pencil className="h-4 w-4" /> Quick Toggle Role
-        </button>
-        <button
-          onClick={onClose}
-          className="px-4 py-2 rounded-md bg-blue-600 text-white"
-        >
-          Close
-        </button>
-      </div>
-    </ModalWrapper>
-  );
-};
+// const ViewUserModal = ({ isOpen, onClose, user, onEdit }) => {
+//   if (!user) return null;
+//   return (
+//     <ModalWrapper isOpen={isOpen} onClose={onClose} title="Directory Details">
+//       <div className="flex gap-4">
+//         <img
+//           src={user.avatar}
+//           alt={user.name}
+//           className="h-16 w-16 rounded-full object-cover"
+//         />
+//         <div className="space-y-1">
+//           <div className="text-lg font-semibold">{user.name}</div>
+//           <div className="text-sm text-gray-600">@{user.username}</div>
+//           <div className="flex items-center gap-2 text-sm text-gray-700">
+//             <Mail className="h-4 w-4" /> {user.email}
+//           </div>
+//           {/* <div className="flex items-center gap-2 text-sm text-gray-700">
+//             <Shield className="h-4 w-4" /> Role:{" "}
+//             <span className="font-medium">{user.role}</span>
+//           </div> */}
+//           <div className="flex items-center gap-2 text-sm text-gray-700">
+//             <Calendar className="h-4 w-4" /> Joined: {user.createdAt}
+//           </div>
+//           <div className="text-sm text-gray-700">
+//             Last Active: {user.lastActive || "—"}
+//           </div>
+//           {/* <div className="text-sm text-gray-700">
+//             Posts: {user.posts} · Followers: {user.followers}
+//           </div> */}
+//         </div>
+//       </div>
+//       <div className="flex justify-end gap-3 mt-6">
+//         <button
+//           onClick={() =>
+//             onEdit({
+//               ...user,
+//               role: user.role === "viewer" ? "author" : "viewer",
+//             })
+//           }
+//           className="px-4 py-2 rounded-md border flex items-center gap-2"
+//         >
+//           <Pencil className="h-4 w-4" /> Quick Toggle Role
+//         </button>
+//         <button
+//           onClick={onClose}
+//           className="px-4 py-2 rounded-md bg-blue-600 text-white"
+//         >
+//           Close
+//         </button>
+//       </div>
+//     </ModalWrapper>
+//   );
+// };
 
 const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, targetName }) => (
   <ModalWrapper isOpen={isOpen} onClose={onClose} title="Confirm Deletion">
@@ -430,32 +433,69 @@ export default function UsersPage() {
         sortBy,
         sortOrder,
       });
-
       if (result?.success) {
         const api = result.data;
 
-        const transformed = (api || []).map((u) => ({
-          id: u.id,
-          name:
-            u.name ||
-            `${u.firstName || ""} ${u.lastName || ""}`.trim() ||
-            "Unnamed",
-          username: u.firstName || u.handle || "unknown",
-          email: u.email || "no-email",
-          role: u.role || "viewer",
-          status:
-            u.status ||
-            (u.isActive ? "active" : u.invited ? "invited" : "suspended"),
-          createdAt: u.createdAt
-            ? new Date(u.createdAt).toISOString().split("T")[0]
-            : "",
-          lastActive: u.lastActiveAt
-            ? new Date(u.lastActiveAt).toISOString().split("T")[0]
-            : null,
-          posts: u.stats?.posts || 0,
-          followers: u.stats?.followers || 0,
-          avatar: u.avatar || `https://i.pravatar.cc/100?u=${u._id}`,
-        }));
+        const transformed = (api || []).map((u) => {
+          // Create a safe user object with fallbacks
+          const safeUser = {
+            // Basic table data
+            id: u.id || u._id,
+            name:
+              u.name ||
+              u.fullName ||
+              `${u.firstName || ""} ${u.lastName || ""}`.trim() ||
+              "Unnamed",
+            username: u.username || u.firstName?.toLowerCase() || "unknown",
+            email: u.email || "no-email",
+            role: u.role || "viewer",
+            status: u.status || (u.isActive ? "active" : "invited"),
+            createdAt: u.createdAt
+              ? new Date(u.createdAt).toISOString().split("T")[0]
+              : "",
+            lastActive:
+              u.lastActiveAt || u.lastLogin
+                ? new Date(u.lastActiveAt || u.lastLogin)
+                    .toISOString()
+                    .split("T")[0]
+                : null,
+            posts: u.posts || u.stats?.postsCount || 0,
+            followers: u.followers || u.stats?.connectionsCount || 0,
+            avatar:
+              u.avatar ||
+              u.profileImage ||
+              `https://i.pravatar.cc/100?u=${u._id}`,
+
+            // Detailed data for ViewUserModal with fallbacks
+            firstName: u.firstName || "",
+            lastName: u.lastName || "",
+            profileImage:
+              u.profileImage ||
+              u.avatar ||
+              `https://i.pravatar.cc/100?u=${u._id}`,
+            companyName: u.companyName || "Not specified",
+            organizationType: u.organizationType || "Not specified",
+            designation: u.designation || "Not specified",
+            themes: u.themes || [],
+            referralCode: u.referralCode || null,
+            isActive: u.isActive !== undefined ? u.isActive : true,
+            isEmailVerified:
+              u.isEmailVerified !== undefined ? u.isEmailVerified : false,
+            termsAccepted:
+              u.termsAccepted !== undefined ? u.termsAccepted : false,
+            hasAutoApprovePrivilege:
+              u.hasAutoApprovePrivilege !== undefined
+                ? u.hasAutoApprovePrivilege
+                : false,
+            isApproved: u.isApproved !== undefined ? u.isApproved : true,
+            registrationSource: u.registrationSource || "direct",
+            lastLogin: u.lastLogin || null,
+            updatedAt: u.updatedAt || u.createdAt,
+            referredBy: u.referredBy || null,
+          };
+
+          return safeUser;
+        });
         setUsers(transformed);
         setPagination((p) => ({
           ...p,
@@ -494,6 +534,12 @@ export default function UsersPage() {
     () => ["all", ...Array.from(new Set(users.map((u) => u.status)))],
     [users]
   );
+  const handleUserAdded = () => {
+    console.log("User added successfully!");
+    // Refresh the users list or show success message
+    loadUsers(); // Refresh the table
+    showToast("User created successfully!", "success");
+  };
 
   // handlers
   const handleAddUser = async (payload) => {
@@ -653,7 +699,7 @@ export default function UsersPage() {
                 />
               </div>
 
-              {/* <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <div className="relative">
                   <select
                     className="rounded-lg border px-3 py-2 text-sm"
@@ -695,7 +741,7 @@ export default function UsersPage() {
                 <div className="hidden md:flex items-center gap-1 text-gray-600">
                   <Filter className="h-4 w-4" />
                 </div>
-              </div> */}
+              </div>
             </div>
           </div>
         </motion.div>
@@ -722,18 +768,7 @@ export default function UsersPage() {
                   >
                     Status <SortIcon col="status" />
                   </th>
-                  <th
-                    className="text-right px-4 py-3 cursor-pointer"
-                    onClick={() => toggleSort("posts")}
-                  >
-                    Posts <SortIcon col="posts" />
-                  </th>
-                  <th
-                    className="text-right px-4 py-3 cursor-pointer"
-                    onClick={() => toggleSort("followers")}
-                  >
-                    Followers <SortIcon col="followers" />
-                  </th>
+
                   <th
                     className="text-left px-4 py-3 cursor-pointer"
                     onClick={() => toggleSort("createdAt")}
@@ -803,8 +838,8 @@ export default function UsersPage() {
                           {u.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right">{u.posts}</td>
-                      <td className="px-4 py-3 text-right">{u.followers}</td>
+                      {/* <td className="px-4 py-3 text-right">{u.posts}</td>
+                      <td className="px-4 py-3 text-right">{u.followers}</td> */}
                       <td className="px-4 py-3">{u.createdAt || "—"}</td>
                       <td className="px-4 py-3">{u.lastActive || "—"}</td>
                       <td className="px-4 py-3">
@@ -904,6 +939,7 @@ export default function UsersPage() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSubmit={handleAddUser}
+        onUserAdded={handleUserAdded}
       />
       <ViewUserModal
         isOpen={isViewModalOpen}

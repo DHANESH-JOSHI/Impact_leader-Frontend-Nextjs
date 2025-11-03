@@ -113,32 +113,6 @@ export default function QnaTableView({
     }
   };
 
-  const getPriorityStyle = (priority) => {
-    switch (priority) {
-      case "high":
-        return { backgroundColor: "#fee2e2", color: "#dc2626" };
-      case "medium":
-        return { backgroundColor: "#fef3c7", color: "#d97706" };
-      case "low":
-        return { backgroundColor: "#dcfce7", color: "#16a34a" };
-      default:
-        return { backgroundColor: "#f3f4f6", color: "#6b7280" };
-    }
-  };
-
-  const getDifficultyStyle = (difficulty) => {
-    switch (difficulty) {
-      case "hard":
-        return { backgroundColor: "#fee2e2", color: "#dc2626" };
-      case "medium":
-        return { backgroundColor: "#fef3c7", color: "#d97706" };
-      case "easy":
-        return { backgroundColor: "#dcfce7", color: "#16a34a" };
-      default:
-        return { backgroundColor: "#f3f4f6", color: "#6b7280" };
-    }
-  };
-
   const truncateText = (text, maxLength = 60) => {
     if (text.length <= maxLength) return text;
     return text.slice(0, maxLength) + "...";
@@ -229,16 +203,6 @@ export default function QnaTableView({
               <th
                 className="text-left px-6 py-4 text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
                 style={{ color: "#040606" }}
-                onClick={() => handleSort("priority")}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>Priority</span>
-                  <SortIcon columnKey="priority" />
-                </div>
-              </th>
-              <th
-                className="text-left px-6 py-4 text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
-                style={{ color: "#040606" }}
                 onClick={() => handleSort("isAnswered")}
               >
                 <div className="flex items-center space-x-1">
@@ -322,17 +286,6 @@ export default function QnaTableView({
                           className="flex items-center space-x-1 text-xs"
                           style={{ color: "#646464" }}
                         >
-                          <span
-                            className="px-2 py-0.5 text-xs rounded-full"
-                            style={getDifficultyStyle(qna.difficulty)}
-                          >
-                            {qna.difficulty}
-                          </span>
-                        </div>
-                        <div
-                          className="flex items-center space-x-1 text-xs"
-                          style={{ color: "#646464" }}
-                        >
                           <ThumbsUp className="h-3 w-3" />
                           <span>{qna.helpful}</span>
                         </div>
@@ -391,17 +344,6 @@ export default function QnaTableView({
                     style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
                   >
                     {qna.category}
-                  </span>
-                </td>
-
-                {/* Priority Column */}
-                <td className="px-6 py-4">
-                  <span
-                    className="inline-flex px-3 py-1 text-xs font-medium rounded-full"
-                    style={getPriorityStyle(qna.priority)}
-                  >
-                    {qna.priority.charAt(0).toUpperCase() +
-                      qna.priority.slice(1)}
                   </span>
                 </td>
 
