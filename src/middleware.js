@@ -44,7 +44,7 @@ async function verifyImpactLeadersToken(token) {
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
-  
+
   // Skip middleware for static files and API routes (except protected ones)
   if (
     pathname.startsWith('/_next') ||
@@ -61,7 +61,7 @@ export async function middleware(request) {
   // Allow access to login page
   if (pathname === '/') {
     const token = request.cookies.get('impactLeadersToken');
-    
+
     // If authenticated and trying to access login page, redirect to dashboard
     if (token) {
       const { valid, isAdmin } = await verifyImpactLeadersToken(token.value);
@@ -80,19 +80,19 @@ export async function middleware(request) {
   // Protect all dashboard routes - only for admin users
   if (pathname.startsWith('/dashboard')) {
     console.log('🛡️ Middleware: Protecting dashboard route:', pathname);
-    
+
     const token = request.cookies.get('impactLeadersToken');
     console.log('🍪 Middleware: Token from cookie:', token ? 'Present' : 'Missing');
-    
+
     if (!token) {
       console.log('❌ Middleware: No token, redirecting to login_required');
       return NextResponse.redirect(new URL('/?error=login_required', request.url));
     }
 
     const { valid, isAdmin, user } = await verifyImpactLeadersToken(token.value);
-    
+
     console.log('📝 Middleware: Verification result - Valid:', valid, 'IsAdmin:', isAdmin);
-    
+
     if (!valid) {
       // Clear invalid token and redirect to login
       console.log('❌ Middleware: Invalid token, redirecting to session_expired');
@@ -100,7 +100,7 @@ export async function middleware(request) {
       response.cookies.delete('impactLeadersToken');
       return response;
     }
-    
+
     if (!isAdmin) {
       // User is valid but not admin
       console.log('❌ Middleware: Valid user but not admin, redirecting to access_denied');
@@ -108,7 +108,7 @@ export async function middleware(request) {
       const response = NextResponse.redirect(new URL('/?error=access_denied', request.url));
       return response;
     }
-    
+
     // Valid admin user, allow access
     console.log('✅ Middleware: Valid admin user, allowing access');
     return NextResponse.next();

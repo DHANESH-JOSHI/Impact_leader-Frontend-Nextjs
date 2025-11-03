@@ -84,32 +84,6 @@ export default function QnaCardView({
     }
   };
 
-  const getPriorityStyle = (priority) => {
-    switch (priority) {
-      case "high":
-        return { backgroundColor: "#fee2e2", color: "#dc2626" };
-      case "medium":
-        return { backgroundColor: "#fef3c7", color: "#d97706" };
-      case "low":
-        return { backgroundColor: "#dcfce7", color: "#16a34a" };
-      default:
-        return { backgroundColor: "#f3f4f6", color: "#6b7280" };
-    }
-  };
-
-  const getDifficultyStyle = (difficulty) => {
-    switch (difficulty) {
-      case "hard":
-        return { backgroundColor: "#fee2e2", color: "#dc2626" };
-      case "medium":
-        return { backgroundColor: "#fef3c7", color: "#d97706" };
-      case "easy":
-        return { backgroundColor: "#dcfce7", color: "#16a34a" };
-      default:
-        return { backgroundColor: "#f3f4f6", color: "#6b7280" };
-    }
-  };
-
   const truncateText = (text, maxLength = 100) => {
     if (text.length <= maxLength) return text;
     return text.slice(0, maxLength) + "...";
@@ -160,28 +134,13 @@ export default function QnaCardView({
                   {qna.question}
                 </h3>
 
-                {/* Status and Priority Badges */}
+                {/* Status Badge */}
                 <div className="flex items-center space-x-2 mb-3">
                   <span
                     className="px-2 py-1 text-xs font-medium rounded-full"
                     style={getStatusBadgeStyle(qna.status)}
                   >
                     {qna.status.charAt(0).toUpperCase() + qna.status.slice(1)}
-                  </span>
-
-                  <span
-                    className="px-2 py-1 text-xs font-medium rounded-full"
-                    style={getPriorityStyle(qna.priority)}
-                  >
-                    {qna.priority.charAt(0).toUpperCase() +
-                      qna.priority.slice(1)}
-                  </span>
-
-                  <span
-                    className="px-2 py-1 text-xs font-medium rounded-full"
-                    style={getDifficultyStyle(qna.difficulty)}
-                  >
-                    {qna.difficulty}
                   </span>
                 </div>
 

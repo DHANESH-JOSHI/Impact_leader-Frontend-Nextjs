@@ -114,6 +114,27 @@ export const API_ENDPOINTS = {
     ATTENDEES: (id) => `/meetings/${id}/attendees`,
   },
 
+  // ==================== SUPPORT ====================
+  SUPPORT: {
+    BASE: '/support/tickets',
+    BY_ID: (id) => `/support/tickets/${id}`,
+    STATS: '/support/stats',
+
+    // Ticket actions
+    STATUS: (id) => `/support/tickets/${id}/status`,
+    PRIORITY: (id) => `/support/tickets/${id}/priority`,
+    ASSIGN: (id) => `/support/tickets/${id}/assign`,
+    ESCALATE: (id) => `/support/tickets/${id}/escalate`,
+
+    // Replies
+    REPLIES: (id) => `/support/tickets/${id}/replies`,
+    REPLY_BY_ID: (ticketId, replyId) => `/support/tickets/${ticketId}/replies/${replyId}`,
+
+    // Attachments
+    ATTACHMENTS: (id) => `/support/tickets/${id}/attachments`,
+    ATTACHMENT_BY_ID: (ticketId, attachmentId) => `/support/tickets/${ticketId}/attachments/${attachmentId}`,
+  },
+
   // ==================== MESSAGES ====================
   MESSAGES: {
     BASE: '/messages',
@@ -232,4 +253,4 @@ export const buildURL = (endpoint, params = {}) => {
 };
 
 // Export individual categories for easier imports
-export const { AUTH, USERS, POSTS, STORIES, RESOURCES, QNA, MEETINGS, MESSAGES, DIRECTORY, NOTIFICATIONS, ADMIN, MONITORING, HEALTH } = API_ENDPOINTS;
+export const { AUTH, USERS, POSTS, STORIES, RESOURCES, QNA, MEETINGS, SUPPORT, MESSAGES, DIRECTORY, NOTIFICATIONS, ADMIN, MONITORING, HEALTH } = API_ENDPOINTS;

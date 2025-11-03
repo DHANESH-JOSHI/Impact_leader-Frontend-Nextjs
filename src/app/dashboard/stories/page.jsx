@@ -7,9 +7,6 @@ import {
   CheckCircle,
   AlertCircle,
   X,
-  Info,
-  AlertTriangle,
-  HelpCircle,
 } from "lucide-react";
 import StoryCard from "@/components/stories/StoryCard";
 import StoryTable from "@/components/stories/StoryTable";
@@ -33,17 +30,11 @@ const Toast = ({ message, type, onClose, isVisible }) => {
   const getToastStyles = () => {
     switch (type) {
       case "success":
-        return "bg-green-500 border-green-600 shadow-green-500/20";
+        return "bg-green-600 border-green-700 shadow-lg";
       case "error":
-        return "bg-red-500 border-red-600 shadow-red-500/20";
-      case "info":
-        return "bg-blue-500 border-blue-600 shadow-blue-500/20";
-      case "warning":
-        return "bg-yellow-500 border-yellow-600 shadow-yellow-500/20";
-      case "question":
-        return "bg-purple-500 border-purple-600 shadow-purple-500/20";
+        return "bg-red-600 border-red-700 shadow-lg";
       default:
-        return "bg-gray-500 border-gray-600 shadow-gray-500/20";
+        return "bg-gray-600 border-gray-700 shadow-lg";
     }
   };
 
@@ -53,12 +44,6 @@ const Toast = ({ message, type, onClose, isVisible }) => {
         return <CheckCircle className="h-5 w-5 text-white" />;
       case "error":
         return <AlertCircle className="h-5 w-5 text-white" />;
-      case "info":
-        return <Info className="h-5 w-5 text-white" />;
-      case "warning":
-        return <AlertTriangle className="h-5 w-5 text-white" />;
-      case "question":
-        return <HelpCircle className="h-5 w-5 text-white" />;
       default:
         return <AlertCircle className="h-5 w-5 text-white" />;
     }
@@ -66,14 +51,14 @@ const Toast = ({ message, type, onClose, isVisible }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 300, scale: 0.3 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 300, scale: 0.5 }}
+      initial={{ opacity: 0, y: -50 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -50 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
       className="fixed top-4 right-4 z-50"
     >
       <div
-        className={`${getToastStyles()} border rounded-lg shadow-2xl p-4 min-w-[320px] max-w-[420px] backdrop-blur-sm`}
+        className={`${getToastStyles()} border rounded-lg p-4 min-w-[320px] max-w-[420px]`}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -96,14 +81,17 @@ const Toast = ({ message, type, onClose, isVisible }) => {
 const useToast = () => {
   const [toasts, setToasts] = useState([]);
 
-  const hideToast = (id) =>
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-
-  const showToast = (message, type = "info") => {
+  const showToast = (message, type = "error") => {
+    // Only allow 'success' or 'error' types
+    const validType = type === "success" ? "success" : "error";
     const id = Date.now() + Math.random();
-    setToasts((prev) => [...prev, { id, message, type, isVisible: true }]);
+    const newToast = { id, message, type: validType, isVisible: true };
+    setToasts((prev) => [...prev, newToast]);
     setTimeout(() => hideToast(id), 4000);
   };
+
+  const hideToast = (id) =>
+    setToasts((prev) => prev.filter((t) => t.id !== id));
 
   return { toasts, showToast, hideToast };
 };
@@ -495,21 +483,15 @@ export default function StoriesPage() {
   const handleViewStory = (story) => {
     setSelectedStory(story);
     setIsViewModalOpen(true);
-    showToast(`Viewing "${story.title}". 👀`, "info");
   };
 
   const handleEditClick = (story) => {
     setSelectedStory(story);
     setIsEditModalOpen(true);
-    showToast(`Preparing to edit "${story.title}". ✏️`, "info");
   };
 
   const handleViewModeChange = (mode) => {
     setViewMode(mode);
-    showToast(
-      `${mode === "cards" ? "Card" : "Table"} view selected. 🔄`,
-      "info"
-    );
   };
 
   const handleSearchChange = (query) => {
@@ -518,8 +500,6 @@ export default function StoriesPage() {
 
   const handleStatusFilter = (status) => {
     setFilterStatus(status);
-    const statusText = status === "all" ? "All Statuses" : status;
-    showToast(`${statusText} filter applied. 📊`, "info");
   };
 
   /* --------------------------------- UI ---------------------------------- */
@@ -564,7 +544,6 @@ export default function StoriesPage() {
           <motion.button
             onClick={() => {
               setIsAddModalOpen(true);
-              showToast("Opening new story form. ➕", "info");
             }}
             className="px-4 py-2 rounded-lg flex items-center gap-2 text-white transition-colors"
             style={{ backgroundColor: "#2691ce" }}
@@ -714,7 +693,6 @@ export default function StoriesPage() {
         onClose={() => {
           setIsEditModalOpen(false);
           setSelectedStory(null);
-          showToast("Edit cancelled. 👋", "info");
         }}
         story={selectedStory}
         onEdit={handleEditStory}
@@ -725,7 +703,6 @@ export default function StoriesPage() {
         onClose={() => {
           setIsViewModalOpen(false);
           setSelectedStory(null);
-          showToast("Closed story view. 👋", "info");
         }}
         story={selectedStory}
       />

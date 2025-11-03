@@ -24,6 +24,7 @@ import {
   User2Icon,
   Menu,
   X,
+  Headphones,
 } from "lucide-react";
 
 // main menu items ka data - dashboard, stories, posts etc.
@@ -57,6 +58,11 @@ const menuItems = [
     title: "Q&A",
     icon: HelpCircle,
     href: "/dashboard/qna",
+  },
+  {
+    title: "Support",
+    icon: Headphones,
+    href: "/dashboard/support",
   },
 ];
 

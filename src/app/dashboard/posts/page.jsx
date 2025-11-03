@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, AlertCircle, X, Info, AlertTriangle } from "lucide-react";
+import { CheckCircle, AlertCircle, X } from "lucide-react";
 import PostsHeader from "@/components/posts/PostsHeader";
 import PostsCardView from "@/components/posts/PostsCardView";
 import PostsTableView from "@/components/posts/PostsTableView";
@@ -27,15 +27,11 @@ const Toast = ({ message, type, onClose, isVisible }) => {
   const getToastStyles = () => {
     switch (type) {
       case "success":
-        return "bg-green-500 border-green-600 shadow-green-500/20";
+        return "bg-green-600 border-green-700 shadow-lg";
       case "error":
-        return "bg-red-500 border-red-600 shadow-red-500/20";
-      case "info":
-        return "bg-blue-500 border-blue-600 shadow-blue-500/20";
-      case "warning":
-        return "bg-yellow-500 border-yellow-600 shadow-yellow-500/20";
+        return "bg-red-600 border-red-700 shadow-lg";
       default:
-        return "bg-gray-500 border-gray-600 shadow-gray-500/20";
+        return "bg-gray-600 border-gray-700 shadow-lg";
     }
   };
 
@@ -45,10 +41,6 @@ const Toast = ({ message, type, onClose, isVisible }) => {
         return <CheckCircle className="h-5 w-5 text-white" />;
       case "error":
         return <AlertCircle className="h-5 w-5 text-white" />;
-      case "info":
-        return <Info className="h-5 w-5 text-white" />;
-      case "warning":
-        return <AlertTriangle className="h-5 w-5 text-white" />;
       default:
         return <AlertCircle className="h-5 w-5 text-white" />;
     }
@@ -56,14 +48,14 @@ const Toast = ({ message, type, onClose, isVisible }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 300, scale: 0.3 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 300, scale: 0.5 }}
+      initial={{ opacity: 0, y: -50 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -50 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
       className="fixed top-4 right-4 z-50"
     >
       <div
-        className={`${getToastStyles()} border rounded-lg shadow-2xl p-4 min-w-[300px] max-w-[400px] backdrop-blur-sm`}
+        className={`${getToastStyles()} border rounded-lg p-4 min-w-[320px] max-w-[420px]`}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -82,13 +74,15 @@ const Toast = ({ message, type, onClose, isVisible }) => {
   );
 };
 
-// Custom hook for toast management
+// Custom hook for toast management - only success and error types
 const useToast = () => {
   const [toasts, setToasts] = useState([]);
 
-  const showToast = (message, type = "info") => {
+  const showToast = (message, type = "error") => {
+    // Only allow 'success' or 'error' types
+    const validType = type === "success" ? "success" : "error";
     const id = Date.now() + Math.random();
-    const newToast = { id, message, type, isVisible: true };
+    const newToast = { id, message, type: validType, isVisible: true };
 
     setToasts((prev) => [...prev, newToast]);
 

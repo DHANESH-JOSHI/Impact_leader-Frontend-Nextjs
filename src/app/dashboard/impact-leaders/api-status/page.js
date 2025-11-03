@@ -1,30 +1,36 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
-  Activity, 
+import React, { useState, useEffect } from "react";
+import {
+  CheckCircle,
+  XCircle,
+  Clock,
+  Activity,
   RefreshCw,
   Server,
   Zap,
   Globe,
-  Database
-} from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+  Database,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 // Import our services for testing
-import { ExternalApiService } from '@/services/externalApiService';
-import { ImpactLeadersAuthService } from '@/services/impactLeadersAuthService';
-import { PostsService } from '@/services/postsService';
-import { UsersService } from '@/services/usersService';
-import { ResourcesService } from '@/services/resourcesService';
-import { StoriesService } from '@/services/storiesService';
-import { QnAService } from '@/services/qnaService';
-import { NotificationsService } from '@/services/notificationsService';
+import { ExternalApiService } from "@/services/externalApiService";
+import { ImpactLeadersAuthService } from "@/services/impactLeadersAuthService";
+import { PostsService } from "@/services/postsService";
+import { UsersService } from "@/services/usersService";
+import { ResourcesService } from "@/services/resourcesService";
+import { StoriesService } from "@/services/storiesService";
+import { QnAService } from "@/services/qnaService";
+import { NotificationsService } from "@/services/notificationsService";
 
 export default function APIStatusPage() {
   const [loading, setLoading] = useState(false);
@@ -34,69 +40,69 @@ export default function APIStatusPage() {
   // API endpoints to monitor
   const apiEndpoints = [
     {
-      id: 'health',
-      name: 'Health Check',
-      description: 'Basic server health status',
-      endpoint: '/health',
-      service: 'ExternalApiService',
-      category: 'Core'
+      id: "health",
+      name: "Health Check",
+      description: "Basic server health status",
+      endpoint: "/health",
+      service: "ExternalApiService",
+      category: "Core",
     },
     {
-      id: 'auth',
-      name: 'Authentication',
-      description: 'User login and authentication',
-      endpoint: '/auth/login',
-      service: 'ImpactLeadersAuthService',
-      category: 'Authentication'
+      id: "auth",
+      name: "Authentication",
+      description: "User login and authentication",
+      endpoint: "/auth/login",
+      service: "ImpactLeadersAuthService",
+      category: "Authentication",
     },
     {
-      id: 'users',
-      name: 'User Management',
-      description: 'User profiles and management',
-      endpoint: '/users',
-      service: 'UsersService',
-      category: 'User Management'
+      id: "users",
+      name: "User Management",
+      description: "User profiles and management",
+      endpoint: "/users",
+      service: "UsersService",
+      category: "User Management",
     },
     {
-      id: 'posts',
-      name: 'Posts & Social',
-      description: 'Posts, comments, and social features',
-      endpoint: '/posts',
-      service: 'PostsService',
-      category: 'Content'
+      id: "posts",
+      name: "Posts & Social",
+      description: "Posts, comments, and social features",
+      endpoint: "/posts",
+      service: "PostsService",
+      category: "Content",
     },
     {
-      id: 'stories',
-      name: 'Stories',
-      description: 'Story creation and management',
-      endpoint: '/stories/feed',
-      service: 'StoriesService',
-      category: 'Content'
+      id: "stories",
+      name: "Stories",
+      description: "Story creation and management",
+      endpoint: "/stories/feed",
+      service: "StoriesService",
+      category: "Content",
     },
     {
-      id: 'resources',
-      name: 'Resources',
-      description: 'Resource library and uploads',
-      endpoint: '/resources',
-      service: 'ResourcesService',
-      category: 'Content'
+      id: "resources",
+      name: "Resources",
+      description: "Resource library and uploads",
+      endpoint: "/resources",
+      service: "ResourcesService",
+      category: "Content",
     },
     {
-      id: 'qna',
-      name: 'Q&A Forum',
-      description: 'Questions and answers',
-      endpoint: '/qa/questions',
-      service: 'QnAService',
-      category: 'Community'
+      id: "qna",
+      name: "Q&A Forum",
+      description: "Questions and answers",
+      endpoint: "/qa/questions",
+      service: "QnAService",
+      category: "Community",
     },
     {
-      id: 'notifications',
-      name: 'Notifications',
-      description: 'Push notifications and alerts',
-      endpoint: '/notifications',
-      service: 'NotificationsService',
-      category: 'Communication'
-    }
+      id: "notifications",
+      name: "Notifications",
+      description: "Push notifications and alerts",
+      endpoint: "/notifications",
+      service: "NotificationsService",
+      category: "Communication",
+    },
   ];
 
   useEffect(() => {
@@ -106,22 +112,24 @@ export default function APIStatusPage() {
   const checkAllEndpoints = async () => {
     setLoading(true);
     const newStatus = {};
-    
+
     // First check basic health
     try {
       const healthResult = await ExternalApiService.healthCheck();
-      newStatus['health'] = {
-        status: healthResult.success ? 'online' : 'offline',
+      newStatus["health"] = {
+        status: healthResult.success ? "online" : "offline",
         responseTime: Date.now() - performance.now(),
-        message: healthResult.success ? 'Server is healthy' : healthResult.message,
-        lastChecked: new Date()
+        message: healthResult.success
+          ? "Server is healthy"
+          : healthResult.message,
+        lastChecked: new Date(),
       };
     } catch (error) {
-      newStatus['health'] = {
-        status: 'error',
+      newStatus["health"] = {
+        status: "error",
         responseTime: null,
         message: error.message,
-        lastChecked: new Date()
+        lastChecked: new Date(),
       };
     }
 
@@ -129,49 +137,63 @@ export default function APIStatusPage() {
     try {
       const startTime = performance.now();
       // We can't actually test login without credentials, so we'll test the endpoint availability
-      const authResult = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://13.60.221.160'}/api/v1/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'test@test.com', password: 'test' }) // This will fail but tells us the endpoint exists
-      });
+      const authResult = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost"
+        }/api/v1/auth/login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: "test@test.com", password: "test" }), // This will fail but tells us the endpoint exists
+        }
+      );
       const endTime = performance.now();
-      
-      newStatus['auth'] = {
-        status: 'online', // Even if it returns 401, the endpoint is accessible
+
+      newStatus["auth"] = {
+        status: "online", // Even if it returns 401, the endpoint is accessible
         responseTime: endTime - startTime,
-        message: 'Authentication endpoint accessible',
-        lastChecked: new Date()
+        message: "Authentication endpoint accessible",
+        lastChecked: new Date(),
       };
     } catch (error) {
-      newStatus['auth'] = {
-        status: 'offline',
+      newStatus["auth"] = {
+        status: "offline",
         responseTime: null,
-        message: 'Cannot reach authentication endpoint',
-        lastChecked: new Date()
+        message: "Cannot reach authentication endpoint",
+        lastChecked: new Date(),
       };
     }
 
     // Check other endpoints (these will likely fail without auth, but we can check if they're reachable)
     const token = ImpactLeadersAuthService.getStoredTokens().accessToken;
-    
-    for (const endpoint of apiEndpoints.slice(2)) { // Skip health and auth since we already checked them
+
+    for (const endpoint of apiEndpoints.slice(2)) {
+      // Skip health and auth since we already checked them
       try {
         const startTime = performance.now();
         const result = await ExternalApiService.get(endpoint.endpoint, token);
         const endTime = performance.now();
-        
+
         newStatus[endpoint.id] = {
-          status: result.success ? 'online' : (result.status === 401 ? 'auth_required' : 'error'),
+          status: result.success
+            ? "online"
+            : result.status === 401
+            ? "auth_required"
+            : "error",
           responseTime: endTime - startTime,
-          message: result.success ? 'Endpoint accessible' : (result.status === 401 ? 'Authentication required' : result.message),
-          lastChecked: new Date()
+          message: result.success
+            ? "Endpoint accessible"
+            : result.status === 401
+            ? "Authentication required"
+            : result.message,
+          lastChecked: new Date(),
         };
       } catch (error) {
         newStatus[endpoint.id] = {
-          status: 'offline',
+          status: "offline",
           responseTime: null,
           message: error.message,
-          lastChecked: new Date()
+          lastChecked: new Date(),
         };
       }
     }
@@ -183,33 +205,58 @@ export default function APIStatusPage() {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'online': return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'offline': return <XCircle className="h-5 w-5 text-red-500" />;
-      case 'auth_required': return <Clock className="h-5 w-5 text-yellow-500" />;
-      case 'error': return <XCircle className="h-5 w-5 text-red-500" />;
-      default: return <Activity className="h-5 w-5 text-gray-500" />;
+      case "online":
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
+      case "offline":
+        return <XCircle className="h-5 w-5 text-red-500" />;
+      case "auth_required":
+        return <Clock className="h-5 w-5 text-yellow-500" />;
+      case "error":
+        return <XCircle className="h-5 w-5 text-red-500" />;
+      default:
+        return <Activity className="h-5 w-5 text-gray-500" />;
     }
   };
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case 'online': return <Badge variant="default" className="bg-green-500">Online</Badge>;
-      case 'offline': return <Badge variant="destructive">Offline</Badge>;
-      case 'auth_required': return <Badge variant="secondary" className="bg-yellow-500 text-white">Auth Required</Badge>;
-      case 'error': return <Badge variant="destructive">Error</Badge>;
-      default: return <Badge variant="outline">Unknown</Badge>;
+      case "online":
+        return (
+          <Badge variant="default" className="bg-green-500">
+            Online
+          </Badge>
+        );
+      case "offline":
+        return <Badge variant="destructive">Offline</Badge>;
+      case "auth_required":
+        return (
+          <Badge variant="secondary" className="bg-yellow-500 text-white">
+            Auth Required
+          </Badge>
+        );
+      case "error":
+        return <Badge variant="destructive">Error</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
     }
   };
 
   const getCategoryIcon = (category) => {
     switch (category) {
-      case 'Core': return <Server className="h-4 w-4" />;
-      case 'Authentication': return <Zap className="h-4 w-4" />;
-      case 'User Management': return <Database className="h-4 w-4" />;
-      case 'Content': return <Globe className="h-4 w-4" />;
-      case 'Community': return <Activity className="h-4 w-4" />;
-      case 'Communication': return <Activity className="h-4 w-4" />;
-      default: return <Activity className="h-4 w-4" />;
+      case "Core":
+        return <Server className="h-4 w-4" />;
+      case "Authentication":
+        return <Zap className="h-4 w-4" />;
+      case "User Management":
+        return <Database className="h-4 w-4" />;
+      case "Content":
+        return <Globe className="h-4 w-4" />;
+      case "Community":
+        return <Activity className="h-4 w-4" />;
+      case "Communication":
+        return <Activity className="h-4 w-4" />;
+      default:
+        return <Activity className="h-4 w-4" />;
     }
   };
 
@@ -221,7 +268,9 @@ export default function APIStatusPage() {
     return acc;
   }, {});
 
-  const onlineCount = Object.values(apiStatus).filter(status => status.status === 'online').length;
+  const onlineCount = Object.values(apiStatus).filter(
+    (status) => status.status === "online"
+  ).length;
   const totalCount = apiEndpoints.length;
 
   return (
@@ -241,8 +290,10 @@ export default function APIStatusPage() {
         </div>
         <div className="flex gap-3">
           <Button onClick={checkAllEndpoints} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            {loading ? 'Checking...' : 'Refresh All'}
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+            />
+            {loading ? "Checking..." : "Refresh All"}
           </Button>
         </div>
       </div>
@@ -269,12 +320,16 @@ export default function APIStatusPage() {
               {onlineCount === totalCount ? (
                 <>
                   <CheckCircle className="h-8 w-8 text-green-500" />
-                  <span className="text-green-600 font-semibold">All Systems Operational</span>
+                  <span className="text-green-600 font-semibold">
+                    All Systems Operational
+                  </span>
                 </>
               ) : (
                 <>
                   <Clock className="h-8 w-8 text-yellow-500" />
-                  <span className="text-yellow-600 font-semibold">Some Issues Detected</span>
+                  <span className="text-yellow-600 font-semibold">
+                    Some Issues Detected
+                  </span>
                 </>
               )}
             </div>
@@ -291,7 +346,8 @@ export default function APIStatusPage() {
               {category}
             </CardTitle>
             <CardDescription>
-              {endpoints.length} endpoint{endpoints.length > 1 ? 's' : ''} in this category
+              {endpoints.length} endpoint{endpoints.length > 1 ? "s" : ""} in
+              this category
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -299,19 +355,28 @@ export default function APIStatusPage() {
               {endpoints.map((endpoint) => {
                 const status = apiStatus[endpoint.id];
                 return (
-                  <div key={endpoint.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div
+                    key={endpoint.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
                     <div className="flex items-center gap-4">
                       {getStatusIcon(status?.status)}
                       <div>
                         <h3 className="font-medium">{endpoint.name}</h3>
-                        <p className="text-sm text-gray-600">{endpoint.description}</p>
+                        <p className="text-sm text-gray-600">
+                          {endpoint.description}
+                        </p>
                         <p className="text-xs text-gray-500 mt-1">
                           {endpoint.endpoint} • {endpoint.service}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      {status ? getStatusBadge(status.status) : <Badge variant="outline">Not checked</Badge>}
+                      {status ? (
+                        getStatusBadge(status.status)
+                      ) : (
+                        <Badge variant="outline">Not checked</Badge>
+                      )}
                       {status?.responseTime && (
                         <p className="text-xs text-gray-500 mt-1">
                           {Math.round(status.responseTime)}ms
@@ -342,13 +407,13 @@ export default function APIStatusPage() {
             <div>
               <p className="font-medium">Base URL</p>
               <p className="text-sm text-gray-600">
-                {process.env.NEXT_PUBLIC_API_BASE_URL || 'http://13.60.221.160'}
+                {process.env.NEXT_PUBLIC_API_BASE_URL || "http://13.60.221.160"}
               </p>
             </div>
             <div>
               <p className="font-medium">Environment</p>
               <p className="text-sm text-gray-600">
-                {process.env.NODE_ENV || 'development'}
+                {process.env.NODE_ENV || "development"}
               </p>
             </div>
           </div>

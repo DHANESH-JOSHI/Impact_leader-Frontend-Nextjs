@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import AddUserModal from "@/components/impact-leaders/users/AddUserModal"
+import AddUserModal from "@/components/impact-leaders/users/AddUserModal";
 import ViewUserModal from "@/components/impact-leaders/users/ViewUserModal";
 import {
   CheckCircle,
@@ -49,21 +49,21 @@ const Toast = ({ message, type, onClose, isVisible }) => {
     type === "success"
       ? "bg-green-500 border-green-600 shadow-green-500/20"
       : type === "error"
-        ? "bg-red-500 border-red-600 shadow-red-500/20"
-        : type === "warning"
-          ? "bg-yellow-500 border-yellow-600 shadow-yellow-500/20"
-          : type === "info"
-            ? "bg-blue-500 border-blue-600 shadow-blue-500/20"
-            : "bg-gray-500 border-gray-600 shadow-gray-500/20";
+      ? "bg-red-500 border-red-600 shadow-red-500/20"
+      : type === "warning"
+      ? "bg-yellow-500 border-yellow-600 shadow-yellow-500/20"
+      : type === "info"
+      ? "bg-blue-500 border-blue-600 shadow-blue-500/20"
+      : "bg-gray-500 border-gray-600 shadow-gray-500/20";
 
   const Icon =
     type === "success"
       ? CheckCircle
       : type === "error"
-        ? AlertCircle
-        : type === "warning"
-          ? AlertTriangle
-          : Info;
+      ? AlertCircle
+      : type === "warning"
+      ? AlertTriangle
+      : Info;
 
   return (
     <motion.div
@@ -85,7 +85,6 @@ const Toast = ({ message, type, onClose, isVisible }) => {
             <X className="h-4 w-4" />
           </button>
         </div>
-
       </div>
     </motion.div>
   );
@@ -442,30 +441,52 @@ export default function UsersPage() {
           const safeUser = {
             // Basic table data
             id: u.id || u._id,
-            name: u.name || u.fullName || `${u.firstName || ""} ${u.lastName || ""}`.trim() || "Unnamed",
+            name:
+              u.name ||
+              u.fullName ||
+              `${u.firstName || ""} ${u.lastName || ""}`.trim() ||
+              "Unnamed",
             username: u.username || u.firstName?.toLowerCase() || "unknown",
             email: u.email || "no-email",
             role: u.role || "viewer",
             status: u.status || (u.isActive ? "active" : "invited"),
-            createdAt: u.createdAt ? new Date(u.createdAt).toISOString().split("T")[0] : "",
-            lastActive: u.lastActiveAt || u.lastLogin ? new Date(u.lastActiveAt || u.lastLogin).toISOString().split("T")[0] : null,
+            createdAt: u.createdAt
+              ? new Date(u.createdAt).toISOString().split("T")[0]
+              : "",
+            lastActive:
+              u.lastActiveAt || u.lastLogin
+                ? new Date(u.lastActiveAt || u.lastLogin)
+                    .toISOString()
+                    .split("T")[0]
+                : null,
             posts: u.posts || u.stats?.postsCount || 0,
             followers: u.followers || u.stats?.connectionsCount || 0,
-            avatar: u.avatar || u.profileImage || `https://i.pravatar.cc/100?u=${u._id}`,
+            avatar:
+              u.avatar ||
+              u.profileImage ||
+              `https://i.pravatar.cc/100?u=${u._id}`,
 
             // Detailed data for ViewUserModal with fallbacks
             firstName: u.firstName || "",
             lastName: u.lastName || "",
-            profileImage: u.profileImage || u.avatar || `https://i.pravatar.cc/100?u=${u._id}`,
+            profileImage:
+              u.profileImage ||
+              u.avatar ||
+              `https://i.pravatar.cc/100?u=${u._id}`,
             companyName: u.companyName || "Not specified",
             organizationType: u.organizationType || "Not specified",
             designation: u.designation || "Not specified",
             themes: u.themes || [],
             referralCode: u.referralCode || null,
             isActive: u.isActive !== undefined ? u.isActive : true,
-            isEmailVerified: u.isEmailVerified !== undefined ? u.isEmailVerified : false,
-            termsAccepted: u.termsAccepted !== undefined ? u.termsAccepted : false,
-            hasAutoApprovePrivilege: u.hasAutoApprovePrivilege !== undefined ? u.hasAutoApprovePrivilege : false,
+            isEmailVerified:
+              u.isEmailVerified !== undefined ? u.isEmailVerified : false,
+            termsAccepted:
+              u.termsAccepted !== undefined ? u.termsAccepted : false,
+            hasAutoApprovePrivilege:
+              u.hasAutoApprovePrivilege !== undefined
+                ? u.hasAutoApprovePrivilege
+                : false,
             isApproved: u.isApproved !== undefined ? u.isApproved : true,
             registrationSource: u.registrationSource || "direct",
             lastLogin: u.lastLogin || null,
@@ -514,10 +535,10 @@ export default function UsersPage() {
     [users]
   );
   const handleUserAdded = () => {
-    console.log('User added successfully!');
+    console.log("User added successfully!");
     // Refresh the users list or show success message
     loadUsers(); // Refresh the table
-    showToast('User created successfully!', 'success');
+    showToast("User created successfully!", "success");
   };
 
   // handlers
@@ -747,18 +768,7 @@ export default function UsersPage() {
                   >
                     Status <SortIcon col="status" />
                   </th>
-                  <th
-                    className="text-right px-4 py-3 cursor-pointer"
-                    onClick={() => toggleSort("posts")}
-                  >
-                    Posts <SortIcon col="posts" />
-                  </th>
-                  <th
-                    className="text-right px-4 py-3 cursor-pointer"
-                    onClick={() => toggleSort("followers")}
-                  >
-                    Followers <SortIcon col="followers" />
-                  </th>
+
                   <th
                     className="text-left px-4 py-3 cursor-pointer"
                     onClick={() => toggleSort("createdAt")}
@@ -788,7 +798,6 @@ export default function UsersPage() {
                     </td>
                   </tr>
                 ) : users.length === 0 ? (
-
                   <tr>
                     <td
                       colSpan={9}
@@ -818,18 +827,19 @@ export default function UsersPage() {
                       <td className="px-4 py-3">{u.email}</td>
                       <td className="px-4 py-3">
                         <span
-                          className={`px-2 py-1 rounded-full text-xs ${u.status === "active"
+                          className={`px-2 py-1 rounded-full text-xs ${
+                            u.status === "active"
                               ? "bg-green-100 text-green-700"
                               : u.status === "invited"
-                                ? "bg-blue-100 text-blue-700"
-                                : "bg-red-100 text-red-700"
-                            }`}
+                              ? "bg-blue-100 text-blue-700"
+                              : "bg-red-100 text-red-700"
+                          }`}
                         >
                           {u.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right">{u.posts}</td>
-                      <td className="px-4 py-3 text-right">{u.followers}</td>
+                      {/* <td className="px-4 py-3 text-right">{u.posts}</td>
+                      <td className="px-4 py-3 text-right">{u.followers}</td> */}
                       <td className="px-4 py-3">{u.createdAt || "—"}</td>
                       <td className="px-4 py-3">{u.lastActive || "—"}</td>
                       <td className="px-4 py-3">
