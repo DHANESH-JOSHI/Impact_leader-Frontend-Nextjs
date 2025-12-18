@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import AddUserModal from "@/components/impact-leaders/users/AddUserModal";
 import ViewUserModal from "@/components/impact-leaders/users/ViewUserModal";
+import EditUserModal from "@/components/impact-leaders/users/EditUserModal";
 import {
   CheckCircle,
   AlertCircle,
@@ -405,6 +406,7 @@ export default function UsersPage() {
   // modal state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
@@ -433,14 +435,22 @@ export default function UsersPage() {
         sortBy,
         sortOrder,
       });
+      console.log('[Users Page] API Response:', result);
+
       if (result?.success) {
-        const api = result.data;
+        // Handle different response structures
+        const api = Array.isArray(result.data)
+          ? result.data
+          : (result.data?.users || result.data?.data || []);
+
+        console.log('[Users Page] Users array:', api);
 
         const transformed = (api || []).map((u) => {
           // Create a safe user object with fallbacks
           const safeUser = {
             // Basic table data
             id: u.id || u._id,
+            _id: u._id || u.id, // Keep both for compatibility
             name:
               u.name ||
               u.fullName ||
@@ -464,7 +474,7 @@ export default function UsersPage() {
             avatar:
               u.avatar ||
               u.profileImage ||
-              `https://i.pravatar.cc/100?u=${u._id}`,
+              `https://i.pravatar.cc/100?u=${u._id || u.id}`,
 
             // Detailed data for ViewUserModal with fallbacks
             firstName: u.firstName || "",
@@ -472,7 +482,7 @@ export default function UsersPage() {
             profileImage:
               u.profileImage ||
               u.avatar ||
-              `https://i.pravatar.cc/100?u=${u._id}`,
+              `https://i.pravatar.cc/100?u=${u._id || u.id}`,
             companyName: u.companyName || "Not specified",
             organizationType: u.organizationType || "Not specified",
             designation: u.designation || "Not specified",
@@ -496,15 +506,29 @@ export default function UsersPage() {
 
           return safeUser;
         });
-        setUsers(transformed);
+
+        // Remove duplicates based on ID
+        const uniqueUsers = Array.from(
+          new Map(transformed.map(u => [u.id || u._id, u])).values()
+        );
+
+        console.log('[Users Page] Transformed users:', transformed.length, 'Unique:', uniqueUsers.length);
+
+        setUsers(uniqueUsers);
+
+        // Handle pagination data from response
+        const totalCount = result.data?.pagination?.total
+          || result.data?.total
+          || result.pagination?.total
+          || uniqueUsers.length;
+
         setPagination((p) => ({
           ...p,
-          total: api.total || transformed.length,
-          totalPages: Math.max(
-            1,
-            Math.ceil((api.total || transformed.length) / p.limit)
-          ),
+          total: totalCount,
+          totalPages: Math.max(1, Math.ceil(totalCount / p.limit)),
         }));
+
+        console.log('[Users Page] Loaded users:', uniqueUsers.length, 'Total:', totalCount);
         // showToast(`Loaded ${transformed.length} users`, "success");
       } else {
         setUsers(initialUsers);
@@ -582,23 +606,34 @@ export default function UsersPage() {
     setIsViewModalOpen(true);
   };
 
-  const handleEditUser = async (updated) => {
+  const handleEditUser = (user) => {
+    setSelectedUser(user);
+    setIsViewModalOpen(false); // Close view modal if open
+    setIsEditModalOpen(true); // Open edit modal
+  };
+
+  const handleSaveUser = async (updated) => {
     try {
       showToast("Updating user…", "info");
-      const res = await UsersService.updateUser?.(updated.id, updated);
+      const userId = updated.id || updated._id;
+
+      console.log('[Users Page] Saving user:', userId, updated);
+
+      const res = await UsersService.updateUser?.(userId, updated);
+
+      console.log('[Users Page] Update response:', res);
+
       if (res?.success) {
-        setUsers((prev) =>
-          prev.map((u) => (u.id === updated.id ? { ...u, ...updated } : u))
-        );
-        showToast("User updated", "success");
+        showToast("User updated successfully", "success");
+        setIsEditModalOpen(false);
+
+        // Reload fresh data from backend
+        await loadUsers();
       } else {
-        // optimistic
-        setUsers((prev) =>
-          prev.map((u) => (u.id === updated.id ? { ...u, ...updated } : u))
-        );
-        showToast("User updated (local)", "success");
+        showToast(res?.message || "Failed to update user", "error");
       }
-    } catch {
+    } catch (error) {
+      console.error('[Users Page] Error updating user:', error);
       showToast("Failed to update user", "error");
     }
   };
@@ -946,6 +981,12 @@ export default function UsersPage() {
         onClose={() => setIsViewModalOpen(false)}
         user={selectedUser}
         onEdit={handleEditUser}
+      />
+      <EditUserModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        user={selectedUser}
+        onSave={handleSaveUser}
       />
       <DeleteConfirmModal
         isOpen={isDeleteModalOpen}

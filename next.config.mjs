@@ -6,9 +6,7 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  experimental: {
-    skipTrailingSlashRedirect: true,
-  },
+  skipTrailingSlashRedirect: true,
   generateBuildId: async () => {
     return 'my-build-id'
   },

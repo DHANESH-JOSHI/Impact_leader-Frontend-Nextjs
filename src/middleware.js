@@ -54,13 +54,9 @@ export async function middleware(request) {
     return NextResponse.next();
   }
 
-  // Temporarily disable middleware for debugging - remove this later
-  console.log('🔧 Middleware: Temporarily disabled for debugging');
-  return NextResponse.next();
-
   // Allow access to login page
   if (pathname === '/') {
-    const token = request.cookies.get('impactLeadersToken');
+    const token = request.cookies.get('authToken');
 
     // If authenticated and trying to access login page, redirect to dashboard
     if (token) {
@@ -70,7 +66,7 @@ export async function middleware(request) {
       } else {
         // Invalid token or not admin, clear cookie and allow login
         const response = NextResponse.next();
-        response.cookies.delete('impactLeadersToken');
+        response.cookies.delete('authToken');
         return response;
       }
     }
@@ -81,7 +77,7 @@ export async function middleware(request) {
   if (pathname.startsWith('/dashboard')) {
     console.log('🛡️ Middleware: Protecting dashboard route:', pathname);
 
-    const token = request.cookies.get('impactLeadersToken');
+    const token = request.cookies.get('authToken');
     console.log('🍪 Middleware: Token from cookie:', token ? 'Present' : 'Missing');
 
     if (!token) {
@@ -97,7 +93,7 @@ export async function middleware(request) {
       // Clear invalid token and redirect to login
       console.log('❌ Middleware: Invalid token, redirecting to session_expired');
       const response = NextResponse.redirect(new URL('/?error=session_expired', request.url));
-      response.cookies.delete('impactLeadersToken');
+      response.cookies.delete('authToken');
       return response;
     }
 

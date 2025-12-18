@@ -4,16 +4,16 @@
  */
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://13.60.221.160";
+  process.env.NEXT_PUBLIC_API_BASE_URL || "https://leader.techwithjoshi.in/";
 
 class ApiClient {
   constructor() {
     // Remove trailing slash from base URL if present
-    const cleanBaseURL = API_BASE_URL.replace(/\/$/, '');
-    this.baseURL = cleanBaseURL + '/api/v1';
+    const cleanBaseURL = API_BASE_URL.replace(/\/$/, "");
+    this.baseURL = cleanBaseURL + "/api/v1";
     this.tokenGetter = null;
     this.defaultTimeout = 30000; // 30 seconds
-    console.log('[API Client] Initialized with baseURL:', this.baseURL);
+    console.log("[API Client] Initialized with baseURL:", this.baseURL);
   }
 
   /**
@@ -28,7 +28,9 @@ class ApiClient {
    * Build complete URL with query parameters
    */
   buildURL(endpoint, params = {}) {
-    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+    const cleanEndpoint = endpoint.startsWith("/")
+      ? endpoint.slice(1)
+      : endpoint;
     const fullURL = `${this.baseURL}/${cleanEndpoint}`;
 
     const url = new URL(fullURL);
@@ -97,7 +99,7 @@ class ApiClient {
         requestOptions.body = isFormData ? data : JSON.stringify(data);
       }
 
-      console.log('[API]', method, url, {
+      console.log("[API]", method, url, {
         hasAuth: !!headers["Authorization"],
         hasData: !!data,
       });
@@ -121,18 +123,59 @@ class ApiClient {
           status: response.status,
           message:
             responseData.message ||
-            ("HTTP " + response.status + ": " + response.statusText),
+            "HTTP " + response.status + ": " + response.statusText,
           data: responseData,
         };
 
-        console.error('[API Error]', method, url, ':', error);
+        console.error("[API Error]", method, url, ":", error);
+
+        // Handle 401 Unauthorized - try to refresh token
+        if (response.status === 401 && !skipAuth && !options._isRetryAfterRefresh) {
+          console.log('[API] 401 Unauthorized - attempting token refresh');
+
+          // Try to get refresh token from cookie
+          if (typeof document !== 'undefined') {
+            const refreshToken = document.cookie
+              .split('; ')
+              .find(row => row.startsWith('refreshToken='))
+              ?.split('=')[1];
+
+            if (refreshToken) {
+              try {
+                // Attempt to refresh the token
+                const refreshResponse = await this.post('/auth/refresh', { refreshToken }, { skipAuth: true });
+
+                if (refreshResponse.success && refreshResponse.data?.token) {
+                  // Update the token in cookie
+                  document.cookie = `authToken=${refreshResponse.data.token}; path=/; max-age=86400; SameSite=Strict`;
+
+                  // Retry the original request with new token
+                  console.log('[API] Token refreshed, retrying original request');
+                  return this.request(endpoint, {
+                    ...options,
+                    token: refreshResponse.data.token,
+                    _isRetryAfterRefresh: true
+                  });
+                }
+              } catch (refreshError) {
+                console.error('[API] Token refresh failed:', refreshError);
+                // Clear tokens and redirect to login
+                if (typeof window !== 'undefined') {
+                  document.cookie = 'authToken=; path=/; max-age=0';
+                  document.cookie = 'refreshToken=; path=/; max-age=0';
+                  window.location.href = '/?error=session_expired';
+                }
+              }
+            }
+          }
+        }
 
         // Retry logic for specific status codes
         if (
           retries > 0 &&
           [408, 429, 500, 502, 503, 504].includes(response.status)
         ) {
-          console.log('[API] Retrying... (' + retries + ' attempts left)');
+          console.log("[API] Retrying... (" + retries + " attempts left)");
           await this.delay(1000);
           return this.request(endpoint, { ...options, retries: retries - 1 });
         }
@@ -146,12 +189,12 @@ class ApiClient {
         data: responseData,
       };
     } catch (error) {
-      console.error('[API Exception]', method, endpoint, ':', error);
+      console.error("[API Exception]", method, endpoint, ":", error);
 
       // Retry on network errors
       if (retries > 0 && error.name === "AbortError") {
         console.log(
-          '[API] Retrying after timeout... (' + retries + ' attempts left)'
+          "[API] Retrying after timeout... (" + retries + " attempts left)"
         );
         await this.delay(1000);
         return this.request(endpoint, { ...options, retries: retries - 1 });
@@ -225,8 +268,11 @@ class ApiClient {
    */
   async healthCheck() {
     try {
-      const baseUrl = this.baseURL.substring(0, this.baseURL.indexOf('/api/v1'));
-      const response = await fetch(baseUrl + '/health');
+      const baseUrl = this.baseURL.substring(
+        0,
+        this.baseURL.indexOf("/api/v1")
+      );
+      const response = await fetch(baseUrl + "/health");
       return {
         success: response.ok,
         status: response.status,

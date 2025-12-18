@@ -1,119 +1,76 @@
-import { generateToken, hashPassword, comparePassword } from "@/lib/auth";
-
-// Mock user database - replace with actual database calls
-const mockUsers = [
-  {
-    id: 1,
-    email: "admin@demo.com",
-    password: "demo123", // Plain text for demo
-    role: "admin",
-    name: "Admin User",
-  },
-];
+import { apiClient } from "@/lib/apiClient";
 
 export class AuthService {
   static async login(email, password) {
     try {
-      // Find user by email
-      const user = mockUsers.find((u) => u.email === email);
+      // Call backend API for login
+      const response = await apiClient.post('/auth/login', {
+        email,
+        password,
+      }, { skipAuth: true }); // Skip auth header for login
 
-      if (!user) {
-        throw new Error("User not found");
+      if (!response.success) {
+        throw new Error(response.message || "Login failed");
       }
 
-      // Verify password - simple comparison for demo
-      const isValid = user.password === password;
-
-      if (!isValid) {
-        throw new Error("Invalid credentials");
-      }
-
-      // Generate JWT token
-      const token = generateToken({
-        userId: user.id,
-        email: user.email,
-        role: user.role,
-        name: user.name,
-      });
-
+      // Backend returns token and user data
       return {
         success: true,
-        token,
-        user: {
-          id: user.id,
-          email: user.email,
-          role: user.role,
-          name: user.name,
-        },
+        token: response.data.token,
+        user: response.data.user,
       };
     } catch (error) {
       console.error("Login error:", error);
       return {
         success: false,
-        message: error.message,
+        message: error.message || "Invalid credentials",
       };
     }
   }
 
   static async register(userData) {
     try {
-      const { email, password, name } = userData;
+      // Call backend API for registration
+      const response = await apiClient.post('/auth/register', userData, {
+        skipAuth: true
+      });
 
-      // Check if user already exists
-      const existingUser = mockUsers.find((u) => u.email === email);
-      if (existingUser) {
-        throw new Error("User already exists");
+      if (!response.success) {
+        throw new Error(response.message || "Registration failed");
       }
-
-      // Hash password
-      const hashedPassword = await hashPassword(password);
-
-      // Create new user
-      const newUser = {
-        id: mockUsers.length + 1,
-        email,
-        password: hashedPassword,
-        role: "user",
-        name,
-      };
-
-      mockUsers.push(newUser);
 
       return {
         success: true,
-        message: "User created successfully",
+        message: response.data.message || "User created successfully",
+        data: response.data,
       };
     } catch (error) {
       console.error("Registration error:", error);
       return {
         success: false,
-        message: error.message,
+        message: error.message || "Registration failed",
       };
     }
   }
 
-  static async getCurrentUser(userId) {
+  static async getCurrentUser() {
     try {
-      const user = mockUsers.find((u) => u.id === userId);
+      // Call backend API to get current user
+      const response = await apiClient.get('/auth/me');
 
-      if (!user) {
-        throw new Error("User not found");
+      if (!response.success) {
+        throw new Error(response.message || "Failed to fetch user");
       }
 
       return {
         success: true,
-        user: {
-          id: user.id,
-          email: user.email,
-          role: user.role,
-          name: user.name,
-        },
+        user: response.data.user,
       };
     } catch (error) {
       console.error("Get user error:", error);
       return {
         success: false,
-        message: error.message,
+        message: error.message || "Failed to fetch user",
       };
     }
   }

@@ -80,6 +80,38 @@ export class UsersService {
     }
   }
 
+  // Update user (admin only - full user update)
+  static async updateUser(userId, userData) {
+    try {
+      console.log('[UsersService] Update user:', userId, userData);
+
+      // Call our Next.js API route which acts as a proxy to the backend
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      const result = await response.json();
+
+      console.log('[UsersService] Update response:', result);
+
+      return {
+        success: result.success || response.ok,
+        data: result.data,
+        message: result.message || (response.ok ? 'User updated successfully' : 'Update failed'),
+      };
+    } catch (error) {
+      console.error("Update user error:", error);
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
   // Update user profile (user's own profile or admin)
   static async updateUserProfile(userId, profileData) {
     try {
