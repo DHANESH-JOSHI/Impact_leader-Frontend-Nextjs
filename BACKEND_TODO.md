@@ -1,11 +1,11 @@
-# Backend API Endpoints TODO
+# Backend API Endpoints - User Update Status
 
-## ⚠️ CRITICAL: Missing Admin User Management Endpoint
+## ✅ UPDATE: Testing `/users/:id` Endpoint
 
-### Required Endpoint
+### Endpoint Configuration
 
 ```javascript
-PUT /api/v1/admin/users/:userId
+PUT /api/v1/users/:userId
 Authorization: Bearer <admin_token>
 Content-Type: application/json
 
@@ -24,128 +24,59 @@ Body:
   "isApproved": boolean,
   "hasAutoApprovePrivilege": boolean
 }
-
-Response:
-{
-  "success": true,
-  "data": {
-    "user": { /* updated user object */ }
-  },
-  "message": "User updated successfully"
-}
 ```
 
-### Current Limitation
+### Current Status
 
-**Admin panel CANNOT update user data** because:
-- ❌ Backend only has `/users/profile` (updates own profile only)
-- ❌ No `/admin/users/:id` endpoint exists
-- ❌ Cannot update other users' data as admin
+**Updated frontend to use `/users/:id` endpoint:**
+- ✅ Found endpoint in API documentation (API_INTEGRATION_FIXED.md line 66)
+- ✅ Updated src/app/api/admin/users/[id]/route.js to call `/users/${id}`
+- ✅ Added `role` field to update payload
+- 🧪 Ready to test if admin can update other users via this endpoint
 
-### Impact
+### Previous Issue (RESOLVED)
 
-- Admin can view users ✅
-- Admin CANNOT edit users ❌
-- Changes are local-only (not saved to database) ❌
-- Page refresh loses all changes ❌
+**Was using wrong endpoint:**
+- ❌ Old: Using `/users/profile` (only updates logged-in user's profile)
+- ✅ New: Using `/users/:id` (should allow updating specific user by ID)
 
-### Priority
+### Testing Required
 
-**🔴 HIGH PRIORITY** - Core admin functionality missing
+1. **Test if endpoint works:**
+   - Edit a user from admin panel
+   - Check browser console for API call logs
+   - Verify response from backend
+   - Check if data persists in database
 
-### Implementation Guide
+2. **Verify permissions:**
+   - Confirm admin token has permission to update other users
+   - Check if endpoint returns 403 Forbidden or works correctly
 
-Create in: `routes/admin/users.js`
+### Implementation Files
 
-```javascript
-router.put('/admin/users/:userId',
-  protect,           // Require authentication
-  authorize('admin'), // Require admin role
-  async (req, res) => {
-    try {
-      const { userId } = req.params;
-      const updateData = req.body;
+Frontend files ready:
+- src/app/api/admin/users/[id]/route.js - Next.js proxy route ✅
+- src/services/usersService.js - Service layer ✅
+- src/app/dashboard/users/page.jsx - UI component ✅
+- src/components/impact-leaders/users/EditUserModal.jsx - Edit modal ✅
 
-      // Find and update user
-      const user = await User.findByIdAndUpdate(
-        userId,
-        {
-          $set: {
-            firstName: updateData.firstName,
-            lastName: updateData.lastName,
-            email: updateData.email,
-            companyName: updateData.companyName,
-            organizationType: updateData.organizationType,
-            designation: updateData.designation,
-            themes: updateData.themes,
-            role: updateData.role,
-            isActive: updateData.isActive,
-            isEmailVerified: updateData.isEmailVerified,
-            isApproved: updateData.isApproved,
-            hasAutoApprovePrivilege: updateData.hasAutoApprovePrivilege,
-            updatedAt: Date.now()
-          }
-        },
-        { new: true, runValidators: true }
-      ).select('-password');
-
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: 'User not found'
-        });
-      }
-
-      res.status(200).json({
-        success: true,
-        data: { user },
-        message: 'User updated successfully'
-      });
-
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: error.message
-      });
-    }
-  }
-);
-```
-
-### Testing
-
-```bash
-curl -X PUT https://leader.techwithjoshi.in/api/v1/admin/users/6920c8d784bd044a9cde4204 \
-  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "firstName": "Updated",
-    "lastName": "Name",
-    "isActive": true
-  }'
-```
-
-### Related Files
-
-Frontend files already prepared:
-- `/api/admin/users/[id]/route.js` - Next.js proxy route ✅
-- `src/services/usersService.js` - Service layer ✅
-- `src/app/dashboard/users/page.jsx` - UI component ✅
-- `src/components/impact-leaders/users/EditUserModal.jsx` - Edit modal ✅
-
-**Once this endpoint is added, admin user management will work immediately!**
+**Frontend is ready for testing!**
 
 ---
 
-## Other Missing Endpoints
+## Other Endpoints to Verify
 
-1. `DELETE /api/v1/admin/users/:userId` - Delete user (admin)
-2. `PATCH /api/v1/admin/users/:userId/role` - Change user role
-3. `PATCH /api/v1/admin/users/:userId/status` - Activate/deactivate user
-4. `POST /api/v1/admin/users/:userId/privileges` - Grant/revoke privileges
+If `/users/:id` doesn't work with admin privileges, may need:
+
+1. `PUT /api/v1/admin/users/:userId` - Admin-specific user update
+2. `DELETE /api/v1/admin/users/:userId` - Delete user (admin)
+3. `PATCH /api/v1/admin/users/:userId/role` - Change user role
+4. `PATCH /api/v1/admin/users/:userId/status` - Activate/deactivate user
+5. `POST /api/v1/admin/users/:userId/privileges` - Grant/revoke privileges
 
 ---
 
 **Created**: 2025-12-19
-**Status**: PENDING
-**Assigned**: Backend Team
+**Status**: TESTING
+**Last Updated**: 2025-12-19
+**Next Step**: Test user edit functionality in admin panel

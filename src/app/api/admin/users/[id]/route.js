@@ -25,9 +25,9 @@ export async function PUT(request, { params }) {
       );
     }
 
-    // Try to update via backend API
-    // Since backend doesn't have PUT /users/:id, we'll use PUT /users/profile
-    console.log('[Admin API] Attempting to update user via profile endpoint');
+    // Update user via backend API
+    // Using PUT /users/:id endpoint (requires admin privileges)
+    console.log('[Admin API] Attempting to update user via /users/:id endpoint');
 
     const updatePayload = {
       firstName: body.firstName,
@@ -37,13 +37,14 @@ export async function PUT(request, { params }) {
       organizationType: body.organizationType?.toLowerCase(),
       designation: body.designation,
       themes: body.themes,
+      role: body.role,
       isActive: body.isActive,
       isEmailVerified: body.isEmailVerified,
       hasAutoApprovePrivilege: body.hasAutoApprovePrivilege,
       isApproved: body.isApproved,
     };
 
-    const response = await apiClient.put('/users/profile', updatePayload, {
+    const response = await apiClient.put(`/users/${id}`, updatePayload, {
       token: authToken
     });
 
