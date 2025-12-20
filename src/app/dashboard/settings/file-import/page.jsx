@@ -8,13 +8,10 @@ import {
   Trash2,
   Download,
   CheckCircle,
-  AlertCircle,
-  File,
   RefreshCw,
 } from "lucide-react";
 
 export default function FileImportPage() {
-  // current logo aur file upload ke states manage krta hai
   const [currentLogo, setCurrentLogo] = useState({
     url: "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=200&h=200&fit=crop&crop=center",
     name: "company-logo.png",
@@ -27,7 +24,6 @@ export default function FileImportPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
 
-  // smooth transitions ke liye animation configurations
   const pageVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -53,7 +49,6 @@ export default function FileImportPage() {
     },
   };
 
-  // uploaded files ko validate krta hai - type aur size check
   const validateFile = (file) => {
     const validTypes = [
       "image/jpeg",
@@ -62,7 +57,7 @@ export default function FileImportPage() {
       "image/svg+xml",
       "image/webp",
     ];
-    const maxSize = 5 * 1024 * 1024; // 5MB limit
+    const maxSize = 5 * 1024 * 1024;
 
     if (!validTypes.includes(file.type)) {
       alert("Please upload only image files (JPG, PNG, SVG, WebP)!");
@@ -77,14 +72,12 @@ export default function FileImportPage() {
     return true;
   };
 
-  // validation ke baad file upload process krta hai
   const handleFileUpload = (file) => {
     if (validateFile(file)) {
       setNewFile(file);
     }
   };
 
-  // drag aur drop functionality handle krta hai
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -105,20 +98,17 @@ export default function FileImportPage() {
     }
   };
 
-  // input se file selection handle krta hai
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       handleFileUpload(e.target.files);
     }
   };
 
-  // nayi file submit krke current logo update krta hai
   const handleUploadSubmit = async () => {
     if (!newFile) return;
 
     setUploading(true);
 
-    // timeout ke sath upload process simulate krta hai
     setTimeout(() => {
       setCurrentLogo({
         url: URL.createObjectURL(newFile),
@@ -129,20 +119,16 @@ export default function FileImportPage() {
       setNewFile(null);
       setUploading(false);
       setUploadSuccess(true);
-
-      // 3 seconds baad success message hide krta hai
       setTimeout(() => setUploadSuccess(false), 3000);
     }, 2000);
   };
 
-  // confirmation ke sath current logo remove krta hai
   const handleDeleteCurrentLogo = () => {
     if (window.confirm("Are you sure you want to delete the current logo?")) {
       setCurrentLogo(null);
     }
   };
 
-  // date strings ko display ke liye format krta hai
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
@@ -160,7 +146,6 @@ export default function FileImportPage() {
       initial="hidden"
       animate="visible"
     >
-      {/* main page header - title aur description ke sath */}
       <motion.div className="mb-8" variants={cardVariants}>
         <div className="flex items-center space-x-3 mb-2">
           <div className="p-2 bg-blue-50 rounded-lg">
@@ -190,7 +175,6 @@ export default function FileImportPage() {
 
           {currentLogo ? (
             <div className="space-y-4">
-              {/* logo preview container */}
               <div className="flex justify-center">
                 <div className="relative group">
                   <img
@@ -202,7 +186,6 @@ export default function FileImportPage() {
                 </div>
               </div>
 
-              {/* file details display */}
               <div className="bg-white p-4 rounded-lg border border-gray-200 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-sm" style={{ color: "#646464" }}>
@@ -239,7 +222,6 @@ export default function FileImportPage() {
                 </div>
               </div>
 
-              {/* current logo ke liye action buttons */}
               <div className="flex space-x-3">
                 <motion.button
                   onClick={() => {
@@ -298,7 +280,6 @@ export default function FileImportPage() {
             Upload New Logo
           </h2>
 
-          {/* interactive upload area */}
           <div className="relative">
             <div
               className={`relative w-full group cursor-pointer transition-all duration-300 ${
@@ -341,7 +322,6 @@ export default function FileImportPage() {
                   </motion.svg>
                 </div>
 
-                {/* animated border overlay */}
                 <div
                   className={`absolute border opacity-0 group-hover:opacity-80 transition-all duration-300 border-dashed inset-0 z-30 bg-transparent flex items-center justify-center h-32 w-32 mx-auto rounded-xl ${
                     dragActive
@@ -361,7 +341,6 @@ export default function FileImportPage() {
               />
             </div>
 
-            {/* upload instructions */}
             <div className="text-center mt-4">
               <p
                 className="text-sm font-medium mb-1"
@@ -375,7 +354,6 @@ export default function FileImportPage() {
             </div>
           </div>
 
-          {/* selected nayi file ka preview */}
           {newFile && (
             <motion.div
               className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200"
@@ -417,7 +395,6 @@ export default function FileImportPage() {
             </motion.div>
           )}
 
-          {/* upload submission button */}
           <div className="mt-6">
             <motion.button
               onClick={handleUploadSubmit}
@@ -449,7 +426,6 @@ export default function FileImportPage() {
         </motion.div>
       </div>
 
-      {/* success notification */}
       {uploadSuccess && (
         <motion.div
           className="fixed bottom-6 right-6 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2"

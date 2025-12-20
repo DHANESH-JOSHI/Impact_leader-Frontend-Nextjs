@@ -17,12 +17,10 @@ import {
   ChevronDown,
   ChevronUp,
   Store,
-  MessageSquare,
   Upload,
   Bell,
   Database,
   User2Icon,
-  Menu,
   X,
   Headphones,
 } from "lucide-react";
@@ -91,17 +89,16 @@ export default function Sidebar({ collapsed, setCollapsed }) {
 
   const isSettingsActive = pathname.startsWith("/dashboard/settings");
 
-  // animation variants - sidebar ke different states ke liye
   const sidebarVariants = {
     expanded: {
-      width: 256, // w-64 = 16rem = 256px
+      width: 256,
       transition: {
         duration: 0.3,
         ease: "easeInOut",
       },
     },
     collapsed: {
-      width: 64, // w-16 = 4rem = 64px
+      width: 64,
       transition: {
         duration: 0.3,
         ease: "easeInOut",
@@ -109,7 +106,6 @@ export default function Sidebar({ collapsed, setCollapsed }) {
     },
   };
 
-  // text show/hide animation variants
   const textVariants = {
     visible: {
       opacity: 1,
@@ -128,7 +124,6 @@ export default function Sidebar({ collapsed, setCollapsed }) {
     },
   };
 
-  // dropdown animation variants - settings submenu ke liye
   const dropdownVariants = {
     open: {
       opacity: 1,
@@ -148,7 +143,6 @@ export default function Sidebar({ collapsed, setCollapsed }) {
     },
   };
 
-  // icon animation variants
   const iconVariants = {
     collapsed: {
       rotate: 0,
@@ -167,7 +161,6 @@ export default function Sidebar({ collapsed, setCollapsed }) {
       animate={collapsed ? "collapsed" : "expanded"}
       initial={false}
     >
-      {/* toggle button - hamesha top me visible rahega */}
       <div className="absolute -right-3 top-6 z-10">
         <motion.button
           onClick={() => setCollapsed(!collapsed)}
@@ -189,7 +182,6 @@ export default function Sidebar({ collapsed, setCollapsed }) {
         </motion.button>
       </div>
 
-      {/* logo aur header section */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center">
           <motion.div className="flex items-center space-x-2" layout>
@@ -215,10 +207,8 @@ export default function Sidebar({ collapsed, setCollapsed }) {
         </div>
       </div>
 
-      {/* navigation menu */}
       <nav className="flex-1 overflow-y-auto py-4">
         <div className="space-y-1 px-2">
-          {/* main menu items render krna hai */}
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -258,7 +248,6 @@ export default function Sidebar({ collapsed, setCollapsed }) {
                     )}
                   </AnimatePresence>
 
-                  {/* tooltip for collapsed state - hover pe dikhega */}
                   {collapsed && (
                     <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                       {item.title}
@@ -269,7 +258,6 @@ export default function Sidebar({ collapsed, setCollapsed }) {
             );
           })}
 
-          {/* settings dropdown section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -307,7 +295,6 @@ export default function Sidebar({ collapsed, setCollapsed }) {
                 </AnimatePresence>
               </div>
 
-              {/* dropdown arrow - expand/collapse indicator */}
               <AnimatePresence>
                 {!collapsed && (
                   <motion.div
@@ -327,7 +314,6 @@ export default function Sidebar({ collapsed, setCollapsed }) {
                 )}
               </AnimatePresence>
 
-              {/* tooltip for collapsed state */}
               {collapsed && (
                 <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                   Settings
@@ -335,7 +321,6 @@ export default function Sidebar({ collapsed, setCollapsed }) {
               )}
             </motion.button>
 
-            {/* settings submenu - expand hone pe dikhega */}
             <AnimatePresence>
               {!collapsed && settingsExpanded && (
                 <motion.div
@@ -381,7 +366,6 @@ export default function Sidebar({ collapsed, setCollapsed }) {
         </div>
       </nav>
 
-      {/* logout button - bottom me fixed */}
       <div className="p-2 border-t border-gray-200">
         <motion.button
           onClick={async () => {
@@ -421,7 +405,6 @@ export default function Sidebar({ collapsed, setCollapsed }) {
             )}
           </AnimatePresence>
 
-          {/* tooltip for collapsed state */}
           {collapsed && (
             <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
               Logout

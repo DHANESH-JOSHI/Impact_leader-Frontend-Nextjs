@@ -34,11 +34,8 @@ import {
   User,
   Clock,
 } from "lucide-react";
-// Services
 import { AdminService } from "@/services/adminService";
-/* ===========================
-   Toasts
-=========================== */
+
 const Toast = ({ message, type, onClose, isVisible }) => {
   useEffect(() => {
     if (isVisible) {
@@ -105,55 +102,6 @@ const useToast = () => {
   return { toasts, showToast, hideToast };
 };
 
-/* ===========================
-   Demo Fallback
-=========================== */
-const demoApprovals = [
-  {
-    contentId: "p_101",
-    contentType: "post",
-    title: "Why Rust in Prod",
-    snippet: "Borrow checker tames foot-guns…",
-    authorName: "Alexandra Chen",
-    authorHandle: "alexchen",
-    submittedAt: "2025-08-23T10:22:00Z",
-    tags: ["engineering", "rust"],
-  },
-  {
-    contentId: "r_55",
-    contentType: "resource",
-    title: "Design Tokens Starter",
-    snippet: "A Figma → code pipeline",
-    authorName: "Marcus Rodriguez",
-    authorHandle: "marcus",
-    submittedAt: "2025-08-22T14:11:00Z",
-    tags: ["design", "tokens"],
-  },
-  {
-    contentId: "q_77",
-    contentType: "qna",
-    title: "How to debounce in React?",
-    snippet: "Should I use lodash or custom…",
-    authorName: "Sarah Kim",
-    authorHandle: "sarahk",
-    submittedAt: "2025-08-21T08:05:00Z",
-    tags: ["react", "frontend"],
-  },
-  {
-    contentId: "s_19",
-    contentType: "story",
-    title: "From Monolith to Services",
-    snippet: "We split the beast in 4 weeks…",
-    authorName: "David Thompson",
-    authorHandle: "davidth",
-    submittedAt: "2025-08-20T06:30:00Z",
-    tags: ["architecture", "migration"],
-  },
-];
-
-/* ===========================
-   Animations
-=========================== */
 const pageVariants = {
   hidden: { opacity: 0, y: 16 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
@@ -299,7 +247,6 @@ export default function ApprovalsPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // filters / sort / pagination (client-side for now)
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all"); // post | resource | qna | story | all
   const [sortBy, setSortBy] = useState("submittedAt"); // submittedAt | title | author | type
@@ -316,28 +263,24 @@ export default function ApprovalsPage() {
   const [selectedItem, setSelectedItem] = useState(null);
 
   const transform = (raw) => {
-    // Normalize unknown API shapes safely
-    const arr = Array.isArray(raw) ? raw : raw?.items || raw?.data || [];
-    return arr.approvals.map((x, idx) => {
+    const approvalsArray = Array.isArray(raw?.approvals) 
+      ? raw.approvals 
+      : Array.isArray(raw) 
+        ? raw 
+        : raw?.data?.approvals || raw?.items?.approvals || [];
+
+    return approvalsArray.map((x, idx) => {
       const registration = x || {};
       return {
-        id: x.id || x._id || `user_${idx}`,
-        // For user registrations, we use the same ID for contentId
-        contentId: x.id || x._id || `user_${idx}`,
-        // User registrations are a different type - we'll call them "user-registration"
+        id: x._id || x.id || `user_${idx}`,
+        contentId: x._id || x.id || `user_${idx}`,
         contentType: "user-registration",
-        // Use company name as title or fallback to user name
         title: registration.companyName || `${registration.firstName || ''} ${registration.lastName || ''}`.trim() || "User Registration",
-        // Use designation as snippet
         snippet: registration.designation || "Pending user registration",
-        // User information
         authorName: `${registration.firstName || ''} ${registration.lastName || ''}`.trim() || "Unknown User",
         authorHandle: registration.email || "no-email",
-        submittedAt: x.submittedAt || x.createdAt || new Date().toISOString(),
-        // Use themes if available, otherwise empty array
-        tags: x.themes || [],
-
-        // Additional user-specific fields for the UI
+        submittedAt: x.createdAt || x.submittedAt || new Date().toISOString(),
+        tags: Array.isArray(x.themes) ? x.themes : [],
         userData: {
           email: registration.email,
           firstName: registration.firstName,
@@ -346,7 +289,7 @@ export default function ApprovalsPage() {
           designation: registration.designation,
           companyName: registration.companyName,
           organizationType: registration.organizationType,
-          themes: x.themes || [],
+          themes: Array.isArray(x.themes) ? x.themes : [],
           daysPending: x.daysPending || 0
         },
 
@@ -360,19 +303,18 @@ export default function ApprovalsPage() {
     setLoading(true);
     try {
       const res = await AdminService.getPendingApprovals();
-      if (res?.success) {
+      if (res?.success && res.data) {
         const list = transform(res.data);
-        // console.log("List : ",list)
         setItems(list);
         showToast(`Loaded ${list.length} pending approvals`, "success");
       } else {
-        setItems(transform(demoApprovals));
-        showToast("Using demo approvals (API unavailable)", "warning");
+        setItems([]);
+        showToast(res?.message || "Failed to load approvals", "error");
       }
     } catch (e) {
       console.error("Approvals load error:", e);
-      setItems(transform(demoApprovals));
-      showToast("Failed to load approvals — using demo", "error");
+      setItems([]);
+      showToast(e.message || "Failed to load approvals", "error");
     } finally {
       setLoading(false);
     }
@@ -473,20 +415,16 @@ export default function ApprovalsPage() {
     showToast("Approving user…", "info");
 
     try {
-      // For user registrations, use the approveUser method
       if (item.contentType === "user-registration") {
         const userId = item.id || item.contentId;
-
         const res = await AdminService.approveUser(userId, {
-          // You can add any additional approval data here if needed
-          approvedBy: "admin", // or get current admin user ID
+          approvedBy: "admin",
           approvedAt: new Date().toISOString(),
         });
 
         if (res?.success) {
           showToast(`User approved successfully: ${item.userData?.fullName || item.authorName}`, "success");
 
-          // Optionally, you can also grant auto-approve privilege after basic approval
           try {
             const privilegeRes = await AdminService.grantAutoApprovePrivilege(userId);
             if (privilegeRes?.success) {
@@ -494,18 +432,16 @@ export default function ApprovalsPage() {
             }
           } catch (privilegeError) {
             console.warn("Could not grant auto-approve privilege:", privilegeError);
-            // Don't rollback the main approval if privilege grant fails
           }
         } else {
           setItems(prev); // rollback
           showToast(res?.message || "User approval failed", "error");
         }
       } else {
-        // For regular content approvals (posts, resources, etc.)
         const res = await AdminService.approveContent(
           item.contentType,
           item.contentId,
-          {} // approvalData (e.g., notes) can be added here
+          {}
         );
         if (res?.success) {
           showToast(`Approved: “${item.title}”`, "success");
@@ -538,7 +474,6 @@ export default function ApprovalsPage() {
     try {
       let res;
 
-      // Use appropriate rejection method based on content type
       if (item.contentType === "user-registration") {
         res = await AdminService.rejectUser(item.id || item.contentId, reason);
       } else {
