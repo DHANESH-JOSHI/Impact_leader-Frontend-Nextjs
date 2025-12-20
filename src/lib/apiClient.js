@@ -3,6 +3,8 @@
  * Handles all HTTP requests with automatic token injection, error handling, and retry logic
  */
 
+import { authStorage } from './storage';
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://13.60.221.160";
 
@@ -11,8 +13,26 @@ class ApiClient {
     // Remove trailing slash from base URL if present
     const cleanBaseURL = API_BASE_URL.replace(/\/$/, '');
     this.baseURL = cleanBaseURL + '/api/v1';
-    this.tokenGetter = null;
     this.defaultTimeout = 30000; // 30 seconds
+    
+    // Initialize token getter to retrieve token from storage
+    // Only works on client-side (browser)
+    this.tokenGetter = () => {
+      if (typeof window === 'undefined') {
+        return null;
+      }
+      try {
+        const token = authStorage.getAccessToken();
+        if (!token) {
+          console.warn('[API Client] No token found in storage');
+        }
+        return token;
+      } catch (error) {
+        console.error('[API Client] Error getting token:', error);
+        return null;
+      }
+    };
+    
     console.log('[API Client] Initialized with baseURL:', this.baseURL);
   }
 
@@ -53,9 +73,26 @@ class ApiClient {
     };
 
     // Auto-inject token if available and not skipped
-    const authToken = token || (!skipAuth && this.tokenGetter?.());
-    if (authToken) {
-      headers["Authorization"] = "Bearer " + authToken;
+    if (!skipAuth) {
+      const authToken = token || (this.tokenGetter ? this.tokenGetter() : null);
+      if (authToken) {
+        headers["Authorization"] = "Bearer " + authToken;
+      } else {
+        if (typeof window !== 'undefined') {
+          try {
+            const raw = window.localStorage?.getItem('impactLeadersAuth');
+            const parsed = raw ? JSON.parse(raw) : null;
+            console.warn('[API Client] No token available for request', {
+              hasTokenGetter: !!this.tokenGetter,
+              hasRawStorage: !!raw,
+              storageValue: parsed ? (parsed.value ? 'wrapped' : 'direct') : 'none',
+              accessToken: parsed?.value?.accessToken ? 'present' : parsed?.accessToken ? 'present (direct)' : 'missing'
+            });
+          } catch (e) {
+            console.warn('[API Client] No token available - could not check storage:', e);
+          }
+        }
+      }
     }
 
     return headers;
@@ -120,12 +157,18 @@ class ApiClient {
           success: false,
           status: response.status,
           message:
-            responseData.message ||
+            responseData?.message ||
+            responseData?.error ||
             ("HTTP " + response.status + ": " + response.statusText),
           data: responseData,
         };
 
-        console.error('[API Error]', method, url, ':', error);
+        console.error('[API Error]', method, url, {
+          status: response.status,
+          statusText: response.statusText,
+          message: error.message,
+          data: responseData,
+        });
 
         // Retry logic for specific status codes
         if (
