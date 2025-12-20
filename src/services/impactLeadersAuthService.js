@@ -54,6 +54,7 @@ export class ImpactLeadersAuthService {
     }
   }
 
+
   static async loginWithOTP(email, otp, purpose = "login") {
     try {
       const response = await apiClient.post(AUTH.OTP.VERIFY,
@@ -93,6 +94,7 @@ export class ImpactLeadersAuthService {
     }
   }
 
+
   static async sendOTP(email, purpose = "login") {
     try {
       const response = await apiClient.post(AUTH.OTP.SEND,
@@ -112,6 +114,7 @@ export class ImpactLeadersAuthService {
       };
     }
   }
+
 
   static async register(userData) {
     try {
@@ -139,6 +142,7 @@ export class ImpactLeadersAuthService {
       };
     }
   }
+
 
   static async getCurrentUser() {
     try {
@@ -178,6 +182,7 @@ export class ImpactLeadersAuthService {
       };
     }
   }
+
 
   static async refreshToken() {
     try {
@@ -227,6 +232,7 @@ export class ImpactLeadersAuthService {
     }
   }
 
+
   static async logout() {
     try {
       const tokens = authStorage.getTokens();
@@ -253,23 +259,29 @@ export class ImpactLeadersAuthService {
     }
   }
 
+
   static getStoredTokens() {
     return authStorage.getTokens();
   }
+
 
   static setStoredTokens(tokens) {
     authStorage.saveTokens(tokens);
   }
 
+
   static clearStoredTokens() {
     authStorage.clearTokens();
   }
+
 
   static getCurrentToken() {
     return authStorage.getAccessToken();
   }
 
+
   static isAuthenticated() {
     return authStorage.isAuthenticated();
   }
+
 }

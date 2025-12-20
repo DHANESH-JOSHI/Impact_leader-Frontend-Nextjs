@@ -246,8 +246,17 @@ export const authStorage = {
    * Get access token only
    */
   getAccessToken() {
-    const tokens = this.getTokens();
-    return tokens.accessToken;
+    try {
+      const tokens = this.getTokens();
+      const token = tokens?.accessToken || tokens?.token || null;
+      if (!token) {
+        console.warn('[AuthStorage] No access token found in storage');
+      }
+      return token;
+    } catch (error) {
+      console.error('[AuthStorage] Error getting access token:', error);
+      return null;
+    }
   },
 
   /**

@@ -55,6 +55,7 @@ export class AuthService {
     }
   }
 
+
   static async register(userData) {
     try {
       const { email, password, name } = userData;
@@ -92,6 +93,7 @@ export class AuthService {
     }
   }
 
+
   static async getCurrentUser(userId) {
     try {
       const user = mockUsers.find((u) => u.id === userId);
@@ -117,4 +119,5 @@ export class AuthService {
       };
     }
   }
+
 }
