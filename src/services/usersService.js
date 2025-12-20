@@ -1,9 +1,7 @@
-import { ExternalApiService } from "./externalApiService";
-import { ImpactLeadersAuthService } from "./impactLeadersAuthService";
+import { apiClient } from '@/lib/apiClient';
+import { ADMIN } from '@/constants/apiEndpoints';
 
 export class UsersService {
-
-  // Get all users with pagination and filters
   static async getAllUsers(params = {}) {
     try {
       const {
@@ -19,57 +17,52 @@ export class UsersService {
         sortOrder = "desc",
       } = params;
 
-      let queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
+      const queryParams = {
+        page,
+        limit,
         sortBy,
         sortOrder,
-      });
+        ...(search && { search }),
+        ...(organizationType && { organizationType }),
+        ...(themes && { themes }),
+        ...(location && { location }),
+        ...(role && { role }),
+        ...(isActive !== undefined && { isActive }),
+      };
 
-      if (search) queryParams.append("search", search);
-      if (organizationType)
-        queryParams.append("organizationType", organizationType);
-      if (themes) queryParams.append("themes", themes);
-      if (location) queryParams.append("location", location);
-      if (role) queryParams.append("role", role);
-      if (isActive !== undefined)
-        queryParams.append("isActive", isActive.toString());
+      const response = await apiClient.get(ADMIN.USERS.BASE, { params: queryParams });
+      const backendResponse = response.data || {};
 
-      const endpoint = `/admin/users?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(
-        endpoint
-      );
-
-      // filter out "admin" role users
-      const filteredUsers = response?.data?.data?.filter(
-        (user) => user.role !== "admin"
-      );
+      const usersData = Array.isArray(backendResponse.data) ? backendResponse.data : [];
+      const filteredUsers = usersData.filter((user) => user.role !== "admin");
 
       return {
-        success: response.success,
+        success: response.success && backendResponse.success !== false,
         data: filteredUsers,
-        message: response.message,
+        pagination: backendResponse.pagination || {},
+        total: backendResponse.total || filteredUsers.length,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Get all users error:", error);
       return {
         success: false,
+        data: [],
+        pagination: {},
         message: error.message,
       };
     }
   }
 
-  // Get user profile by ID
   static async getUserProfile(userId) {
     try {
-      const response = await ExternalApiService.get(
-        `/users/${userId}`,
-      );
+      const response = await apiClient.get(USERS.BY_ID(userId));
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Get user profile error:", error);
@@ -80,19 +73,16 @@ export class UsersService {
     }
   }
 
-  // Update user profile (user's own profile or admin)
   static async updateUserProfile(userId, profileData) {
     try {
-      const endpoint = userId ? `/users/${userId}/profile` : "/users/profile";
-      const response = await ExternalApiService.put(
-        endpoint,
-        profileData,
-      );
+      const endpoint = userId ? USERS.PROFILE(userId) : USERS.BASE + '/profile';
+      const response = await apiClient.put(endpoint, profileData);
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Update user profile error:", error);
@@ -103,24 +93,19 @@ export class UsersService {
     }
   }
 
-  // Upload user avatar
   static async uploadAvatar(avatarFile, userId = null) {
     try {
       const formData = new FormData();
       formData.append("avatar", avatarFile);
 
-      const endpoint = userId ? `/users/${userId}/avatar` : "/users/avatar";
-      const response = await ExternalApiService.post(
-        endpoint,
-        formData,
-        undefined,
-        true
-      );
+      const endpoint = userId ? USERS.BY_ID(userId) + '/avatar' : USERS.BASE + '/avatar';
+      const response = await apiClient.upload(endpoint, formData);
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Upload avatar error:", error);
@@ -131,17 +116,15 @@ export class UsersService {
     }
   }
 
-  // Delete user (admin only)
   static async deleteUser(userId) {
     try {
-      const response = await ExternalApiService.delete(
-        `/users/${userId}`,
-      );
+      const response = await apiClient.delete(USERS.BY_ID(userId));
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Delete user error:", error);
@@ -152,21 +135,19 @@ export class UsersService {
     }
   }
 
-  // Suspend/Unsuspend user (admin only)
+
   static async toggleUserStatus(userId, suspend = true) {
     try {
       const endpoint = suspend
-        ? `/admin/users/${userId}/suspend`
-        : `/admin/users/${userId}/unsuspend`;
-      const response = await ExternalApiService.post(
-        endpoint,
-        {},
-      );
+        ? ADMIN.USERS.BAN(userId)
+        : ADMIN.USERS.UNBAN(userId);
+      const response = await apiClient.post(endpoint, {});
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Toggle user status error:", error);
@@ -177,20 +158,16 @@ export class UsersService {
     }
   }
 
-  // Grant privileges to user (admin only)
+
   static async grantUserPrivilege(userId, privilege) {
     try {
-      const response = await ExternalApiService.post(
-        `/admin/users/${userId}/grant-privilege`,
-        {
-          privilege,
-        },
-      );
+      const response = await apiClient.post(ADMIN.USERS.PERMISSIONS(userId) || `/admin/users/${userId}/grant-privilege`, { privilege });
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Grant user privilege error:", error);
@@ -201,26 +178,23 @@ export class UsersService {
     }
   }
 
-  // Get user activity/statistics (admin only)
   static async getUserActivity(userId, params = {}) {
     try {
       const { startDate, endDate, activityType } = params;
 
-      let queryParams = new URLSearchParams();
+      const queryParams = {
+        ...(startDate && { startDate }),
+        ...(endDate && { endDate }),
+        ...(activityType && { activityType }),
+      };
 
-      if (startDate) queryParams.append("startDate", startDate);
-      if (endDate) queryParams.append("endDate", endDate);
-      if (activityType) queryParams.append("activityType", activityType);
-
-      const endpoint = `/admin/users/${userId}/activity?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(
-        endpoint,
-      );
+      const response = await apiClient.get(ADMIN.USERS.BY_ID(userId) + '/activity', { params: queryParams });
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Get user activity error:", error);
@@ -231,25 +205,22 @@ export class UsersService {
     }
   }
 
-  // Get user statistics (admin dashboard)
   static async getUserStats(params = {}) {
     try {
       const { timeframe = "30d", groupBy = "day" } = params;
 
-      let queryParams = new URLSearchParams({
+      const queryParams = {
         timeframe,
         groupBy,
-      });
+      };
 
-      const endpoint = `/admin/users/stats?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(
-        endpoint,
-      );
+      const response = await apiClient.get(ADMIN.USERS.BASE + '/stats', { params: queryParams });
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Get user stats error:", error);
@@ -260,22 +231,20 @@ export class UsersService {
     }
   }
 
-  // Bulk actions (admin only)
+
   static async bulkUserAction(action, userIds, additionalData = {}) {
     try {
-      const response = await ExternalApiService.post(
-        "/admin/users/bulk-action",
-        {
-          action,
-          userIds,
-          ...additionalData,
-        },
-      );
+      const response = await apiClient.post(ADMIN.USERS.BULK_ACTION, {
+        action,
+        userIds,
+        ...additionalData,
+      });
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Bulk user action error:", error);
@@ -286,23 +255,21 @@ export class UsersService {
     }
   }
 
-  // Export users data (admin only)
+
   static async exportUsers(params = {}) {
     try {
       const { format = "csv", filters = {} } = params;
 
-      const response = await ExternalApiService.post(
-        "/admin/users/export",
-        {
-          format,
-          filters,
-        },
-      );
+      const response = await apiClient.post(ADMIN.USERS.BASE + '/export', {
+        format,
+        filters,
+      });
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Export users error:", error);
@@ -313,7 +280,6 @@ export class UsersService {
     }
   }
 
-  // Get organization types
   static getOrganizationTypes() {
     return [
       { value: "corporate", label: "Corporate" },
@@ -328,7 +294,6 @@ export class UsersService {
     ];
   }
 
-  // Get user roles
   static getUserRoles() {
     return [
       { value: "user", label: "User" },
@@ -338,7 +303,6 @@ export class UsersService {
     ];
   }
 
-  // Get user themes/interests
   static getUserThemes() {
     return [
       { value: "environment", label: "Environment" },
@@ -356,7 +320,6 @@ export class UsersService {
     ];
   }
 
-  // Get user privileges
   static getUserPrivileges() {
     return [
       { value: "auto-approve-posts", label: "Auto-approve Posts" },
@@ -369,7 +332,6 @@ export class UsersService {
     ];
   }
 
-  // Get sort options
   static getSortOptions() {
     return [
       { value: "createdAt", label: "Join Date" },
@@ -382,7 +344,6 @@ export class UsersService {
     ];
   }
 
-  // Get activity types
   static getActivityTypes() {
     return [
       { value: "posts", label: "Posts" },
@@ -395,4 +356,5 @@ export class UsersService {
       { value: "login", label: "Login Activity" },
     ];
   }
+
 }

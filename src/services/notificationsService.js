@@ -1,9 +1,7 @@
-import { ExternalApiService } from './externalApiService';
-import { ImpactLeadersAuthService } from './impactLeadersAuthService';
+import { apiClient } from '@/lib/apiClient';
+import { NOTIFICATIONS, ADMIN } from '@/constants/apiEndpoints';
 
 export class NotificationsService {
-
-  // Get user notifications
   static async getNotifications(params = {}) {
     try {
       const { 
@@ -14,60 +12,65 @@ export class NotificationsService {
         priority 
       } = params;
       
-      let queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString()
-      });
+      const queryParams = {
+        page,
+        limit,
+        ...(type && { type }),
+        ...(isRead !== undefined && { isRead }),
+        ...(priority && { priority }),
+      };
 
-      if (type) queryParams.append('type', type);
-      if (isRead !== undefined) queryParams.append('isRead', isRead.toString());
-      if (priority) queryParams.append('priority', priority);
-
-      const endpoint = `/notifications?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const response = await apiClient.get(NOTIFICATIONS.BASE, { params: queryParams });
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || [],
+        pagination: backendResponse.pagination || {},
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Get notifications error:', error);
       return {
         success: false,
+        data: [],
+        pagination: {},
         message: error.message
       };
     }
   }
 
-  // Get unread notifications count
   static async getUnreadCount() {
     try {
-      const response = await ExternalApiService.get('/notifications/unread/count');
+      const response = await apiClient.get(NOTIFICATIONS.UNREAD_COUNT);
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse.count || 0,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Get unread count error:', error);
       return {
         success: false,
+        data: 0,
         message: error.message
       };
     }
   }
 
-  // Mark notification as read
+
   static async markAsRead(notificationId) {
     try {
-      const response = await ExternalApiService.post(`/notifications/${notificationId}/read`, {});
+      const endpoint = NOTIFICATIONS.MARK_READ ? NOTIFICATIONS.MARK_READ(notificationId) : `/notifications/${notificationId}/mark-read`;
+      const response = await apiClient.post(endpoint, {});
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Mark notification as read error:', error);
@@ -78,15 +81,17 @@ export class NotificationsService {
     }
   }
 
-  // Mark all notifications as read
+
   static async markAllAsRead() {
     try {
-      const response = await ExternalApiService.post('/notifications/read-all', {});
+      const endpoint = NOTIFICATIONS.MARK_ALL_READ;
+      const response = await apiClient.post(endpoint, {});
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Mark all as read error:', error);
@@ -97,15 +102,15 @@ export class NotificationsService {
     }
   }
 
-  // Delete notification
   static async deleteNotification(notificationId) {
     try {
-      const response = await ExternalApiService.delete(`/notifications/${notificationId}`);
+      const response = await apiClient.delete(NOTIFICATIONS.BY_ID(notificationId));
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Delete notification error:', error);
@@ -116,15 +121,15 @@ export class NotificationsService {
     }
   }
 
-  // Create announcement (Admin only)
   static async createAnnouncement(announcementData) {
     try {
-      const response = await ExternalApiService.post('/notifications/announcement', announcementData);
+      const response = await apiClient.post(ADMIN.SETTINGS.NOTIFICATIONS || '/admin/notifications/announcement', announcementData);
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Create announcement error:', error);
@@ -135,15 +140,16 @@ export class NotificationsService {
     }
   }
 
-  // Send targeted notification (Admin only)
+
   static async sendTargetedNotification(notificationData) {
     try {
-      const response = await ExternalApiService.post('/admin/notifications/send', notificationData);
+      const response = await apiClient.post(ADMIN.SETTINGS.NOTIFICATIONS || '/admin/notifications/send', notificationData);
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Send targeted notification error:', error);
@@ -154,15 +160,15 @@ export class NotificationsService {
     }
   }
 
-  // Get notification templates (Admin only)
   static async getNotificationTemplates() {
     try {
-      const response = await ExternalApiService.get('/admin/notifications/templates');
+      const response = await apiClient.get(ADMIN.SETTINGS.NOTIFICATIONS || '/admin/notifications/templates');
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Get notification templates error:', error);
@@ -173,10 +179,10 @@ export class NotificationsService {
     }
   }
 
-  // Create notification template (Admin only)
   static async createNotificationTemplate(templateData) {
     try {
-      const response = await ExternalApiService.post('/admin/notifications/templates', templateData);
+      const response = await apiClient.post(ADMIN.SETTINGS.NOTIFICATIONS || '/admin/notifications/templates', templateData);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
@@ -192,24 +198,23 @@ export class NotificationsService {
     }
   }
 
-  // Get notification statistics (Admin only)
   static async getNotificationStats(params = {}) {
     try {
       const { startDate, endDate, type } = params;
       
-      let queryParams = new URLSearchParams();
-      
-      if (startDate) queryParams.append('startDate', startDate);
-      if (endDate) queryParams.append('endDate', endDate);
-      if (type) queryParams.append('type', type);
+      const queryParams = {
+        ...(startDate && { startDate }),
+        ...(endDate && { endDate }),
+        ...(type && { type }),
+      };
 
-      const endpoint = `/admin/notifications/stats?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const response = await apiClient.get(ADMIN.SETTINGS.NOTIFICATIONS || '/admin/notifications/stats', { params: queryParams });
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Get notification stats error:', error);
@@ -220,15 +225,15 @@ export class NotificationsService {
     }
   }
 
-  // Update notification preferences
   static async updateNotificationPreferences(preferences) {
     try {
-      const response = await ExternalApiService.put('/notifications/preferences', preferences);
+      const response = await apiClient.put(NOTIFICATIONS.PREFERENCES, preferences);
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Update notification preferences error:', error);
@@ -239,15 +244,15 @@ export class NotificationsService {
     }
   }
 
-  // Get notification preferences
   static async getNotificationPreferences() {
     try {
-      const response = await ExternalApiService.get('/notifications/preferences');
+      const response = await apiClient.get(NOTIFICATIONS.PREFERENCES);
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Get notification preferences error:', error);
@@ -258,7 +263,6 @@ export class NotificationsService {
     }
   }
 
-  // Get notification types
   static getNotificationTypes() {
     return [
       { value: 'connection_request', label: 'Connection Request', icon: '👥' },
@@ -276,7 +280,6 @@ export class NotificationsService {
     ];
   }
 
-  // Get notification priorities
   static getNotificationPriorities() {
     return [
       { value: 'low', label: 'Low', color: '#6b7280' },
@@ -286,7 +289,6 @@ export class NotificationsService {
     ];
   }
 
-  // Get target user options for admin notifications
   static getTargetUserOptions() {
     return [
       { value: 'all', label: 'All Users' },
@@ -298,7 +300,6 @@ export class NotificationsService {
     ];
   }
 
-  // Get notification delivery methods
   static getDeliveryMethods() {
     return [
       { value: 'in_app', label: 'In-App Notification' },
@@ -307,4 +308,5 @@ export class NotificationsService {
       { value: 'sms', label: 'SMS (Premium)' }
     ];
   }
+
 }

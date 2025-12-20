@@ -1,18 +1,15 @@
-import { ExternalApiService } from "./externalApiService";
-import { ImpactLeadersAuthService } from "./impactLeadersAuthService";
+import { apiClient } from '@/lib/apiClient';
+import { ADMIN, USERS, POSTS, STORIES, RESOURCES, NOTIFICATIONS } from '@/constants/apiEndpoints';
 
 export class AdminService {
-
-  // Get analytics dashboard data from Impact Leaders API
   static async getAnalyticsDashboard() {
     try {
-      const response = await ExternalApiService.get(
-        "/admin/analytics",
-      );
+      const response = await apiClient.get(ADMIN.DASHBOARD_ANALYTICS);
+      const backendResponse = response.data || {};
 
       // Extract overview data from the actual API response structure
-      if (response.success && response.data) {
-        const overview = response.data.data.overview;
+      if (response.success && backendResponse) {
+        const overview = backendResponse.data?.overview || backendResponse.overview || {};
         const formattedData = {
           totalUsers: overview.totalUsers || 0,
           totalPosts: overview.totalPosts || 0,
@@ -24,17 +21,17 @@ export class AdminService {
           flaggedContent: overview.flaggedContent || 0,
           totalApiEndpoints: 66, // From Postman collection
           // Additional data from API response
-          recentUsers: response.data.recentUsers || [],
-          topPosts: response.data.topPosts || [],
-          topResources: response.data.topResources || [],
-          analytics: response.data.analytics || {},
-          charts: response.data.charts || {},
+          recentUsers: backendResponse.recentUsers || backendResponse.data?.recentUsers || [],
+          topPosts: backendResponse.topPosts || backendResponse.data?.topPosts || [],
+          topResources: backendResponse.topResources || backendResponse.data?.topResources || [],
+          analytics: backendResponse.analytics || backendResponse.data?.analytics || {},
+          charts: backendResponse.charts || backendResponse.data?.charts || {},
         };
 
         return {
           success: true,
           data: formattedData,
-          message: response.message || "Analytics data retrieved successfully",
+          message: backendResponse.message || response.message || "Analytics data retrieved successfully",
         };
       }
 
@@ -51,7 +48,6 @@ export class AdminService {
     }
   }
 
-  // Get individual counts for dashboard from Impact Leaders API
   static async getDashboardCounts() {
     try {
       console.log("Fetching dashboard counts from Impact Leaders API...");
@@ -64,15 +60,11 @@ export class AdminService {
         resourcesResponse,
         notificationsResponse,
       ] = await Promise.allSettled([
-        ExternalApiService.get("/users?page=1&limit=1"),
-        ExternalApiService.get("/posts?page=1&limit=1"),
-        ExternalApiService.get("/stories/feed"),
-        ExternalApiService.get(
-          "/resources?page=1&limit=1",
-          ),
-        ExternalApiService.get(
-          "/notifications/unread/count",
-          ),
+        apiClient.get(USERS.BASE, { params: { page: 1, limit: 1 } }),
+        apiClient.get(POSTS.BASE, { params: { page: 1, limit: 1 } }),
+        apiClient.get(STORIES.FEED),
+        apiClient.get(RESOURCES.BASE, { params: { page: 1, limit: 1 } }),
+        apiClient.get(NOTIFICATIONS.UNREAD_COUNT),
       ]);
 
       const counts = {
@@ -86,20 +78,22 @@ export class AdminService {
 
       // Extract user count from pagination or data
       if (usersResponse.status === "fulfilled" && usersResponse.value.success) {
+        const userData = usersResponse.value.data || {};
         counts.totalUsers =
-          usersResponse.value.pagination?.total ||
-          usersResponse.value.data?.length ||
-          usersResponse.value.total ||
+          userData.pagination?.total ||
+          (Array.isArray(userData.data) ? userData.data.length : 0) ||
+          userData.total ||
           0;
         console.log("Users API response:", usersResponse.value);
       }
 
       // Extract posts count from pagination or data
       if (postsResponse.status === "fulfilled" && postsResponse.value.success) {
+        const postData = postsResponse.value.data || {};
         counts.totalPosts =
-          postsResponse.value.pagination?.total ||
-          postsResponse.value.data?.length ||
-          postsResponse.value.total ||
+          postData.pagination?.total ||
+          (Array.isArray(postData.data) ? postData.data.length : 0) ||
+          postData.total ||
           0;
         console.log("Posts API response:", postsResponse.value);
       }
@@ -109,10 +103,11 @@ export class AdminService {
         storiesResponse.status === "fulfilled" &&
         storiesResponse.value.success
       ) {
+        const storyData = storiesResponse.value.data || {};
         counts.totalStories =
-          storiesResponse.value.data?.length ||
-          storiesResponse.value.total ||
-          storiesResponse.value.pagination?.total ||
+          (Array.isArray(storyData.data) ? storyData.data.length : 0) ||
+          storyData.total ||
+          storyData.pagination?.total ||
           0;
         console.log("Stories API response:", storiesResponse.value);
       }
@@ -122,10 +117,11 @@ export class AdminService {
         resourcesResponse.status === "fulfilled" &&
         resourcesResponse.value.success
       ) {
+        const resourceData = resourcesResponse.value.data || {};
         counts.totalResources =
-          resourcesResponse.value.pagination?.total ||
-          resourcesResponse.value.data?.totalResources ||
-          resourcesResponse.value.data?.length ||
+          resourceData.pagination?.total ||
+          resourceData.totalResources ||
+          (Array.isArray(resourceData.data) ? resourceData.data.length : 0) ||
           0;
         console.log("Resources API response:", resourcesResponse.value);
       }
@@ -135,9 +131,10 @@ export class AdminService {
         notificationsResponse.status === "fulfilled" &&
         notificationsResponse.value.success
       ) {
+        const notifData = notificationsResponse.value.data || {};
         counts.totalNotifications =
-          notificationsResponse.value.data?.count ||
-          notificationsResponse.value.count ||
+          notifData.count ||
+          notifData.data?.count ||
           0;
         console.log("Notifications API response:", notificationsResponse.value);
       }
@@ -159,19 +156,17 @@ export class AdminService {
     }
   }
 
-  // Get pending approvals
   static async getPendingApprovals() {
     try {
-      const response = await ExternalApiService.get(
-        "/admin/approvals/pending",
-      );
+      const response = await apiClient.get(ADMIN.PENDING_APPROVALS);
+      const backendResponse = response.data || {};
 
       // console.log("Get pending approvals response:", response);
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Get pending approvals error:", error);
@@ -182,18 +177,20 @@ export class AdminService {
     }
   }
 
+
   // Approve content (post, resource, etc.)
   static async approveContent(contentType, contentId, approvalData = {}) {
     try {
-      const response = await ExternalApiService.post(
-        `/admin/approvals/${contentType}/${contentId}/approve`,
+      const response = await apiClient.post(
+        ADMIN.APPROVE_CONTENT(contentType, contentId),
         approvalData,
       );
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Approve content error:", error);
@@ -204,18 +201,20 @@ export class AdminService {
     }
   }
 
+
   // Reject content
   static async rejectContent(contentType, contentId, rejectionData) {
     try {
-      const response = await ExternalApiService.post(
-        `/admin/approvals/${contentType}/${contentId}/reject`,
+      const response = await apiClient.post(
+        ADMIN.REJECT_CONTENT(contentType, contentId),
         rejectionData,
       );
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Reject content error:", error);
@@ -226,7 +225,6 @@ export class AdminService {
     }
   }
 
-  // Get flagged content
   static async getFlaggedContent(params = {}) {
     try {
       const { page = 1, limit = 10, contentType, status } = params;
@@ -239,15 +237,19 @@ export class AdminService {
       if (contentType) queryParams.append("contentType", contentType);
       if (status) queryParams.append("status", status);
 
-      const endpoint = `/admin/flagged-content?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(
-        endpoint,
-      );
+      const queryParamsObj = {
+        page,
+        limit,
+        ...(contentType && { contentType }),
+        ...(status && { status }),
+      };
+      const response = await apiClient.get(ADMIN.FLAGGED_CONTENT, { params: queryParamsObj });
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Get flagged content error:", error);
@@ -258,18 +260,17 @@ export class AdminService {
     }
   }
 
+
   // Handle flagged content
   static async handleFlaggedContent(flagId, action, data = {}) {
     try {
-      const response = await ExternalApiService.post(
-        `/admin/flagged-content/${flagId}/${action}`,
-        data,
-      );
+      const response = await apiClient.post(`/admin/flagged-content/${flagId}/${action}`, data);
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Handle flagged content error:", error);
@@ -280,17 +281,15 @@ export class AdminService {
     }
   }
 
-  // Get system health status
   static async getSystemHealth() {
     try {
-      const response = await ExternalApiService.get(
-        "/admin/system/health",
-      );
+      const response = await apiClient.get(ADMIN.SYSTEM_HEALTH);
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Get system health error:", error);
@@ -301,7 +300,6 @@ export class AdminService {
     }
   }
 
-  // Get audit logs
   static async getAuditLogs(params = {}) {
     try {
       const {
@@ -323,15 +321,21 @@ export class AdminService {
       if (startDate) queryParams.append("startDate", startDate);
       if (endDate) queryParams.append("endDate", endDate);
 
-      const endpoint = `/admin/audit-logs?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(
-        endpoint,
-      );
+      const queryParamsObj = {
+        page,
+        limit,
+        ...(action && { action }),
+        ...(userId && { userId }),
+        ...(startDate && { startDate }),
+        ...(endDate && { endDate }),
+      };
+      const response = await apiClient.get(ADMIN.AUDIT_LOGS, { params: queryParamsObj });
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Get audit logs error:", error);
@@ -342,18 +346,17 @@ export class AdminService {
     }
   }
 
+
   // Export data
   static async exportData(exportType, params = {}) {
     try {
-      const response = await ExternalApiService.post(
-        `/admin/export/${exportType}`,
-        params,
-      );
+      const response = await apiClient.post(ADMIN.EXPORT(exportType), params);
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Export data error:", error);
@@ -364,17 +367,15 @@ export class AdminService {
     }
   }
 
-  // Get system configuration
   static async getSystemConfig() {
     try {
-      const response = await ExternalApiService.get(
-        "/admin/system/config",
-      );
+      const response = await apiClient.get(ADMIN.SYSTEM_CONFIG);
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Get system config error:", error);
@@ -385,18 +386,15 @@ export class AdminService {
     }
   }
 
-  // Update system configuration
   static async updateSystemConfig(configData) {
     try {
-      const response = await ExternalApiService.put(
-        "/admin/system/config",
-        configData,
-      );
+      const response = await apiClient.put(ADMIN.SYSTEM_CONFIG, configData);
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Update system config error:", error);
@@ -407,7 +405,6 @@ export class AdminService {
     }
   }
 
-  // Get user activity analytics
   static async getUserActivityAnalytics(params = {}) {
     try {
       const { timeframe = "30d", groupBy = "day" } = params;
@@ -417,15 +414,13 @@ export class AdminService {
         groupBy,
       });
 
-      const endpoint = `/admin/analytics/user-activity?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(
-        endpoint,
-      );
+      const response = await apiClient.get(ADMIN.USER_ACTIVITY_ANALYTICS, { params: { timeframe, groupBy } });
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Get user activity analytics error:", error);
@@ -436,7 +431,6 @@ export class AdminService {
     }
   }
 
-  // Get content analytics
   static async getContentAnalytics(params = {}) {
     try {
       const { timeframe = "30d", contentType } = params;
@@ -447,15 +441,17 @@ export class AdminService {
 
       if (contentType) queryParams.append("contentType", contentType);
 
-      const endpoint = `/admin/analytics/content?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(
-        endpoint,
-      );
+      const queryParamsObj = {
+        timeframe,
+        ...(contentType && { contentType }),
+      };
+      const response = await apiClient.get(ADMIN.CONTENT_ANALYTICS, { params: queryParamsObj });
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Get content analytics error:", error);
@@ -466,18 +462,17 @@ export class AdminService {
     }
   }
 
+
   // Send system maintenance notification
   static async sendMaintenanceNotification(maintenanceData) {
     try {
-      const response = await ExternalApiService.post(
-        "/admin/maintenance/notify",
-        maintenanceData,
-      );
+      const response = await apiClient.post(ADMIN.MAINTENANCE_NOTIFY, maintenanceData);
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Send maintenance notification error:", error);
@@ -488,7 +483,6 @@ export class AdminService {
     }
   }
 
-  // Get content approval types
   static getApprovalTypes() {
     return [
       { value: "posts", label: "Posts" },
@@ -500,7 +494,6 @@ export class AdminService {
     ];
   }
 
-  // Get flagged content reasons
   static getFlagReasons() {
     return [
       { value: "inappropriate", label: "Inappropriate Content" },
@@ -514,7 +507,6 @@ export class AdminService {
     ];
   }
 
-  // Get audit log actions
   static getAuditActions() {
     return [
       { value: "user_created", label: "User Created" },
@@ -531,7 +523,6 @@ export class AdminService {
     ];
   }
 
-  // Get export types
   static getExportTypes() {
     return [
       { value: "users", label: "Users Data" },
@@ -544,7 +535,6 @@ export class AdminService {
     ];
   }
 
-  // Get time frame options
   static getTimeFrameOptions() {
     return [
       { value: "7d", label: "Last 7 days" },
@@ -556,9 +546,8 @@ export class AdminService {
     ];
   }
 
-  // ==================== User Management (From Postman Collection) ====================
 
-  // Get pending users (awaiting approval)
+  // ==================== User Management (From Postman Collection) ====================
   static async getPendingUsers(params = {}) {
     try {
       const { page = 1, limit = 20 } = params;
@@ -568,13 +557,13 @@ export class AdminService {
         limit: limit.toString(),
       });
 
-      const endpoint = `/admin/pending-users?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const response = await apiClient.get(ADMIN.PENDING_USERS, { params: { page, limit } });
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Get pending users error:", error);
@@ -585,21 +574,23 @@ export class AdminService {
     }
   }
 
+
   // Approve user registration
   static async approveUser(userId, approvalData = {}) {
     try {
-      const response = await ExternalApiService.put(
-        `/admin/approve-user/${userId}`,
+      const response = await apiClient.put(
+        ADMIN.APPROVE_USER(userId),
         {
           isApproved: true,
           ...approvalData,
         }
       );
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Approve user error:", error);
@@ -610,20 +601,22 @@ export class AdminService {
     }
   }
 
+
   // Reject user registration
   static async rejectUser(userId, reason = "") {
     try {
-      const response = await ExternalApiService.put(
-        `/admin/reject-user/${userId}`,
+      const response = await apiClient.put(
+        ADMIN.REJECT_USER(userId),
         {
           reason,
         }
       );
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Reject user error:", error);
@@ -634,7 +627,6 @@ export class AdminService {
     }
   }
 
-  // Get all users (Admin only)
   static async getAllUsersAdmin(params = {}) {
     try {
       const { page = 1, limit = 50 } = params;
@@ -644,13 +636,13 @@ export class AdminService {
         limit: limit.toString(),
       });
 
-      const endpoint = `/admin/users?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const response = await apiClient.get(ADMIN.USERS.BASE, { params: { page, limit } });
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
       console.error("Get all users (admin) error:", error);
@@ -660,4 +652,5 @@ export class AdminService {
       };
     }
   }
+
 }

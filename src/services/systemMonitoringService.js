@@ -1,4 +1,4 @@
-import { ExternalApiService } from './externalApiService';
+import { apiClient } from '@/lib/apiClient';
 
 // Global variables to track API metrics
 let apiHitCount = 0;
@@ -50,6 +50,7 @@ export class SystemMonitoringService {
     if (route.includes('/health') || route.includes('/api/v1/status') || route.includes('/api/v1/test')) return 'system';
     return 'other';
   }
+
 
   // Track API hits with route information
   static trackAPIHit(responseTime = null, route = '', method = 'GET') {
@@ -106,10 +107,12 @@ export class SystemMonitoringService {
     }
   }
 
+
   // Increment active connections
   static incrementConnections() {
     activeConnections++;
   }
+
 
   // Decrement active connections
   static decrementConnections() {
@@ -117,7 +120,6 @@ export class SystemMonitoringService {
     if (activeConnections < 0) activeConnections = 0;
   }
 
-  // Get API analytics and metrics
   static async getAPIAnalytics() {
     try {
       // Calculate average response time
@@ -174,6 +176,7 @@ export class SystemMonitoringService {
     }
   }
 
+
   // Calculate CPU usage
   static async calculateCPUUsage() {
     return new Promise((resolve) => {
@@ -201,6 +204,7 @@ export class SystemMonitoringService {
     });
   }
 
+
   // Mock disk usage - in production, use a proper disk usage library
   static getDiskUsage() {
     // Simulate disk usage
@@ -216,7 +220,6 @@ export class SystemMonitoringService {
     };
   }
 
-  // Get real-time API metrics (called frequently)
   static async getRealTimeMetrics() {
     try {
       const now = Date.now();
@@ -249,7 +252,6 @@ export class SystemMonitoringService {
     }
   }
 
-  // Get API performance metrics
   static getAPIMetrics() {
     try {
       return {
@@ -274,12 +276,12 @@ export class SystemMonitoringService {
     }
   }
 
-  // Get system monitoring data from Impact Leaders API using stored token
   static async getSystemMonitoringFromAPI() {
     try {
       console.log('🔧 SystemMonitoring: Making API call (token will be automatically injected by ExternalApiService)');
 
-      const response = await ExternalApiService.get('/admin/monitoring/system');
+      const response = await apiClient.get(MONITORING.SYSTEM.HEALTH || '/admin/monitoring/system');
+      const backendResponse = response.data || {};
       
       console.log('🔧 SystemMonitoring: API Response:', {
         success: response.success,
@@ -290,13 +292,13 @@ export class SystemMonitoringService {
       if (!response.success) {
         return {
           success: false,
-          message: response.message || 'Failed to get system monitoring data'
+          message: backendResponse.message || response.message || 'Failed to get system monitoring data'
         };
       }
 
       return {
         success: true,
-        data: response.data
+        data: backendResponse.data || backendResponse
       };
     } catch (error) {
       console.error('System monitoring API error:', error);
@@ -307,22 +309,22 @@ export class SystemMonitoringService {
     }
   }
 
-  // Get API analytics from Impact Leaders API using stored token
   static async getAPIAnalyticsFromAPI() {
     try {
 
-      const response = await ExternalApiService.get('/admin/monitoring/api-analytics');
+      const response = await apiClient.get(MONITORING.API.ANALYTICS || '/admin/monitoring/api-analytics');
+      const backendResponse = response.data || {};
       
       if (!response.success) {
         return {
           success: false,
-          message: response.message || 'Failed to get API analytics data'
+          message: backendResponse.message || response.message || 'Failed to get API analytics data'
         };
       }
 
       return {
         success: true,
-        data: response.data
+        data: backendResponse.data || backendResponse
       };
     } catch (error) {
       console.error('API analytics API error:', error);
@@ -333,7 +335,6 @@ export class SystemMonitoringService {
     }
   }
 
-  // Get combined monitoring data (local + API)
   static async getCombinedMonitoringData() {
     try {
       // Get local analytics
@@ -363,24 +364,25 @@ export class SystemMonitoringService {
     }
   }
 
+
   // Test method to verify token and API connectivity
   static async testAPIConnection() {
     try {
       console.log('🔧 Testing API Connection (ExternalApiService will handle authentication automatically)...');
 
       // Test a simple endpoint first
-      const response = await ExternalApiService.get('/auth/me');
+      const response = await apiClient.get(AUTH.ME);
+      const backendResponse = response.data || {};
       
       return {
         success: response.success,
-        message: response.success ? 'API connection successful' : response.message,
+        message: response.success ? 'API connection successful' : backendResponse.message || response.message,
         debug: {
           hasToken: true,
-          hasUser: !!tokens.user,
           apiResponse: {
             success: response.success,
             status: response.status,
-            message: response.message
+            message: backendResponse.message || response.message
           }
         }
       };
@@ -395,4 +397,5 @@ export class SystemMonitoringService {
       };
     }
   }
+
 }

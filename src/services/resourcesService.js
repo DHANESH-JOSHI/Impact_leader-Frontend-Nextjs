@@ -1,9 +1,7 @@
-import { ExternalApiService } from './externalApiService';
-import { ImpactLeadersAuthService } from './impactLeadersAuthService';
+import { apiClient } from '@/lib/apiClient';
+import { RESOURCES } from '@/constants/apiEndpoints';
 
 export class ResourcesService {
-
-  // Get all resources with filters and pagination
   static async getAllResources(params = {}) {
     try {
       const { 
@@ -13,51 +11,75 @@ export class ResourcesService {
         category, 
         type, 
         themes, 
-        sortBy = 'createdAt' 
+        status,
+        sortBy = 'createdAt',
+        sortOrder = 'desc'
       } = params;
       
-      let queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-        sortBy
-      });
+      const queryParams = {
+        page,
+        limit,
+        sortBy,
+        sortOrder,
+        ...(search && { search }),
+        ...(category && { category }),
+        ...(type && { type }),
+        ...(themes && { themes }),
+        ...(status && { status }),
+      };
 
-      if (search) queryParams.append('search', search);
-      if (category) queryParams.append('category', category);
-      if (type) queryParams.append('type', type);
-      if (themes) queryParams.append('themes', themes);
-
-      const endpoint = `/resources?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
-      // console.log("Resources response:", response);
+      const response = await apiClient.get(RESOURCES.BASE, { params: queryParams });
+      const backendResponse = response.data || {};
+      
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || [],
+        pagination: backendResponse.pagination || {},
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Get resources error:', error);
+      console.error('[Resources] Get resources error:', error);
       return {
         success: false,
+        data: [],
+        pagination: {},
         message: error.message
       };
     }
   }
 
-  // Search resources
   static async searchResources(params = {}) {
     try {
       const { search, themes, sortBy = 'downloads' } = params;
       
-      let queryParams = new URLSearchParams({
-        sortBy
-      });
+      const queryParams = {
+        sortBy,
+        ...(search && { search }),
+        ...(themes && { themes }),
+      };
 
-      if (search) queryParams.append('search', search);
-      if (themes) queryParams.append('themes', themes);
+      const response = await apiClient.get(RESOURCES.BASE, { params: queryParams });
 
-      const endpoint = `/resources?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      return {
+        success: response.success,
+        data: response.data || [],
+        pagination: response.pagination || {},
+        message: response.message
+      };
+    } catch (error) {
+      console.error('[Resources] Search resources error:', error);
+      return {
+        success: false,
+        data: [],
+        pagination: {},
+        message: error.message
+      };
+    }
+  }
+
+  static async createResource(resourceData) {
+    try {
+      const response = await apiClient.post(RESOURCES.BASE, resourceData);
 
       return {
         success: response.success,
@@ -65,131 +87,70 @@ export class ResourcesService {
         message: response.message
       };
     } catch (error) {
-      console.error('Search resources error:', error);
+      console.error('[Resources] Create resource error:', error);
       return {
         success: false,
         message: error.message
       };
     }
   }
-// Create resource (metadata only - without file)
-static async createResource(resourceData) {
-  try {
-    console.log("📝 Creating metadata-only resource:", resourceData);
-    
-    const response = await ExternalApiService.post('/resources', resourceData);
 
-    return {
-      success: response.success,
-      data: response.data,
-      message: response.message
-    };
-  } catch (error) {
-    console.error('Create resource error:', error);
-    return {
-      success: false,
-      message: error.message
-    };
-  }
-}
-// Upload document resource (PDF, DOC, XLS, etc.)
-static async uploadDocumentResource(resourceData, file) {
-  try {
-    const formData = new FormData();
-    
-    console.log("🔍 Original resourceData:", resourceData);
-    
-    // Add resource metadata
-    Object.keys(resourceData).forEach(key => {
-      if (Array.isArray(resourceData[key])) {
-        resourceData[key].forEach(item => {
-          formData.append(key, item);
-        });
-      } else {
-        formData.append(key, resourceData[key]);
-      }
-    });
-    
-    if (file) {
-      formData.append('file', file);
-    }
 
-    // 🚨 CRITICAL: Debug FormData contents
-    console.log("📦 FormData entries (BEFORE sending):");
-    const entries = [];
-    for (let [key, value] of formData.entries()) {
-      console.log(`  ${key}:`, value);
-      entries.push({ key, value });
-    }
-    
-    // Check for duplicate 'type' fields
-    const typeEntries = entries.filter(entry => entry.key === 'type');
-    if (typeEntries.length > 1) {
-      console.error("🚨 DUPLICATE TYPE FIELDS FOUND:", typeEntries);
-      // Remove all type entries and add only one
-      const cleanFormData = new FormData();
-      let typeAdded = false;
+  static async uploadDocumentResource(resourceData, file) {
+    try {
+      const formData = new FormData();
       
-      for (let [key, value] of formData.entries()) {
-        if (key === 'type') {
-          if (!typeAdded) {
-            cleanFormData.append(key, value);
-            typeAdded = true;
-          }
+      // Add resource metadata
+      Object.keys(resourceData).forEach(key => {
+        if (Array.isArray(resourceData[key])) {
+          resourceData[key].forEach(item => {
+            formData.append(key, item);
+          });
         } else {
-          cleanFormData.append(key, value);
+          formData.append(key, resourceData[key]);
         }
-      }
+      });
       
-      console.log("🧹 Cleaned FormData:");
-      for (let [key, value] of cleanFormData.entries()) {
-        console.log(`  ${key}:`, value);
+      if (file) {
+        formData.append('file', file);
       }
-      
-      const response = await ExternalApiService.post('/resources', cleanFormData, undefined, true);
+
+      const response = await apiClient.upload(RESOURCES.BASE, formData);
+
       return {
         success: response.success,
         data: response.data,
         message: response.message
       };
+    } catch (error) {
+      console.error('[Resources] Upload document resource error:', error);
+      return {
+        success: false,
+        message: error.message
+      };
     }
-
-    const response = await ExternalApiService.post('/resources', formData, undefined, true);
-
-    return {
-      success: response.success,
-      data: response.data,
-      message: response.message
-    };
-  } catch (error) {
-    console.error('Upload document resource error:', error);
-    return {
-      success: false,
-      message: error.message
-    };
   }
-}
-  // Upload video resource
+
+
   static async uploadVideoResource(resourceData, file) {
     try {
       const formData = new FormData();
       
-      // Add resource metadata
       Object.keys(resourceData).forEach(key => {
-        if (key === 'themes' || key === 'tags') {
-          formData.append(key, JSON.stringify(resourceData[key]));
+        if (Array.isArray(resourceData[key])) {
+          resourceData[key].forEach(item => {
+            formData.append(key, item);
+          });
         } else {
           formData.append(key, resourceData[key]);
         }
       });
-
-      // formData.append('type', 'video');
       
       if (file) {
         formData.append('file', file);
       }
 
-      const response = await ExternalApiService.post('/resources', formData, undefined, true);
+      const response = await apiClient.upload(RESOURCES.BASE, formData);
 
       return {
         success: response.success,
@@ -197,7 +158,7 @@ static async uploadDocumentResource(resourceData, file) {
         message: response.message
       };
     } catch (error) {
-      console.error('Upload video resource error:', error);
+      console.error('[Resources] Upload video resource error:', error);
       return {
         success: false,
         message: error.message
@@ -205,28 +166,25 @@ static async uploadDocumentResource(resourceData, file) {
     }
   }
 
-  // Upload audio resource
   static async uploadAudioResource(resourceData, file) {
     try {
       const formData = new FormData();
       
-      // Add resource metadata
       Object.keys(resourceData).forEach(key => {
-        if (key === 'themes' || key === 'tags') {
-          formData.append(key, JSON.stringify(resourceData[key]));
+        if (Array.isArray(resourceData[key])) {
+          resourceData[key].forEach(item => {
+            formData.append(key, item);
+          });
         } else {
           formData.append(key, resourceData[key]);
         }
       });
-
-      // formData.append('type', 'audio');
-
       
       if (file) {
         formData.append('file', file);
       }
 
-      const response = await ExternalApiService.post('/resources', formData, undefined, true);
+      const response = await apiClient.upload(RESOURCES.BASE, formData);
 
       return {
         success: response.success,
@@ -234,7 +192,7 @@ static async uploadDocumentResource(resourceData, file) {
         message: response.message
       };
     } catch (error) {
-      console.error('Upload audio resource error:', error);
+      console.error('[Resources] Upload audio resource error:', error);
       return {
         success: false,
         message: error.message
@@ -242,27 +200,25 @@ static async uploadDocumentResource(resourceData, file) {
     }
   }
 
-  // Upload image resource
   static async uploadImageResource(resourceData, file) {
     try {
       const formData = new FormData();
       
-      // Add resource metadata
       Object.keys(resourceData).forEach(key => {
-        if (key === 'themes' || key === 'tags') {
-          formData.append(key, JSON.stringify(resourceData[key]));
+        if (Array.isArray(resourceData[key])) {
+          resourceData[key].forEach(item => {
+            formData.append(key, item);
+          });
         } else {
           formData.append(key, resourceData[key]);
         }
       });
-
-      // formData.append('type', 'image');
       
       if (file) {
         formData.append('file', file);
       }
 
-      const response = await ExternalApiService.post('/resources', formData, undefined, true);
+      const response = await apiClient.upload(RESOURCES.BASE, formData);
 
       return {
         success: response.success,
@@ -270,7 +226,7 @@ static async uploadDocumentResource(resourceData, file) {
         message: response.message
       };
     } catch (error) {
-      console.error('Upload image resource error:', error);
+      console.error('[Resources] Upload image resource error:', error);
       return {
         success: false,
         message: error.message
@@ -278,10 +234,9 @@ static async uploadDocumentResource(resourceData, file) {
     }
   }
 
-  // Get resource by ID
   static async getResourceById(resourceId) {
     try {
-      const response = await ExternalApiService.get(`/resources/${resourceId}`);
+      const response = await apiClient.get(RESOURCES.BY_ID(resourceId));
 
       return {
         success: response.success,
@@ -289,18 +244,19 @@ static async uploadDocumentResource(resourceData, file) {
         message: response.message
       };
     } catch (error) {
-      console.error('Get resource by ID error:', error);
+      console.error('[Resources] Get resource by ID error:', error);
       return {
         success: false,
         message: error.message
       };
     }
   }
+
 
   // Download resource (generates download link)
   static async downloadResource(resourceId) {
     try {
-      const response = await ExternalApiService.get(`/resources/${resourceId}/download`);
+      const response = await apiClient.get(RESOURCES.DOWNLOAD(resourceId));
 
       return {
         success: response.success,
@@ -308,7 +264,7 @@ static async uploadDocumentResource(resourceData, file) {
         message: response.message
       };
     } catch (error) {
-      console.error('Download resource error:', error);
+      console.error('[Resources] Download resource error:', error);
       return {
         success: false,
         message: error.message
@@ -316,10 +272,9 @@ static async uploadDocumentResource(resourceData, file) {
     }
   }
 
-  // Update resource
   static async updateResource(resourceId, updateData) {
     try {
-      const response = await ExternalApiService.put(`/resources/${resourceId}`, updateData);
+      const response = await apiClient.put(RESOURCES.BY_ID(resourceId), updateData);
 
       return {
         success: response.success,
@@ -327,7 +282,7 @@ static async uploadDocumentResource(resourceData, file) {
         message: response.message
       };
     } catch (error) {
-      console.error('Update resource error:', error);
+      console.error('[Resources] Update resource error:', error);
       return {
         success: false,
         message: error.message
@@ -335,10 +290,9 @@ static async uploadDocumentResource(resourceData, file) {
     }
   }
 
-  // Delete resource
   static async deleteResource(resourceId) {
     try {
-      const response = await ExternalApiService.delete(`/resources/${resourceId}`);
+      const response = await apiClient.delete(RESOURCES.BY_ID(resourceId));
 
       return {
         success: response.success,
@@ -346,7 +300,7 @@ static async uploadDocumentResource(resourceData, file) {
         message: response.message
       };
     } catch (error) {
-      console.error('Delete resource error:', error);
+      console.error('[Resources] Delete resource error:', error);
       return {
         success: false,
         message: error.message
@@ -354,10 +308,9 @@ static async uploadDocumentResource(resourceData, file) {
     }
   }
 
-  // Get resource categories
   static async getResourceCategories() {
     try {
-      const response = await ExternalApiService.get('/resources/categories');
+      const response = await apiClient.get(RESOURCES.CATEGORIES);
 
       return {
         success: response.success,
@@ -365,7 +318,7 @@ static async uploadDocumentResource(resourceData, file) {
         message: response.message
       };
     } catch (error) {
-      console.error('Get resource categories error:', error);
+      console.error('[Resources] Get resource categories error:', error);
       return {
         success: false,
         message: error.message
@@ -373,10 +326,9 @@ static async uploadDocumentResource(resourceData, file) {
     }
   }
 
-  // Get resource statistics
   static async getResourceStats() {
     try {
-      const response = await ExternalApiService.get('/resources/stats');
+      const response = await apiClient.get(RESOURCES.STATS);
 
       return {
         success: response.success,
@@ -384,7 +336,7 @@ static async uploadDocumentResource(resourceData, file) {
         message: response.message
       };
     } catch (error) {
-      console.error('Get resource stats error:', error);
+      console.error('[Resources] Get resource stats error:', error);
       return {
         success: false,
         message: error.message
@@ -392,7 +344,6 @@ static async uploadDocumentResource(resourceData, file) {
     }
   }
 
-  // Get resource types
   static getResourceTypes() {
     return [
       { value: 'document', label: 'Document', extensions: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'] },
@@ -402,7 +353,6 @@ static async uploadDocumentResource(resourceData, file) {
     ];
   }
 
-  // Get resource categories (static list)
   static getResourceCategoriesStatic() {
     return [
       { value: 'templates', label: 'Templates' },
@@ -416,7 +366,6 @@ static async uploadDocumentResource(resourceData, file) {
     ];
   }
 
-  // Get resource themes (static list)
   static getResourceThemes() {
     return [
       { value: 'ESG', label: 'ESG' },
@@ -432,7 +381,6 @@ static async uploadDocumentResource(resourceData, file) {
     ];
   }
 
-  // Get sort options
   static getSortOptions() {
     return [
       { value: 'createdAt', label: 'Date Created' },
@@ -442,4 +390,5 @@ static async uploadDocumentResource(resourceData, file) {
       { value: 'size', label: 'File Size' }
     ];
   }
+
 }
