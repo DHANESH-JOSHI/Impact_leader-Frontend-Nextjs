@@ -2,8 +2,6 @@ import { ExternalApiService } from './externalApiService';
 import { ImpactLeadersAuthService } from './impactLeadersAuthService';
 
 export class ConnectionsService {
-
-  // Get user's connections
   static async getMyConnections(params = {}) {
     try {
       const { 
@@ -38,6 +36,7 @@ export class ConnectionsService {
     }
   }
 
+
   // Send connection request
   static async sendConnectionRequest(requestData) {
     try {
@@ -57,6 +56,7 @@ export class ConnectionsService {
     }
   }
 
+
   // Accept connection request - Using PUT method as per Postman
   static async acceptConnectionRequest(connectionId) {
     try {
@@ -75,6 +75,7 @@ export class ConnectionsService {
       };
     }
   }
+
 
   // Reject connection request - Using PUT method as per Postman
   static async rejectConnectionRequest(connectionId, reason = '') {
@@ -97,7 +98,6 @@ export class ConnectionsService {
     }
   }
 
-  // Get connection suggestions
   static async getConnectionSuggestions(limit = 5) {
     try {
       const endpoint = `/connections/suggestions?limit=${limit}`;
@@ -116,6 +116,7 @@ export class ConnectionsService {
       };
     }
   }
+
 
   // Remove connection
   static async removeConnection(connectionId) {
@@ -136,7 +137,6 @@ export class ConnectionsService {
     }
   }
 
-  // Get pending connection requests (received) - Using /connections/requests endpoint
   static async getPendingRequests(params = {}) {
     try {
       const { page = 1, limit = 10, type = 'received' } = params;
@@ -164,7 +164,6 @@ export class ConnectionsService {
     }
   }
 
-  // Get sent connection requests - Using /connections/requests endpoint
   static async getSentRequests(params = {}) {
     try {
       const { page = 1, limit = 10 } = params;
@@ -192,7 +191,6 @@ export class ConnectionsService {
     }
   }
 
-  // Get connection statistics
   static async getConnectionStats(userId = null) {
     try {
       const endpoint = userId ? `/users/${userId}/connections/stats` : '/connections/stats';
@@ -212,7 +210,6 @@ export class ConnectionsService {
     }
   }
 
-  // Get connection types
   static getConnectionTypes() {
     return [
       { value: 'professional', label: 'Professional' },
@@ -223,7 +220,6 @@ export class ConnectionsService {
     ];
   }
 
-  // Get connection sources
   static getConnectionSources() {
     return [
       { value: 'directory', label: 'Directory Search' },
@@ -234,6 +230,7 @@ export class ConnectionsService {
       { value: 'mutual', label: 'Mutual Connection' }
     ];
   }
+
 
   // Block user connection
   static async blockConnection(connectionId) {
@@ -254,6 +251,7 @@ export class ConnectionsService {
     }
   }
 
+
   // Unblock user connection
   static async unblockConnection(connectionId) {
     try {
@@ -273,7 +271,6 @@ export class ConnectionsService {
     }
   }
 
-  // Get mutual connections
   static async getMutualConnections(userId, params = {}) {
     try {
       const { page = 1, limit = 10 } = params;
@@ -300,6 +297,7 @@ export class ConnectionsService {
     }
   }
 
+
   // Cancel sent connection request
   static async cancelConnectionRequest(connectionId) {
     try {
@@ -319,7 +317,6 @@ export class ConnectionsService {
     }
   }
 
-  // Update connection preferences
   static async updateConnectionPreferences(preferences) {
     try {
       const response = await ExternalApiService.put('/connections/preferences', preferences);
@@ -338,7 +335,6 @@ export class ConnectionsService {
     }
   }
 
-  // Get connection preferences
   static async getConnectionPreferences() {
     try {
       const response = await ExternalApiService.get('/connections/preferences');
@@ -356,6 +352,7 @@ export class ConnectionsService {
       };
     }
   }
+
 
   // Admin: Get all connections
   static async getAllConnections(params = {}) {
@@ -398,6 +395,7 @@ export class ConnectionsService {
     }
   }
 
+
   // Admin: Get connection analytics
   static async getConnectionAnalytics(params = {}) {
     try {
@@ -425,6 +423,7 @@ export class ConnectionsService {
     }
   }
 
+
   // Admin: Delete connection
   static async adminDeleteConnection(connectionId, reason = '') {
     try {
@@ -443,6 +442,7 @@ export class ConnectionsService {
       };
     }
   }
+
 
   // Admin: Force connection between users
   static async forceConnection(requesterId, recipientId, connectionData) {
@@ -466,6 +466,7 @@ export class ConnectionsService {
       };
     }
   }
+
 
   // Export connections data
   static async exportConnections(params = {}) {
@@ -491,7 +492,6 @@ export class ConnectionsService {
     }
   }
 
-  // Get suggested connections with AI
   static async getAISuggestions(params = {}) {
     try {
       const { limit = 10, criteria = 'mixed' } = params;
@@ -518,7 +518,6 @@ export class ConnectionsService {
     }
   }
 
-  // Get connection status types
   static getConnectionStatuses() {
     return [
       { value: 'pending', label: 'Pending' },
@@ -528,7 +527,6 @@ export class ConnectionsService {
     ];
   }
 
-  // Get AI suggestion criteria
   static getAISuggestionCriteria() {
     return [
       { value: 'mixed', label: 'Mixed (Recommended)' },
@@ -541,7 +539,6 @@ export class ConnectionsService {
     ];
   }
 
-  // Get connection rejection reasons
   static getRejectionReasons() {
     return [
       { value: 'not_relevant', label: 'Not Relevant' },
@@ -552,4 +549,5 @@ export class ConnectionsService {
       { value: 'other', label: 'Other' }
     ];
   }
+
 }

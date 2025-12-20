@@ -1,46 +1,37 @@
-import { ExternalApiService } from "./externalApiService";
-import { ImpactLeadersAuthService } from "./impactLeadersAuthService";
+import { apiClient } from '@/lib/apiClient';
+import { STORIES } from '@/constants/apiEndpoints';
 
 export class StoriesService {
-
-  // Get stories feed
   static async getStoriesFeed(params = {}) {
     try {
       const { page = 1, limit = 20 } = params;
 
-      let queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-      });
+      const queryParams = {
+        page,
+        limit,
+      };
 
-      const endpoint = `/stories/feed?${queryParams.toString()}`;
-
-      console.log("🔧 StoriesService: Making API call to:", endpoint);
-
-      const response = await ExternalApiService.get(endpoint);
-
-      console.log("🔧 StoriesService: API Response:", {
-        success: response.success,
-        status: response.status,
-        message: response.message,
-        hasData: !!response.data,
-      });
-
+      const response = await apiClient.get(STORIES.FEED, { params: queryParams });
+      const backendResponse = response.data || {};
+      
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || [],
+        pagination: backendResponse.pagination || {},
+        count: backendResponse.count,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Get stories feed error:", error);
+      console.error('[Stories] Get stories feed error:', error);
       return {
         success: false,
+        data: [],
+        pagination: {},
         message: error.message,
       };
     }
   }
 
-  // Create text story (Admin)
   static async createTextStory(storyData) {
     try {
       const payload = {
@@ -48,10 +39,7 @@ export class StoriesService {
         ...storyData,
       };
 
-      const response = await ExternalApiService.post(
-        "/stories",
-        payload
-      );
+      const response = await apiClient.post(STORIES.BASE, payload);
 
       return {
         success: response.success,
@@ -59,7 +47,7 @@ export class StoriesService {
         message: response.message,
       };
     } catch (error) {
-      console.error("Create text story error:", error);
+      console.error('[Stories] Create text story error:', error);
       return {
         success: false,
         message: error.message,
@@ -67,12 +55,10 @@ export class StoriesService {
     }
   }
 
-  // Create image story with upload
   static async createImageStory(storyData, imageFile) {
     try {
       const formData = new FormData();
 
-      // Add story data
       Object.keys(storyData).forEach((key) => {
         if (Array.isArray(storyData[key])) {
           storyData[key].forEach((value) => {
@@ -88,12 +74,7 @@ export class StoriesService {
         formData.append("media", imageFile);
       }
 
-      const response = await ExternalApiService.post(
-        "/stories/upload",
-        formData,
-        undefined,
-        true
-      );
+      const response = await apiClient.upload("/stories/upload", formData);
 
       return {
         success: response.success,
@@ -101,7 +82,7 @@ export class StoriesService {
         message: response.message,
       };
     } catch (error) {
-      console.error("Create image story error:", error);
+      console.error('[Stories] Create image story error:', error);
       return {
         success: false,
         message: error.message,
@@ -109,12 +90,10 @@ export class StoriesService {
     }
   }
 
-  // Create video story with upload
   static async createVideoStory(storyData, videoFile) {
     try {
       const formData = new FormData();
 
-      // Add story data
       Object.keys(storyData).forEach((key) => {
         if (Array.isArray(storyData[key])) {
           storyData[key].forEach((value) => {
@@ -130,12 +109,7 @@ export class StoriesService {
         formData.append("media", videoFile);
       }
 
-      const response = await ExternalApiService.post(
-        "/stories/upload",
-        formData,
-        undefined,
-        true
-      );
+      const response = await apiClient.upload("/stories/upload", formData);
 
       return {
         success: response.success,
@@ -143,20 +117,19 @@ export class StoriesService {
         message: response.message,
       };
     } catch (error) {
-      console.error("Create video story error:", error);
+      console.error('[Stories] Create video story error:', error);
       return {
         success: false,
         message: error.message,
       };
     }
   }
+
 
   // View story (increments view count)
   static async viewStory(storyId) {
     try {
-      const response = await ExternalApiService.get(
-        `/stories/${storyId}`
-      );
+      const response = await apiClient.get(STORIES.VIEW(storyId));
 
       return {
         success: response.success,
@@ -164,7 +137,7 @@ export class StoriesService {
         message: response.message,
       };
     } catch (error) {
-      console.error("View story error:", error);
+      console.error('[Stories] View story error:', error);
       return {
         success: false,
         message: error.message,
@@ -172,12 +145,9 @@ export class StoriesService {
     }
   }
 
-  // Get story analytics (Admin)
   static async getStoryAnalytics() {
     try {
-      const response = await ExternalApiService.get(
-        "/stories/analytics"
-      );
+      const response = await apiClient.get("/stories/analytics");
 
       return {
         success: response.success,
@@ -185,7 +155,7 @@ export class StoriesService {
         message: response.message,
       };
     } catch (error) {
-      console.error("Get story analytics error:", error);
+      console.error('[Stories] Get story analytics error:', error);
       return {
         success: false,
         message: error.message,
@@ -193,12 +163,9 @@ export class StoriesService {
     }
   }
 
-  // Delete story (Admin)
   static async deleteStory(storyId) {
     try {
-      const response = await ExternalApiService.delete(
-        `/stories/${storyId}`
-      );
+      const response = await apiClient.delete(STORIES.BY_ID(storyId));
 
       return {
         success: response.success,
@@ -206,7 +173,7 @@ export class StoriesService {
         message: response.message,
       };
     } catch (error) {
-      console.error("Delete story error:", error);
+      console.error('[Stories] Delete story error:', error);
       return {
         success: false,
         message: error.message,
@@ -214,13 +181,9 @@ export class StoriesService {
     }
   }
 
-  // Update story (Admin)
   static async updateStory(storyId, updateData) {
     try {
-      const response = await ExternalApiService.put(
-        `/stories/${storyId}`,
-        updateData
-      );
+      const response = await apiClient.put(STORIES.BY_ID(storyId), updateData);
 
       return {
         success: response.success,
@@ -228,7 +191,7 @@ export class StoriesService {
         message: response.message,
       };
     } catch (error) {
-      console.error("Update story error:", error);
+      console.error('[Stories] Update story error:', error);
       return {
         success: false,
         message: error.message,
@@ -236,7 +199,6 @@ export class StoriesService {
     }
   }
 
-  // Get story types
   static getStoryTypes() {
     return [
       { value: "text", label: "Text Story" },
@@ -245,7 +207,6 @@ export class StoriesService {
     ];
   }
 
-  // Get background colors for text stories
   static getBackgroundColors() {
     return [
       { value: "#2c3e50", label: "Dark Blue", color: "#2c3e50" },
@@ -258,7 +219,6 @@ export class StoriesService {
     ];
   }
 
-  // Get font families
   static getFontFamilies() {
     return [
       { value: "Arial", label: "Arial" },
@@ -270,7 +230,6 @@ export class StoriesService {
     ];
   }
 
-  // Get default story duration options (in milliseconds)
   static getStoryDurations() {
     return [
       { value: 86400000, label: "24 Hours" }, // 24 * 60 * 60 * 1000
@@ -279,4 +238,5 @@ export class StoriesService {
       { value: 2592000000, label: "30 Days" }, // 30 * 24 * 60 * 60 * 1000
     ];
   }
+
 }

@@ -7,7 +7,7 @@ let networkHistory = [];
 let processHistory = [];
 
 export class ServerMonitoringService {
-  // Get comprehensive server metrics
+
   static async getServerMetrics() {
     try {
       const cpus = os.cpus();
@@ -122,6 +122,7 @@ export class ServerMonitoringService {
     }
   }
 
+
   // Calculate CPU usage over a short period
   static async calculateCPUUsage() {
     return new Promise((resolve) => {
@@ -149,6 +150,7 @@ export class ServerMonitoringService {
     });
   }
 
+
   // Calculate overall server health
   static calculateOverallHealth(cpuUsage, memoryUsage, loadAverage) {
     const cpuScore = cpuUsage < 50 ? 100 : cpuUsage < 70 ? 80 : cpuUsage < 85 ? 60 : 30;
@@ -163,7 +165,6 @@ export class ServerMonitoringService {
     return { status: 'Poor', score: overall, color: '#ef4444' };
   }
 
-  // Get real-time server updates
   static async getRealTimeServerMetrics() {
     try {
       const cpuUsage = await this.calculateCPUUsage();
@@ -197,6 +198,7 @@ export class ServerMonitoringService {
     }
   }
 
+
   // Format bytes to human readable
   static formatBytes(bytes, decimals = 2) {
     if (bytes === 0) return '0 Bytes';
@@ -206,6 +208,7 @@ export class ServerMonitoringService {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   }
+
 
   // Format uptime to human readable
   static formatUptime(seconds) {
@@ -217,4 +220,5 @@ export class ServerMonitoringService {
     if (hours > 0) return `${hours}h ${minutes}m`;
     return `${minutes}m`;
   }
+
 }

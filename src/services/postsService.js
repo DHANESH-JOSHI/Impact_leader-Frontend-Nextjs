@@ -3,7 +3,6 @@ import { POSTS } from '@/constants/apiEndpoints';
 
 export class PostsService {
 
-  // Get all posts with pagination and filters
   static async getAllPosts(params = {}) {
     try {
       const { page = 1, limit = 10, search, type, theme, isPublic } = params;
@@ -18,11 +17,13 @@ export class PostsService {
       };
 
       const response = await apiClient.get(POSTS.BASE, { params: queryParams });
-      // console.log("response :",response)
+      const backendResponse = response.data || {};
+      
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || [],
+        pagination: backendResponse.pagination || {},
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('[Posts] Get posts error:', error);
@@ -33,7 +34,7 @@ export class PostsService {
     }
   }
 
-  // Create new post (text only)
+
   static async createPost(postData) {
     try {
       const response = await apiClient.post(POSTS.BASE, postData);
@@ -52,12 +53,11 @@ export class PostsService {
     }
   }
 
-  // Create post with images using FormData
+
   static async createPostWithImages(postData, images = []) {
     try {
       const formData = new FormData();
 
-      // Add text fields
       Object.keys(postData).forEach(key => {
         if (Array.isArray(postData[key])) {
           postData[key].forEach(value => {
@@ -68,7 +68,6 @@ export class PostsService {
         }
       });
 
-      // Add image files
       images.forEach(image => {
         formData.append('images', image);
       });
@@ -89,7 +88,7 @@ export class PostsService {
     }
   }
 
-  // Create post with poll
+
   static async createPollPost(postData, pollData) {
     try {
       const payload = {
@@ -114,6 +113,7 @@ export class PostsService {
     }
   }
 
+
   // Upvote a post
   static async upvotePost(postId) {
     try {
@@ -133,6 +133,7 @@ export class PostsService {
     }
   }
 
+
   // Downvote a post
   static async downvotePost(postId) {
     try {
@@ -151,6 +152,7 @@ export class PostsService {
       };
     }
   }
+
 
   // Vote on poll
   static async voteOnPoll(postId, optionIndex) {
@@ -173,6 +175,7 @@ export class PostsService {
     }
   }
 
+
   // Add comment to post
   static async addComment(postId, content) {
     try {
@@ -193,6 +196,7 @@ export class PostsService {
       };
     }
   }
+
 
   // Flag post (Admin function)
   static async flagPost(postId, reason) {
@@ -215,6 +219,7 @@ export class PostsService {
     }
   }
 
+
   // Pin/Unpin post (Admin function)
   static async pinPost(postId) {
     try {
@@ -234,7 +239,6 @@ export class PostsService {
     }
   }
 
-  // Get post types for dropdown
   static getPostTypes() {
     return [
       { value: 'announcement', label: 'Announcement' },
@@ -245,7 +249,6 @@ export class PostsService {
     ];
   }
 
-  // Get single post by ID
   static async getPost(postId) {
     try {
       const response = await ExternalApiService.get(`/posts/${postId}`);
@@ -264,7 +267,6 @@ export class PostsService {
     }
   }
 
-  // Update post
   static async updatePost(postId, postData) {
     try {
       const response = await ExternalApiService.put(`/posts/${postId}`, postData);
@@ -283,7 +285,6 @@ export class PostsService {
     }
   }
 
-  // Delete post
   static async deletePost(postId) {
     try {
       const response = await ExternalApiService.delete(`/posts/${postId}`);
@@ -302,7 +303,6 @@ export class PostsService {
     }
   }
 
-  // Get comments for a post
   static async getPostComments(postId, params = {}) {
     try {
       const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc' } = params;
@@ -331,7 +331,6 @@ export class PostsService {
     }
   }
 
-  // Update comment
   static async updateComment(postId, commentId, content) {
     try {
       const response = await ExternalApiService.put(`/posts/${postId}/comments/${commentId}`, {
@@ -352,7 +351,6 @@ export class PostsService {
     }
   }
 
-  // Delete comment
   static async deleteComment(postId, commentId) {
     try {
       const response = await ExternalApiService.delete(`/posts/${postId}/comments/${commentId}`);
@@ -370,6 +368,7 @@ export class PostsService {
       };
     }
   }
+
 
   // Like/Unlike comment
   static async toggleCommentLike(postId, commentId) {
@@ -390,6 +389,7 @@ export class PostsService {
     }
   }
 
+
   // Share post
   static async sharePost(postId, shareData = {}) {
     try {
@@ -408,6 +408,7 @@ export class PostsService {
       };
     }
   }
+
 
   // Save/Bookmark post
   static async savePost(postId) {
@@ -428,6 +429,7 @@ export class PostsService {
     }
   }
 
+
   // Unsave/Remove bookmark
   static async unsavePost(postId) {
     try {
@@ -447,7 +449,6 @@ export class PostsService {
     }
   }
 
-  // Get saved posts
   static async getSavedPosts(params = {}) {
     try {
       const { page = 1, limit = 10 } = params;
@@ -474,6 +475,7 @@ export class PostsService {
     }
   }
 
+
   // Report post
   static async reportPost(postId, reason, description = '') {
     try {
@@ -495,6 +497,7 @@ export class PostsService {
       };
     }
   }
+
 
   // Admin: Get reported posts
   static async getReportedPosts(params = {}) {
@@ -524,6 +527,7 @@ export class PostsService {
     }
   }
 
+
   // Admin: Handle reported post
   static async handleReportedPost(reportId, action, reason = '') {
     try {
@@ -544,6 +548,7 @@ export class PostsService {
       };
     }
   }
+
 
   // Admin: Get post analytics
   static async getPostAnalytics(params = {}) {
@@ -572,6 +577,7 @@ export class PostsService {
     }
   }
 
+
   // Admin: Bulk actions on posts
   static async bulkActionPosts(action, postIds, data = {}) {
     try {
@@ -595,7 +601,6 @@ export class PostsService {
     }
   }
 
-  // Get trending posts
   static async getTrendingPosts(params = {}) {
     try {
       const { limit = 10, timeframe = '24h' } = params;
@@ -622,7 +627,6 @@ export class PostsService {
     }
   }
 
-  // Get post themes
   static getPostThemes() {
     return [
       { value: 'environment', label: 'Environment' },
@@ -640,7 +644,6 @@ export class PostsService {
     ];
   }
 
-  // Get flag reasons
   static getFlagReasons() {
     return [
       { value: 'inappropriate', label: 'Inappropriate Content' },
@@ -654,7 +657,6 @@ export class PostsService {
     ];
   }
 
-  // Get report statuses
   static getReportStatuses() {
     return [
       { value: 'pending', label: 'Pending' },
@@ -664,7 +666,6 @@ export class PostsService {
     ];
   }
 
-  // Get sort options
   static getSortOptions() {
     return [
       { value: 'createdAt', label: 'Date Created' },
@@ -676,7 +677,6 @@ export class PostsService {
     ];
   }
 
-  // Get bulk action options
   static getBulkActions() {
     return [
       { value: 'approve', label: 'Approve' },
@@ -688,4 +688,5 @@ export class PostsService {
       { value: 'unflag', label: 'Unflag' }
     ];
   }
+
 }

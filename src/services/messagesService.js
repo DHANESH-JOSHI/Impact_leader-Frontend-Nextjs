@@ -2,8 +2,6 @@ import { ExternalApiService } from "./externalApiService";
 import { ImpactLeadersAuthService } from "./impactLeadersAuthService";
 
 export class MessagesService {
-
-  // Get all conversations for the authenticated user
   static async getConversations(params = {}) {
     try {
       const { page = 1, limit = 20, search, status } = params;
@@ -35,7 +33,6 @@ export class MessagesService {
     }
   }
 
-  // Get messages in a specific conversation
   static async getConversationMessages(conversationId, params = {}) {
     try {
       const { page = 1, limit = 50, before, after } = params;
@@ -67,6 +64,7 @@ export class MessagesService {
     }
   }
 
+
   // Send a new message
   static async sendMessage(messageData) {
     try {
@@ -88,6 +86,7 @@ export class MessagesService {
       };
     }
   }
+
 
   // Send message with attachment
   static async sendMessageWithAttachment(messageData, attachmentFile) {
@@ -121,6 +120,7 @@ export class MessagesService {
     }
   }
 
+
   // Mark message as read
   static async markMessageAsRead(messageId) {
     try {
@@ -142,6 +142,7 @@ export class MessagesService {
       };
     }
   }
+
 
   // Mark conversation as read
   static async markConversationAsRead(conversationId) {
@@ -165,7 +166,6 @@ export class MessagesService {
     }
   }
 
-  // Delete message
   static async deleteMessage(messageId) {
     try {
       const response = await ExternalApiService.delete(
@@ -186,7 +186,6 @@ export class MessagesService {
     }
   }
 
-  // Delete conversation
   static async deleteConversation(conversationId) {
     try {
       const response = await ExternalApiService.delete(
@@ -206,6 +205,7 @@ export class MessagesService {
       };
     }
   }
+
 
   // Archive conversation
   static async archiveConversation(conversationId) {
@@ -229,6 +229,7 @@ export class MessagesService {
     }
   }
 
+
   // Unarchive conversation
   static async unarchiveConversation(conversationId) {
     try {
@@ -250,6 +251,7 @@ export class MessagesService {
       };
     }
   }
+
 
   // Block user
   static async blockUser(userId) {
@@ -273,6 +275,7 @@ export class MessagesService {
     }
   }
 
+
   // Unblock user
   static async unblockUser(userId) {
     try {
@@ -295,7 +298,6 @@ export class MessagesService {
     }
   }
 
-  // Get blocked users
   static async getBlockedUsers(params = {}) {
     try {
       const { page = 1, limit = 20 } = params;
@@ -324,7 +326,6 @@ export class MessagesService {
     }
   }
 
-  // Get unread message count
   static async getUnreadCount() {
     try {
       const response = await ExternalApiService.get(
@@ -344,6 +345,7 @@ export class MessagesService {
       };
     }
   }
+
 
   // Admin: Get all messages (admin only)
   static async getAllMessages(params = {}) {
@@ -392,6 +394,7 @@ export class MessagesService {
     }
   }
 
+
   // Admin: Get message analytics
   static async getMessageAnalytics(params = {}) {
     try {
@@ -421,6 +424,7 @@ export class MessagesService {
     }
   }
 
+
   // Admin: Delete message (admin action)
   static async adminDeleteMessage(messageId, reason = "") {
     try {
@@ -442,6 +446,7 @@ export class MessagesService {
     }
   }
 
+
   // Message types
   static getMessageTypes() {
     return [
@@ -453,6 +458,7 @@ export class MessagesService {
     ];
   }
 
+
   // Message status options
   static getMessageStatuses() {
     return [
@@ -462,6 +468,7 @@ export class MessagesService {
       { value: "failed", label: "Failed" },
     ];
   }
+
 
   // Conversation status options
   static getConversationStatuses() {
@@ -473,9 +480,8 @@ export class MessagesService {
     ];
   }
 
-  // ==================== 1-to-1 Chat Functions ====================
 
-  // Get chat history with a specific user
+  // ==================== 1-to-1 Chat Functions ====================
   static async getChatHistory(userId, params = {}) {
     try {
       const { page = 1, limit = 50 } = params;
@@ -501,6 +507,7 @@ export class MessagesService {
       };
     }
   }
+
 
   // Send 1-to-1 message (text or file)
   static async send1to1Message(messageData, attachmentFile = null) {
@@ -535,7 +542,6 @@ export class MessagesService {
     }
   }
 
-  // Search messages
   static async searchMessages(params = {}) {
     try {
       const { query, userId } = params;
@@ -563,9 +569,8 @@ export class MessagesService {
     }
   }
 
-  // ==================== Group Management Functions ====================
 
-  // Create group
+  // ==================== Group Management Functions ====================
   static async createGroup(groupData, groupImageFile = null) {
     try {
       const formData = new FormData();
@@ -598,7 +603,6 @@ export class MessagesService {
     }
   }
 
-  // Get group details
   static async getGroupDetails(groupId) {
     try {
       const endpoint = `/messages/groups/${groupId}`;
@@ -618,7 +622,6 @@ export class MessagesService {
     }
   }
 
-  // Update group (Creator only)
   static async updateGroup(groupId, groupData, groupImageFile = null) {
     try {
       const formData = new FormData();
@@ -650,6 +653,7 @@ export class MessagesService {
     }
   }
 
+
   // Add members to group (Creator only)
   static async addGroupMembers(groupId, memberIds) {
     try {
@@ -672,6 +676,7 @@ export class MessagesService {
     }
   }
 
+
   // Remove member from group (Creator only)
   static async removeGroupMember(groupId, userId) {
     try {
@@ -692,6 +697,7 @@ export class MessagesService {
       };
     }
   }
+
 
   // Leave group
   static async leaveGroup(groupId) {
@@ -715,7 +721,6 @@ export class MessagesService {
     }
   }
 
-  // Delete group (Creator only)
   static async deleteGroup(groupId) {
     try {
       const response = await ExternalApiService.delete(
@@ -736,9 +741,8 @@ export class MessagesService {
     }
   }
 
-  // ==================== Group Chat Functions ====================
 
-  // Get group messages
+  // ==================== Group Chat Functions ====================
   static async getGroupMessages(groupId, params = {}) {
     try {
       const { page = 1, limit = 50 } = params;
@@ -764,6 +768,7 @@ export class MessagesService {
       };
     }
   }
+
 
   // Send group message (text or file)
   static async sendGroupMessage(groupId, messageData, attachmentFile = null) {
@@ -797,4 +802,5 @@ export class MessagesService {
       };
     }
   }
+
 }

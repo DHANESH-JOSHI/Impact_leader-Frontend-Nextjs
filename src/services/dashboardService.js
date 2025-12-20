@@ -33,6 +33,7 @@ export class DashboardService {
     }
   }
 
+
   /**
    * Get chart data for dashboard visualizations
    * This should call the appropriate analytics endpoint when available
@@ -67,6 +68,7 @@ export class DashboardService {
       };
     }
   }
+
 
   /**
    * Get recent activities/notifications
@@ -105,6 +107,7 @@ export class DashboardService {
     }
   }
 
+
   /**
    * Get system health status
    */
@@ -128,4 +131,5 @@ export class DashboardService {
       };
     }
   }
+
 }

@@ -25,6 +25,7 @@ export class MeetingsService {
     }
   }
 
+
   // Verify organizer email - can use current email or provide new one
   static async verifyOrganizerEmail(sessionId, useCurrentEmail = true, newEmail = "") {
     try {
@@ -50,6 +51,7 @@ export class MeetingsService {
       };
     }
   }
+
 
   // Confirm organizer email with OTP
   static async confirmOrganizerEmail(sessionId, email, otp) {
@@ -77,6 +79,7 @@ export class MeetingsService {
     }
   }
 
+
   // Verify attendee emails - can provide updates for individual emails
   static async verifyAttendeeEmails(sessionId, attendeeEmailUpdates = []) {
     try {
@@ -101,6 +104,7 @@ export class MeetingsService {
       };
     }
   }
+
 
   // Confirm attendee email with OTP (public endpoint - no auth required)
   static async confirmAttendeeEmail(sessionId, email, otp) {
@@ -129,6 +133,7 @@ export class MeetingsService {
     }
   }
 
+
   // Complete meeting creation
   static async completeMeetingCreation(sessionId) {
     try {
@@ -153,7 +158,6 @@ export class MeetingsService {
     }
   }
 
-  // Get creation status for a session
   static async getCreationStatus(sessionId) {
     try {
       const response = await ExternalApiService.get(
@@ -174,7 +178,6 @@ export class MeetingsService {
     }
   }
 
-  // Get all meetings (admin)
   static async getAllMeetings(params = {}) {
     try {
       const {
@@ -217,7 +220,6 @@ export class MeetingsService {
     }
   }
 
-  // Get meeting analytics
   static async getMeetingAnalytics(params = {}) {
     try {
       const { timeframe = "30d", groupBy = "day" } = params;
@@ -246,6 +248,7 @@ export class MeetingsService {
     }
   }
 
+
   // Meeting types options
   static getMeetingTypes() {
     return [
@@ -257,6 +260,7 @@ export class MeetingsService {
     ];
   }
 
+
   // Meeting status options
   static getMeetingStatuses() {
     return [
@@ -267,6 +271,7 @@ export class MeetingsService {
       { value: "pending-verification", label: "Pending Verification" },
     ];
   }
+
 
   // Timezone options (common ones)
   static getTimezones() {
@@ -280,4 +285,5 @@ export class MeetingsService {
       { value: "America/Los_Angeles", label: "America/Los_Angeles (PST/PDT)" },
     ];
   }
+
 }

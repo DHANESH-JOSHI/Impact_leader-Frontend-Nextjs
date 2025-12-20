@@ -1,9 +1,7 @@
-import { ExternalApiService } from './externalApiService';
-import { ImpactLeadersAuthService } from './impactLeadersAuthService';
+import { apiClient } from '@/lib/apiClient';
+import { QNA } from '@/constants/apiEndpoints';
 
 export class QnAService {
-
-  // Get all questions with pagination and filters
   static async getQuestions(params = {}) {
     try {
       const { 
@@ -12,42 +10,47 @@ export class QnAService {
         search, 
         category, 
         tags,
+        themes,
+        status,
         sortBy = 'createdAt',
         sortOrder = 'desc'
       } = params;
       
-      let queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
+      const queryParams = {
+        page,
+        limit,
         sortBy,
-        sortOrder
-      });
+        sortOrder,
+        ...(search && { search }),
+        ...(category && { category }),
+        ...(tags && { tags }),
+        ...(themes && { themes }),
+        ...(status && { status }),
+      };
 
-      if (search) queryParams.append('search', search);
-      if (category) queryParams.append('category', category);
-      if (tags) queryParams.append('tags', tags);
-
-      const endpoint = `/qa/questions?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
-
+      const response = await apiClient.get('/qa/questions', { params: queryParams });
+      const backendResponse = response.data || {};
+      
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || [],
+        pagination: backendResponse.pagination || {},
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Get questions error:', error);
+      console.error('[QnA] Get questions error:', error);
       return {
         success: false,
+        data: [],
+        pagination: {},
         message: error.message
       };
     }
   }
 
-  // Get question by ID with answers
   static async getQuestionById(questionId) {
     try {
-      const response = await ExternalApiService.get(`/qa/questions/${questionId}`);
+      const response = await apiClient.get(`/qa/questions/${questionId}`);
 
       return {
         success: response.success,
@@ -55,18 +58,19 @@ export class QnAService {
         message: response.message
       };
     } catch (error) {
-      console.error('Get question by ID error:', error);
+      console.error('[QnA] Get question by ID error:', error);
       return {
         success: false,
         message: error.message
       };
     }
   }
+
 
   // Ask a new question
   static async askQuestion(questionData) {
     try {
-      const response = await ExternalApiService.post('/qa/questions', questionData);
+      const response = await apiClient.post('/qa/questions', questionData);
 
       return {
         success: response.success,
@@ -74,7 +78,7 @@ export class QnAService {
         message: response.message
       };
     } catch (error) {
-      console.error('Ask question error:', error);
+      console.error('[QnA] Ask question error:', error);
       return {
         success: false,
         message: error.message
@@ -82,10 +86,9 @@ export class QnAService {
     }
   }
 
-  // Update question (only by question author or admin)
   static async updateQuestion(questionId, updateData) {
     try {
-      const response = await ExternalApiService.put(`/qa/questions/${questionId}`, updateData);
+      const response = await apiClient.put(`/qa/questions/${questionId}`, updateData);
 
       return {
         success: response.success,
@@ -93,7 +96,7 @@ export class QnAService {
         message: response.message
       };
     } catch (error) {
-      console.error('Update question error:', error);
+      console.error('[QnA] Update question error:', error);
       return {
         success: false,
         message: error.message
@@ -101,10 +104,9 @@ export class QnAService {
     }
   }
 
-  // Delete question (admin only)
   static async deleteQuestion(questionId) {
     try {
-      const response = await ExternalApiService.delete(`/qa/questions/${questionId}`);
+      const response = await apiClient.delete(`/qa/questions/${questionId}`);
 
       return {
         success: response.success,
@@ -112,18 +114,19 @@ export class QnAService {
         message: response.message
       };
     } catch (error) {
-      console.error('Delete question error:', error);
+      console.error('[QnA] Delete question error:', error);
       return {
         success: false,
         message: error.message
       };
     }
   }
+
 
   // Answer a question
   static async answerQuestion(questionId, answerData) {
     try {
-      const response = await ExternalApiService.post(`/qa/questions/${questionId}/answers`, answerData);
+      const response = await apiClient.post(`/qa/questions/${questionId}/answers`, answerData);
 
       return {
         success: response.success,
@@ -131,7 +134,7 @@ export class QnAService {
         message: response.message
       };
     } catch (error) {
-      console.error('Answer question error:', error);
+      console.error('[QnA] Answer question error:', error);
       return {
         success: false,
         message: error.message
@@ -139,10 +142,9 @@ export class QnAService {
     }
   }
 
-  // Update answer
   static async updateAnswer(questionId, answerId, updateData) {
     try {
-      const response = await ExternalApiService.put(`/qa/questions/${questionId}/answers/${answerId}`, updateData);
+      const response = await apiClient.put(`/qa/questions/${questionId}/answers/${answerId}`, updateData);
 
       return {
         success: response.success,
@@ -150,7 +152,7 @@ export class QnAService {
         message: response.message
       };
     } catch (error) {
-      console.error('Update answer error:', error);
+      console.error('[QnA] Update answer error:', error);
       return {
         success: false,
         message: error.message
@@ -158,10 +160,9 @@ export class QnAService {
     }
   }
 
-  // Delete answer
   static async deleteAnswer(questionId, answerId) {
     try {
-      const response = await ExternalApiService.delete(`/qa/questions/${questionId}/answers/${answerId}`);
+      const response = await apiClient.delete(`/qa/questions/${questionId}/answers/${answerId}`);
 
       return {
         success: response.success,
@@ -169,18 +170,19 @@ export class QnAService {
         message: response.message
       };
     } catch (error) {
-      console.error('Delete answer error:', error);
+      console.error('[QnA] Delete answer error:', error);
       return {
         success: false,
         message: error.message
       };
     }
   }
+
 
   // Upvote question
   static async upvoteQuestion(questionId) {
     try {
-      const response = await ExternalApiService.post(`/qa/questions/${questionId}/upvote`, {});
+      const response = await apiClient.post(`/qa/questions/${questionId}/vote`, { voteType: 'up' });
 
       return {
         success: response.success,
@@ -188,18 +190,19 @@ export class QnAService {
         message: response.message
       };
     } catch (error) {
-      console.error('Upvote question error:', error);
+      console.error('[QnA] Upvote question error:', error);
       return {
         success: false,
         message: error.message
       };
     }
   }
+
 
   // Upvote answer
   static async upvoteAnswer(questionId, answerId) {
     try {
-      const response = await ExternalApiService.post(`/qa/questions/${questionId}/answers/${answerId}/upvote`, {});
+      const response = await apiClient.post(`/qa/questions/${questionId}/answers/${answerId}/vote`, { voteType: 'up' });
 
       return {
         success: response.success,
@@ -207,18 +210,19 @@ export class QnAService {
         message: response.message
       };
     } catch (error) {
-      console.error('Upvote answer error:', error);
+      console.error('[QnA] Upvote answer error:', error);
       return {
         success: false,
         message: error.message
       };
     }
   }
+
 
   // Mark answer as accepted (question author or admin)
   static async acceptAnswer(questionId, answerId) {
     try {
-      const response = await ExternalApiService.post(`/qa/questions/${questionId}/answers/${answerId}/accept`, {});
+      const response = await apiClient.post(`/qa/questions/${questionId}/answers/${answerId}/accept`, {});
 
       return {
         success: response.success,
@@ -226,7 +230,7 @@ export class QnAService {
         message: response.message
       };
     } catch (error) {
-      console.error('Accept answer error:', error);
+      console.error('[QnA] Accept answer error:', error);
       return {
         success: false,
         message: error.message
@@ -234,10 +238,9 @@ export class QnAService {
     }
   }
 
-  // Get Q&A statistics (admin)
   static async getQnAStats() {
     try {
-      const response = await ExternalApiService.get('/qa/stats');
+      const response = await apiClient.get('/qa/stats');
 
       return {
         success: response.success,
@@ -245,7 +248,7 @@ export class QnAService {
         message: response.message
       };
     } catch (error) {
-      console.error('Get Q&A stats error:', error);
+      console.error('[QnA] Get Q&A stats error:', error);
       return {
         success: false,
         message: error.message
@@ -253,10 +256,9 @@ export class QnAService {
     }
   }
 
-  // Get trending questions
   static async getTrendingQuestions(limit = 10) {
     try {
-      const response = await ExternalApiService.get(`/qa/questions/trending?limit=${limit}`);
+      const response = await apiClient.get('/qa/questions/trending', { params: { limit } });
 
       return {
         success: response.success,
@@ -264,7 +266,7 @@ export class QnAService {
         message: response.message
       };
     } catch (error) {
-      console.error('Get trending questions error:', error);
+      console.error('[QnA] Get trending questions error:', error);
       return {
         success: false,
         message: error.message
@@ -272,35 +274,35 @@ export class QnAService {
     }
   }
 
-  // Get unanswered questions
   static async getUnansweredQuestions(params = {}) {
     try {
       const { page = 1, limit = 10 } = params;
       
-      let queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-        answered: 'false'
-      });
+      const queryParams = {
+        page,
+        limit,
+        status: 'open'
+      };
 
-      const endpoint = `/qa/questions?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const response = await apiClient.get('/qa/questions', { params: queryParams });
 
       return {
         success: response.success,
-        data: response.data,
+        data: response.data || [],
+        pagination: response.pagination || {},
         message: response.message
       };
     } catch (error) {
-      console.error('Get unanswered questions error:', error);
+      console.error('[QnA] Get unanswered questions error:', error);
       return {
         success: false,
+        data: [],
+        pagination: {},
         message: error.message
       };
     }
   }
 
-  // Get Q&A categories (static list)
   static getQnACategories() {
     return [
       { value: 'program-management', label: 'Program Management' },
@@ -320,7 +322,6 @@ export class QnAService {
     ];
   }
 
-  // Get question tags (commonly used)
   static getCommonTags() {
     return [
       'CSR', 'sustainability', 'impact', 'ESG', 'volunteering', 
@@ -330,7 +331,6 @@ export class QnAService {
     ];
   }
 
-  // Get sort options
   static getSortOptions() {
     return [
       { value: 'createdAt', label: 'Most Recent' },
@@ -340,4 +340,5 @@ export class QnAService {
       { value: 'views', label: 'Most Viewed' }
     ];
   }
+
 }

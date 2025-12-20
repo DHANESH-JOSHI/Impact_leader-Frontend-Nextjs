@@ -23,6 +23,7 @@ export class SystemHealthService {
     }
   }
 
+
   // API status endpoint
   static async getApiStatus() {
     try {
@@ -43,6 +44,7 @@ export class SystemHealthService {
       };
     }
   }
+
 
   // Test endpoint
   static async testEndpoint() {
@@ -65,6 +67,7 @@ export class SystemHealthService {
     }
   }
 
+
   // Advanced system diagnostics
   static async getSystemDiagnostics() {
     try {
@@ -85,6 +88,7 @@ export class SystemHealthService {
       };
     }
   }
+
 
   // Database health check
   static async getDatabaseHealth() {
@@ -107,6 +111,7 @@ export class SystemHealthService {
     }
   }
 
+
   // Redis health check
   static async getRedisHealth() {
     try {
@@ -127,6 +132,7 @@ export class SystemHealthService {
       };
     }
   }
+
 
   // Email service health check
   static async getEmailServiceHealth() {
@@ -149,6 +155,7 @@ export class SystemHealthService {
     }
   }
 
+
   // File storage health check
   static async getStorageHealth() {
     try {
@@ -170,7 +177,6 @@ export class SystemHealthService {
     }
   }
 
-  // Get system metrics
   static async getSystemMetrics(params = {}) {
     try {
       const { timeframe = '1h', metrics = 'all' } = params;
@@ -199,7 +205,6 @@ export class SystemHealthService {
     }
   }
 
-  // Get API endpoint statistics
   static async getApiEndpointStats(params = {}) {
     try {
       const { timeframe = '24h', sortBy = 'requests' } = params;
@@ -228,6 +233,7 @@ export class SystemHealthService {
     }
   }
 
+
   // Clear system cache
   static async clearSystemCache(cacheType = 'all') {
     try {
@@ -250,6 +256,7 @@ export class SystemHealthService {
       };
     }
   }
+
 
   // Restart system service
   static async restartSystemService(serviceName) {
@@ -274,7 +281,6 @@ export class SystemHealthService {
     }
   }
 
-  // Get system logs
   static async getSystemLogs(params = {}) {
     try {
       const {
@@ -312,6 +318,7 @@ export class SystemHealthService {
       };
     }
   }
+
 
   // Run system health check suite
   static async runHealthCheckSuite() {
@@ -368,6 +375,7 @@ export class SystemHealthService {
     }
   }
 
+
   // Performance test endpoint
   static async performanceTest(params = {}) {
     try {
@@ -395,14 +403,12 @@ export class SystemHealthService {
     }
   }
 
-  // Static helper methods
 
-  // Get health status colors for UI
+  // Static helper methods
   static getHealthStatusColor(isHealthy) {
     return isHealthy ? '#10b981' : '#ef4444'; // green-500 : red-500
   }
 
-  // Get health status badge
   static getHealthStatusBadge(isHealthy) {
     return {
       text: isHealthy ? 'Healthy' : 'Issues',
@@ -411,7 +417,6 @@ export class SystemHealthService {
     };
   }
 
-  // Get log level options
   static getLogLevels() {
     return [
       { value: 'all', label: 'All Levels' },
@@ -422,7 +427,6 @@ export class SystemHealthService {
     ];
   }
 
-  // Get system services
   static getSystemServices() {
     return [
       { value: 'all', label: 'All Services' },
@@ -435,7 +439,6 @@ export class SystemHealthService {
     ];
   }
 
-  // Get cache types
   static getCacheTypes() {
     return [
       { value: 'all', label: 'All Caches' },
@@ -447,7 +450,6 @@ export class SystemHealthService {
     ];
   }
 
-  // Get metric types
   static getMetricTypes() {
     return [
       { value: 'all', label: 'All Metrics' },
@@ -460,7 +462,6 @@ export class SystemHealthService {
     ];
   }
 
-  // Get timeframe options
   static getTimeframeOptions() {
     return [
       { value: '5m', label: 'Last 5 minutes' },
@@ -471,4 +472,5 @@ export class SystemHealthService {
       { value: '7d', label: 'Last 7 days' }
     ];
   }
+
 }

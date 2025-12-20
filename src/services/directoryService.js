@@ -58,7 +58,6 @@ export class DirectoryService {
     }
   }
 
-  // Search by company/organization
   static async searchByCompany(companyName, params = {}) {
     try {
       const { page = 1, limit = 20, sortBy = "name" } = params;
@@ -90,7 +89,6 @@ export class DirectoryService {
     }
   }
 
-  // Search by person name
   static async searchByPerson(personName, params = {}) {
     try {
       const { page = 1, limit = 20, sortBy = "name" } = params;
@@ -121,6 +119,7 @@ export class DirectoryService {
       };
     }
   }
+
 
   // Alphabetical browse (A-Z)
   static async alphabeticalBrowse(letter, params = {}) {
@@ -153,6 +152,7 @@ export class DirectoryService {
       };
     }
   }
+
 
   // Advanced search with multiple filters
   static async advancedSearch(filters) {
@@ -215,7 +215,6 @@ export class DirectoryService {
     }
   }
 
-  // Get professional profile details
   static async getProfileDetails(profileId) {
     try {
       const response = await ExternalApiService.get(
@@ -236,7 +235,6 @@ export class DirectoryService {
     }
   }
 
-  // Get similar profiles/recommendations
   static async getSimilarProfiles(profileId, params = {}) {
     try {
       const { limit = 10, criteria = "themes" } = params;
@@ -265,7 +263,6 @@ export class DirectoryService {
     }
   }
 
-  // Get directory statistics
   static async getDirectoryStats() {
     try {
       const response = await ExternalApiService.get(
@@ -286,7 +283,6 @@ export class DirectoryService {
     }
   }
 
-  // Get featured profiles
   static async getFeaturedProfiles(params = {}) {
     try {
       const { limit = 10, category = "all" } = params;
@@ -315,6 +311,7 @@ export class DirectoryService {
     }
   }
 
+
   // Admin: Manage featured profiles
   static async setFeaturedProfile(profileId, featured = true) {
     try {
@@ -336,6 +333,7 @@ export class DirectoryService {
       };
     }
   }
+
 
   // Admin: Get directory analytics
   static async getDirectoryAnalytics(params = {}) {
@@ -366,9 +364,8 @@ export class DirectoryService {
     }
   }
 
-  // Static helper methods for UI
 
-  // Get search types
+  // Static helper methods for UI
   static getSearchTypes() {
     return [
       { value: "all", label: "All Results" },
@@ -377,7 +374,6 @@ export class DirectoryService {
     ];
   }
 
-  // Get sort options
   static getSortOptions() {
     return [
       { value: "relevance", label: "Relevance" },
@@ -390,7 +386,6 @@ export class DirectoryService {
     ];
   }
 
-  // Get experience ranges
   static getExperienceRanges() {
     return [
       { value: "0-2", label: "0-2 years" },
@@ -402,7 +397,6 @@ export class DirectoryService {
     ];
   }
 
-  // Get company sizes
   static getCompanySizes() {
     return [
       { value: "startup", label: "Startup (1-10)" },
@@ -413,7 +407,6 @@ export class DirectoryService {
     ];
   }
 
-  // Get industries
   static getIndustries() {
     return [
       { value: "technology", label: "Technology" },
@@ -431,7 +424,6 @@ export class DirectoryService {
     ];
   }
 
-  // Get alphabetical letters for browsing
   static getAlphabetLetters() {
     return "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map(letter => ({
       value: letter,
@@ -439,7 +431,6 @@ export class DirectoryService {
     }));
   }
 
-  // Get featured categories
   static getFeaturedCategories() {
     return [
       { value: "all", label: "All Categories" },
@@ -450,4 +441,5 @@ export class DirectoryService {
       { value: "nonprofit-directors", label: "Nonprofit Directors" },
     ];
   }
+
 }

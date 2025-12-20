@@ -1,8 +1,7 @@
-import { ExternalApiService } from './externalApiService';
+import { apiClient } from '@/lib/apiClient';
+import { SUPPORT } from '@/constants/apiEndpoints';
 
 export class SupportService {
-
-  // Get all support tickets with pagination and filters
   static async getTickets(params = {}) {
     try {
       const {
@@ -16,44 +15,46 @@ export class SupportService {
         sortOrder = 'desc'
       } = params;
 
-      let queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
+      const queryParams = {
+        page,
+        limit,
         sortBy,
-        sortOrder
-      });
+        sortOrder,
+        ...(search && { search }),
+        ...(category && { category }),
+        ...(priority && { priority }),
+        ...(status && { status }),
+      };
 
-      if (search) queryParams.append('search', search);
-      if (category) queryParams.append('category', category);
-      if (priority) queryParams.append('priority', priority);
-      if (status) queryParams.append('status', status);
-
-      const endpoint = `/support/tickets?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const response = await apiClient.get(SUPPORT.BASE, { params: queryParams });
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || [],
+        pagination: backendResponse.pagination || {},
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Get tickets error:', error);
       return {
         success: false,
+        data: [],
+        pagination: {},
         message: error.message
       };
     }
   }
 
-  // Get ticket by ID with replies
   static async getTicketById(ticketId) {
     try {
-      const response = await ExternalApiService.get(`/support/tickets/${ticketId}`);
+      const response = await apiClient.get(SUPPORT.BY_ID(ticketId));
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Get ticket by ID error:', error);
@@ -64,15 +65,15 @@ export class SupportService {
     }
   }
 
-  // Create a new support ticket
   static async createTicket(ticketData) {
     try {
-      const response = await ExternalApiService.post('/support/tickets', ticketData);
+      const response = await apiClient.post(SUPPORT.BASE, ticketData);
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Create ticket error:', error);
@@ -83,15 +84,15 @@ export class SupportService {
     }
   }
 
-  // Update ticket
   static async updateTicket(ticketId, updateData) {
     try {
-      const response = await ExternalApiService.put(`/support/tickets/${ticketId}`, updateData);
+      const response = await apiClient.put(SUPPORT.BY_ID(ticketId), updateData);
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Update ticket error:', error);
@@ -102,15 +103,15 @@ export class SupportService {
     }
   }
 
-  // Delete ticket (admin only)
   static async deleteTicket(ticketId) {
     try {
-      const response = await ExternalApiService.delete(`/support/tickets/${ticketId}`);
+      const response = await apiClient.delete(SUPPORT.BY_ID(ticketId));
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Delete ticket error:', error);
@@ -121,15 +122,15 @@ export class SupportService {
     }
   }
 
-  // Update ticket status
   static async updateStatus(ticketId, status) {
     try {
-      const response = await ExternalApiService.patch(`/support/tickets/${ticketId}/status`, { status });
+      const response = await apiClient.patch(SUPPORT.STATUS(ticketId), { status });
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Update status error:', error);
@@ -140,15 +141,15 @@ export class SupportService {
     }
   }
 
-  // Update ticket priority
   static async updatePriority(ticketId, priority) {
     try {
-      const response = await ExternalApiService.patch(`/support/tickets/${ticketId}/priority`, { priority });
+      const response = await apiClient.patch(SUPPORT.PRIORITY(ticketId), { priority });
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Update priority error:', error);
@@ -159,15 +160,16 @@ export class SupportService {
     }
   }
 
-  // Assign ticket to support staff
+
   static async assignTicket(ticketId, assignedTo) {
     try {
-      const response = await ExternalApiService.patch(`/support/tickets/${ticketId}/assign`, { assignedTo });
+      const response = await apiClient.patch(SUPPORT.ASSIGN(ticketId), { assignedTo });
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Assign ticket error:', error);
@@ -178,15 +180,16 @@ export class SupportService {
     }
   }
 
-  // Add reply to ticket
+
   static async addReply(ticketId, replyData) {
     try {
-      const response = await ExternalApiService.post(`/support/tickets/${ticketId}/replies`, replyData);
+      const response = await apiClient.post(SUPPORT.REPLIES(ticketId), replyData);
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Add reply error:', error);
@@ -197,15 +200,15 @@ export class SupportService {
     }
   }
 
-  // Update reply
   static async updateReply(ticketId, replyId, updateData) {
     try {
-      const response = await ExternalApiService.put(`/support/tickets/${ticketId}/replies/${replyId}`, updateData);
+      const response = await apiClient.put(SUPPORT.REPLY_BY_ID(ticketId, replyId), updateData);
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Update reply error:', error);
@@ -216,15 +219,15 @@ export class SupportService {
     }
   }
 
-  // Delete reply
   static async deleteReply(ticketId, replyId) {
     try {
-      const response = await ExternalApiService.delete(`/support/tickets/${ticketId}/replies/${replyId}`);
+      const response = await apiClient.delete(SUPPORT.REPLY_BY_ID(ticketId, replyId));
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Delete reply error:', error);
@@ -235,15 +238,16 @@ export class SupportService {
     }
   }
 
-  // Escalate ticket
+
   static async escalateTicket(ticketId) {
     try {
-      const response = await ExternalApiService.patch(`/support/tickets/${ticketId}/escalate`, {});
+      const response = await apiClient.patch(SUPPORT.ESCALATE(ticketId), {});
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Escalate ticket error:', error);
@@ -254,15 +258,15 @@ export class SupportService {
     }
   }
 
-  // Get support statistics (admin)
   static async getSupportStats() {
     try {
-      const response = await ExternalApiService.get('/support/stats');
+      const response = await apiClient.get(SUPPORT.STATS);
+      const backendResponse = response.data || {};
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
       console.error('Get support stats error:', error);
@@ -273,7 +277,6 @@ export class SupportService {
     }
   }
 
-  // Get support categories (static list)
   static getSupportCategories() {
     return [
       { value: 'technical', label: 'Technical Issue' },
@@ -288,7 +291,6 @@ export class SupportService {
     ];
   }
 
-  // Get priority levels
   static getPriorityLevels() {
     return [
       { value: 'low', label: 'Low', color: 'green' },
@@ -298,7 +300,6 @@ export class SupportService {
     ];
   }
 
-  // Get status options
   static getStatusOptions() {
     return [
       { value: 'open', label: 'Open', color: 'blue' },
@@ -309,7 +310,6 @@ export class SupportService {
     ];
   }
 
-  // Get sort options
   static getSortOptions() {
     return [
       { value: 'createdAt', label: 'Most Recent' },
@@ -318,4 +318,5 @@ export class SupportService {
       { value: 'status', label: 'Status' }
     ];
   }
+
 }
