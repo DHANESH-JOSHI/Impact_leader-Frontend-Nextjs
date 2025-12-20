@@ -10,7 +10,6 @@ import {
   Heart,
   Activity,
   TrendingUp,
-  Calendar,
 } from "lucide-react";
 import {
   Card,
@@ -45,13 +44,13 @@ export default function ImpactLeadersAdminDashboard() {
         setStats(analyticsResult.data);
       }
       console.log("=====>", analyticsResult);
-      // Load pending approvals
       const approvalsResult = await AdminService.getPendingApprovals();
       if (approvalsResult.success) {
-        setPendingApprovals(approvalsResult.data.total || 0);
+        const approvalsData = approvalsResult.data?.approvals || [];
+        const paginationData = approvalsResult.pagination?.approvals || {};
+        setPendingApprovals(paginationData.total || approvalsData.length || 0);
       }
 
-      // Load recent activity (mock for now)
       setRecentActivity([
         {
           id: 1,

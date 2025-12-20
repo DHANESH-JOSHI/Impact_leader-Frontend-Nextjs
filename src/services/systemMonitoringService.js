@@ -1,4 +1,3 @@
-import { ImpactLeadersAuthService } from './impactLeadersAuthService';
 import { ExternalApiService } from './externalApiService';
 
 // Global variables to track API metrics

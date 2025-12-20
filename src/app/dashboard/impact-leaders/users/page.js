@@ -25,7 +25,6 @@ import Link from 'next/link';
 
 // Import services
 import { UsersService } from '@/services/usersService';
-import { ImpactLeadersAuthService } from '@/services/impactLeadersAuthService';
 
 // Import modals
 import AddUserModal from '@/components/impact-leaders/users/AddUserModal';
