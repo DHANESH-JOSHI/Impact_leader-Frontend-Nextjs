@@ -3,11 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { FiGrid, FiList, FiPlus, FiSearch, FiFilter } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  CheckCircle,
-  AlertCircle,
-  X,
-} from "lucide-react";
+import toast from "react-hot-toast";
 import StoryCard from "@/components/stories/StoryCard";
 import StoryTable from "@/components/stories/StoryTable";
 import AddStoryModal from "@/components/stories/AddStoryModal";
@@ -15,109 +11,6 @@ import EditStoryModal from "@/components/stories/EditStoryModal";
 import ViewStoryModal from "@/components/stories/ViewStoryModal";
 import { StoriesService } from "@/services/storiesService";
 
-/* ----------------------------- Toast Component ---------------------------- */
-/** Professional, English-only toast component */
-const Toast = ({ message, type, onClose, isVisible }) => {
-  useEffect(() => {
-    if (isVisible) {
-      const timer = setTimeout(() => onClose(), 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [isVisible, onClose]);
-
-  if (!isVisible) return null;
-
-  const getToastStyles = () => {
-    switch (type) {
-      case "success":
-        return "bg-green-600 border-green-700 shadow-lg";
-      case "error":
-        return "bg-red-600 border-red-700 shadow-lg";
-      default:
-        return "bg-gray-600 border-gray-700 shadow-lg";
-    }
-  };
-
-  const getIcon = () => {
-    switch (type) {
-      case "success":
-        return <CheckCircle className="h-5 w-5 text-white" />;
-      case "error":
-        return <AlertCircle className="h-5 w-5 text-white" />;
-      default:
-        return <AlertCircle className="h-5 w-5 text-white" />;
-    }
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -50 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -50 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-      className="fixed top-4 right-4 z-50"
-    >
-      <div
-        className={`${getToastStyles()} border rounded-lg p-4 min-w-[320px] max-w-[420px]`}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            {getIcon()}
-            <p className="text-white text-sm font-medium">{message}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-white/80 hover:text-white transition-colors ml-2"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
-/* ------------------------------- Toast Hook ------------------------------- */
-const useToast = () => {
-  const [toasts, setToasts] = useState([]);
-
-  const showToast = (message, type = "error") => {
-    // Only allow 'success' or 'error' types
-    const validType = type === "success" ? "success" : "error";
-    const id = Date.now() + Math.random();
-    const newToast = { id, message, type: validType, isVisible: true };
-    setToasts((prev) => [...prev, newToast]);
-    setTimeout(() => hideToast(id), 4000);
-  };
-
-  const hideToast = (id) =>
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-
-  return { toasts, showToast, hideToast };
-};
-
-/* ------------------------------ Mocked Stories ---------------------------- */
-const mockStories = [
-  {
-    id: 1,
-    title: "Digital Nomad Life",
-    content:
-      "Working from a beachside café in Bali - living the dream! 🏝️ The perfect blend of productivity and paradise.",
-    image:
-      "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80",
-    author: "Alex Rivera",
-    status: "published",
-    views: 3420,
-    likes: 287,
-    tags: ["travel", "work", "digitalnomad", "bali", "lifestyle"],
-    createdAt: "2024-01-20T08:30:00Z",
-    updatedAt: "2024-01-20T08:30:00Z",
-    duration: 24,
-    isActive: true,
-  },
-];
-
-/* -------------------------------- Animations ------------------------------ */
 const pageVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
@@ -135,7 +28,6 @@ const cardVariants = {
   },
 };
 
-/* ---------------------------- Safe Token Helpers -------------------------- */
 const getStoredAuth = () => {
   if (typeof window === "undefined") return null;
   try {
@@ -145,12 +37,10 @@ const getStoredAuth = () => {
     return null;
   }
 };
-// console.log("🔑 Stored Auth:", getStoredAuth());
+
 const getToken = () => getStoredAuth()?.value?.accessToken ?? null;
 
-/* --------------------------------- Page ---------------------------------- */
 export default function StoriesPage() {
-  const { toasts, showToast, hideToast } = useToast();
 
   const [categories, setCategories] = useState(["General", "Travel", "Lifestyle", "Work", "Technology"]);
   const [stories, setStories] = useState([]);
@@ -170,24 +60,20 @@ export default function StoriesPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
-  // compute token once on client
   const token = useMemo(
     () => (typeof window !== "undefined" ? getToken() : null),
     []
   );
 
-  // Load stories only when token exists and pagination changes
   useEffect(() => {
     if (!token) {
       setLoading(false);
-      console.log("🔒 StoriesPage: Token missing; skipping initial fetch.");
       return;
     }
     loadStories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, pagination.page, pagination.limit]);
 
-  /* ------------------------ Robust Stories Loader ------------------------ */
   const loadStories = async (params = {}) => {
     setLoading(true);
     try {
@@ -197,80 +83,46 @@ export default function StoriesPage() {
         ...params,
       });
 
-      let ok = false;
-
-      if (Array.isArray(result?.stories)) {
-        // Already normalized (shape C)
-        ok = true;
-        const transformed = result.stories.map(transformStory).filter(Boolean);
-        setStories(transformed);
-        const total = Number.isFinite(result.total)
-          ? result.total
-          : transformed.length;
-        const totalPages = Number.isFinite(result.totalPages)
-          ? result.totalPages
-          : Math.ceil(total / pagination.limit);
-        setPagination((prev) => ({ ...prev, total, totalPages }));
-      } else {
-        ok = !!result?.success;
-        const maybeArray =
-          (Array.isArray(result?.data) && result.data) ||
-          (Array.isArray(result?.data?.data) && result.data.data) ||
-          [];
-
-        const containers = Array.isArray(maybeArray) ? maybeArray : [];
-        const allStories = containers.reduce((acc, item) => {
-          const list = Array.isArray(item?.stories) ? item.stories : [];
-          return acc.concat(list);
+      if (result?.success && result.data) {
+        const groupedData = Array.isArray(result.data) ? result.data : [];
+        
+        const allStories = groupedData.reduce((acc, group) => {
+          const groupStories = Array.isArray(group.stories) ? group.stories : [];
+          const authorInfo = group._id || {};
+          const storiesWithAuthor = groupStories.map(story => ({
+            ...story,
+            author: authorInfo
+          }));
+          return acc.concat(storiesWithAuthor);
         }, []);
 
         const transformed = allStories.map(transformStory).filter(Boolean);
-        const totalFromServer = containers.reduce(
-          (sum, c) =>
-            sum +
-            (c?.storyCount ??
-              (Array.isArray(c?.stories) ? c.stories.length : 0)),
-          0
-        );
-        const total =
-          totalFromServer > 0 ? totalFromServer : transformed.length;
-        const totalPages = Math.ceil(total / pagination.limit);
+        
+        const totalFromGroups = groupedData.reduce((sum, group) => sum + (group.storyCount || 0), 0);
+        const total = result.pagination?.total || result.count || totalFromGroups || transformed.length;
+        const totalPages = result.pagination?.totalPages || Math.ceil(total / pagination.limit);
 
         setStories(transformed);
         setPagination((prev) => ({ ...prev, total, totalPages }));
-
-        if (ok) {
-        } else {
-          setStories(mockStories);
-          setPagination((p) => ({
-            ...p,
-            total: mockStories.length,
-            totalPages: 1,
-          }));
-          showToast(
-            "Using demo data — API reported failure. Kindly Relogin",
-            "warning"
-          );
+        
+        if (transformed.length === 0) {
+          toast("No stories found", { icon: 'ℹ️' });
         }
+      } else {
+        setStories([]);
+        setPagination((prev) => ({ ...prev, total: 0, totalPages: 0 }));
+        toast.error(result?.message || "Failed to load stories");
       }
     } catch (error) {
       console.error("Failed to load stories:", error);
-      setStories(mockStories);
-      setPagination((p) => ({
-        ...p,
-        total: mockStories.length,
-        totalPages: 1,
-      }));
-      showToast(
-        "Failed to load stories — switched to demo data. Kindly Relogin",
-        "warning"
-      );
+      setStories([]);
+      setPagination((prev) => ({ ...prev, total: 0, totalPages: 0 }));
+      toast.error(error.message || "Failed to load stories");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ----------------------------- Transformers ---------------------------- */
   const transformStory = (story) => {
     if (!story || typeof story !== "object") return null;
 
@@ -279,17 +131,37 @@ export default function StoriesPage() {
       : 86400000;
     const durationHours = Math.round((durationMs / 3600000) * 10) / 10;
 
-    const author =
-      typeof story?.author === "object"
-        ? story.author?.name || story.author?.username || "Unknown"
-        : story?.author || "Unknown";
+    let author = "Unknown";
+    if (typeof story?.author === "object" && story.author) {
+      if (story.author.name) {
+        author = story.author.name;
+      } else if (story.author.firstName || story.author.lastName) {
+        author = `${story.author.firstName || ''} ${story.author.lastName || ''}`.trim();
+      } else if (story.author.username) {
+        author = story.author.username;
+      } else if (story.author.email) {
+        author = story.author.email;
+      }
+    } else if (typeof story?.author === "string") {
+      author = story.author;
+    }
 
     const caption = story?.caption || story?.title || "";
     const textContent = story?.textContent || story?.content || "";
-    const imageUrl = story?.mediaUrl || story?.media?.url || null;
+    
+    let imageUrl = null;
+    if (story?.mediaUrl) {
+      imageUrl = story.mediaUrl;
+    } else if (story?.media?.url) {
+      imageUrl = story.media.url;
+    } else if (Array.isArray(story?.media) && story.media.length > 0) {
+      imageUrl = story.media[0].url || story.media[0];
+    } else if (story?.thumbnailUrl) {
+      imageUrl = story.thumbnailUrl;
+    }
 
     return {
-      id: story?._id || story?.id || `${Date.now()}-${Math.random()}`, // ensure stable id for table ops
+      id: story?._id || story?.id || `${Date.now()}-${Math.random()}`,
       title:
         caption ||
         (textContent ? textContent.slice(0, 50) + "..." : "Untitled Story"),
@@ -317,7 +189,6 @@ export default function StoriesPage() {
     };
   };
 
-  /* ------------------------------- Filtering ------------------------------ */
   const filteredStories = stories.filter(Boolean).filter((story) => {
     const q = (searchTerm || "").toLowerCase();
     const title = (story.title || "").toLowerCase();
@@ -338,20 +209,16 @@ export default function StoriesPage() {
     return matchesSearch && matchesFilter;
   });
 
-  /* ------------------------------ Handlers CRUD --------------------------- */
   const handleAddStory = async (newStoryData) => {
     try {
       setLoading(true);
   
-      console.log('📥 Received from form:', newStoryData);
-  
       let result;
   
-      // Use the data as-is from modal (it's already formatted correctly)
       const baseStoryData = {
-        textContent: newStoryData.textContent, // Use the textContent from modal
+        textContent: newStoryData.textContent,
         type: newStoryData.type,
-        duration: newStoryData.duration, // Already in milliseconds from modal
+        duration: newStoryData.duration,
         tags: newStoryData.tags || [],
         backgroundColor: newStoryData.backgroundColor || "#000000",
         textColor: newStoryData.textColor || "#FFFFFF",
@@ -359,10 +226,7 @@ export default function StoriesPage() {
         isActive: newStoryData.isActive || false
       };
   
-      console.log('📤 Base story data:', baseStoryData);
-  
       if (newStoryData.mediaFile) {
-        // For file uploads
         if (newStoryData.type === "image") {
           result = await StoriesService.createImageStory(
             baseStoryData,
@@ -375,35 +239,27 @@ export default function StoriesPage() {
           );
         }
       } else {
-        // For stories with URLs or text stories
         if (newStoryData.type === "image") {
-          // For image stories with URL - use mediaUrl field
           const imageStoryData = {
             ...baseStoryData,
-            mediaUrl: newStoryData.mediaUrl || newStoryData.image // Map image to mediaUrl
+            mediaUrl: newStoryData.mediaUrl || newStoryData.image
           };
-          console.log('🖼️ Image story data:', imageStoryData);
           result = await StoriesService.createTextStory(imageStoryData);
         } else {
-          // For text stories
-          console.log('📝 Text story data:', baseStoryData);
           result = await StoriesService.createTextStory(baseStoryData);
         }
       }
   
-      console.log('📨 API Response:', result);
-  
       if (result?.success) {
         setIsAddModalOpen(false);
         await loadStories();
-        showToast(`Story created successfully! ✅`, "success");
+        toast.success(`Story created successfully!`);
       } else {
         const errorMsg = result?.message || "Unknown error";
-        showToast(`Failed: ${errorMsg} ❌`, "error");
+        toast.error(`Failed: ${errorMsg}`);
       }
     } catch (error) {
-      console.error("Add story error:", error);
-      showToast("There was a problem creating the story. Please try again. ❌", "error");
+      toast.error("There was a problem creating the story. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -426,19 +282,14 @@ export default function StoriesPage() {
         setIsEditModalOpen(false);
         setSelectedStory(null);
         await loadStories();
-        showToast("Story updated successfully. 🎉", "success");
+        toast.success("Story updated successfully");
       } else {
-        showToast(
-          `Update failed: ${result?.message || "Unknown error"}. ❌`,
-          "error"
+        toast.error(
+          `Update failed: ${result?.message || "Unknown error"}`
         );
       }
     } catch (error) {
-      console.error("Edit story error:", error);
-      showToast(
-        "There was a problem updating the story. Please try again. ❌",
-        "error"
-      );
+      toast.error("There was a problem updating the story. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -446,10 +297,6 @@ export default function StoriesPage() {
 
   const handleDeleteStory = async (storyId) => {
     const storyToDelete = stories.find((s) => s.id === storyId);
-    showToast(
-      `Confirming deletion of "${storyToDelete?.title}"... ⚠️`,
-      "warning"
-    );
 
     if (window.confirm("Are you sure you want to delete this story?")) {
       try {
@@ -458,22 +305,16 @@ export default function StoriesPage() {
 
         if (result?.success) {
           await loadStories();
-          showToast(
-            `"${storyToDelete?.title}" deleted successfully. 🗑️`,
-            "success"
+          toast.success(
+            `"${storyToDelete?.title}" deleted successfully`
           );
         } else {
-          showToast(
-            `Delete failed: ${result?.message || "Unknown error"}. ❌`,
-            "error"
+          toast.error(
+            `Delete failed: ${result?.message || "Unknown error"}`
           );
         }
       } catch (error) {
-        console.error("Delete story error:", error);
-        showToast(
-          "There was a problem deleting the story. Please try again. ❌",
-          "error"
-        );
+        toast.error("There was a problem deleting the story. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -502,7 +343,6 @@ export default function StoriesPage() {
     setFilterStatus(status);
   };
 
-  /* --------------------------------- UI ---------------------------------- */
   return (
     <motion.div
       className="p-6 bg-gray-50 min-h-screen relative"
@@ -510,26 +350,6 @@ export default function StoriesPage() {
       initial="hidden"
       animate="visible"
     >
-      {/* Toasts */}
-      <div className="fixed top-0 right-0 z-50 p-4">
-        <AnimatePresence>
-          {toasts.map((toast, index) => (
-            <div
-              key={toast.id}
-              style={{ marginBottom: index > 0 ? "8px" : "0" }}
-            >
-              <Toast
-                message={toast.message}
-                type={toast.type}
-                isVisible={toast.isVisible}
-                onClose={() => hideToast(toast.id)}
-              />
-            </div>
-          ))}
-        </AnimatePresence>
-      </div>
-
-      {/* Header */}
       <motion.div className="mb-8" variants={cardVariants}>
         <div className="flex justify-between items-center mb-6">
           <div>
@@ -555,13 +375,11 @@ export default function StoriesPage() {
           </motion.button>
         </div>
 
-        {/* Controls */}
         <motion.div
           className="bg-white rounded-lg shadow-sm border p-4"
           variants={cardVariants}
         >
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            {/* Search */}
             <div className="relative flex-1 max-w-md">
               <FiSearch
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5"
@@ -578,7 +396,6 @@ export default function StoriesPage() {
             </div>
 
             <div className="flex items-center gap-4">
-              {/* Filter */}
               <div className="relative">
                 <FiFilter
                   className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
@@ -597,7 +414,6 @@ export default function StoriesPage() {
                 </select>
               </div>
 
-              {/* View toggle */}
               <div className="flex border border-gray-300 rounded-lg overflow-hidden">
                 <motion.button
                   onClick={() => handleViewModeChange("cards")}
@@ -633,7 +449,6 @@ export default function StoriesPage() {
         </motion.div>
       </motion.div>
 
-      {/* Content */}
       <motion.div className="mb-6" variants={cardVariants}>
         {loading ? (
           <motion.div
@@ -678,7 +493,6 @@ export default function StoriesPage() {
         )}
       </motion.div>
 
-      {/* Modals */}
       <AddStoryModal
         isOpen={isAddModalOpen}
         onClose={() => {

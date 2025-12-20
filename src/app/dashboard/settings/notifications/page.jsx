@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Bell,
   Plus,
@@ -387,71 +387,85 @@ const NotificationForm = ({ notification, onSave, onCancel }) => {
   );
 };
 
-// main notification settings component
-export default function NotificationSettings() {
-  // notifications ka mock data
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: "Welcome to Admin Panel",
-      message:
-        "Welcome to your new dashboard! Explore all the features available.",
-      type: "success",
-      targetUsers: "new",
-      status: "active",
-      createdAt: "2024-01-15T10:30:00Z",
-    },
-    {
-      id: 2,
-      title: "System Maintenance",
-      message: "Scheduled maintenance will occur tonight from 2-4 AM.",
-      type: "warning",
-      targetUsers: "all",
-      status: "scheduled",
-      createdAt: "2024-01-14T15:45:00Z",
-    },
-  ]);
+import { NotificationsService } from "@/services/notificationsService";
+import toast from "react-hot-toast";
 
-  // form modal ke states
+export default function NotificationSettings() {
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingNotification, setEditingNotification] = useState(null);
 
-  // notification save krne ka function
-  const handleSave = (notificationData) => {
-    if (editingNotification) {
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n.id === editingNotification.id
-            ? {
-                ...notificationData,
-                id: editingNotification.id,
-                createdAt: editingNotification.createdAt,
-              }
-            : n
-        )
-      );
-    } else {
-      const newNotification = {
-        ...notificationData,
-        id: Date.now(),
-        status: "active",
-        createdAt: new Date().toISOString(),
-      };
-      setNotifications((prev) => [newNotification, ...prev]);
+  useEffect(() => {
+    loadNotifications();
+  }, []);
+
+  const loadNotifications = async () => {
+    setLoading(true);
+    try {
+      const result = await NotificationsService.getNotifications({ limit: 100 });
+      if (result.success) {
+        const notificationsData = Array.isArray(result.data) ? result.data : [];
+        setNotifications(notificationsData);
+      } else {
+        toast.error(result.message || "Failed to load notifications");
+      }
+    } catch (error) {
+      console.error("Failed to load notifications:", error);
+      toast.error("Failed to load notifications");
+    } finally {
+      setLoading(false);
     }
-    setShowForm(false);
-    setEditingNotification(null);
   };
 
-  // notification edit krne ka function
+  const handleSave = async (notificationData) => {
+    try {
+      if (editingNotification) {
+        const result = await NotificationsService.sendTargetedNotification({
+          ...notificationData,
+          id: editingNotification.id,
+        });
+        if (result.success) {
+          toast.success("Notification updated successfully");
+          await loadNotifications();
+        } else {
+          toast.error(result.message || "Failed to update notification");
+        }
+      } else {
+        const result = await NotificationsService.sendTargetedNotification(notificationData);
+        if (result.success) {
+          toast.success("Notification created successfully");
+          await loadNotifications();
+        } else {
+          toast.error(result.message || "Failed to create notification");
+        }
+      }
+      setShowForm(false);
+      setEditingNotification(null);
+    } catch (error) {
+      console.error("Failed to save notification:", error);
+      toast.error("Failed to save notification");
+    }
+  };
+
   const handleEdit = (notification) => {
     setEditingNotification(notification);
     setShowForm(true);
   };
 
-  // notification delete krne ka function
-  const handleDelete = (id) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      const result = await NotificationsService.deleteNotification(id);
+      if (result.success) {
+        toast.success("Notification deleted successfully");
+        await loadNotifications();
+      } else {
+        toast.error(result.message || "Failed to delete notification");
+      }
+    } catch (error) {
+      console.error("Failed to delete notification:", error);
+      toast.error("Failed to delete notification");
+    }
   };
 
   // status badge colors

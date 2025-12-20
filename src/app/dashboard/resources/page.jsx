@@ -2,15 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  CheckCircle,
-  AlertCircle,
-  X,
-  Info,
-  AlertTriangle,
-  FileText,
-  Video,
-} from "lucide-react";
+import toast from "react-hot-toast";
 import ResourcesHeader from "@/components/resources/ResourcesHeader";
 import ResourcesCardView from "@/components/resources/ResourcesCardView";
 import ResourcesTableView from "@/components/resources/ResourcesTableView";
@@ -38,87 +30,6 @@ const humanBytes = (bytes = 0) => {
   return `${val.toFixed(val >= 10 ? 0 : 1)} ${units[i]}`;
 };
 
-const Toast = ({ message, type, onClose, isVisible }) => {
-  useEffect(() => {
-    if (!isVisible) return;
-    const timer = setTimeout(onClose, 4500);
-    return () => clearTimeout(timer);
-  }, [isVisible, onClose]);
-
-  if (!isVisible) return null;
-
-  const styles =
-    type === "success"
-      ? "bg-green-500 border-green-600 shadow-green-500/20"
-      : type === "error"
-      ? "bg-red-500 border-red-600 shadow-red-500/20"
-      : type === "warning"
-      ? "bg-yellow-500 border-yellow-600 shadow-yellow-500/20"
-      : type === "resource"
-      ? "bg-purple-500 border-purple-600 shadow-purple-500/20"
-      : type === "download"
-      ? "bg-teal-500 border-teal-600 shadow-teal-500/20"
-      : "bg-blue-500 border-blue-600 shadow-blue-500/20";
-
-  const Icon =
-    type === "success"
-      ? CheckCircle
-      : type === "error"
-      ? AlertCircle
-      : type === "warning"
-      ? AlertTriangle
-      : type === "resource"
-      ? FileText
-      : type === "download"
-      ? Video
-      : Info;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: 400, scale: 0.94 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 400, scale: 0.96 }}
-      transition={{ duration: 0.28, ease: "easeOut" }}
-      className="fixed top-4 right-4 z-50"
-    >
-      <div
-        className={`${styles} border rounded-lg shadow-2xl p-4 min-w-[340px] max-w-[460px] backdrop-blur-sm`}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Icon className="h-5 w-5 text-white" />
-            <p className="text-white text-sm font-medium leading-relaxed">
-              {message}
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-white/85 hover:text-white transition-colors ml-2"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
-const useToast = () => {
-  const [toasts, setToasts] = useState([]);
-  const showToast = (message, type = "info") => {
-    const id = Date.now() + Math.random();
-    setToasts((prev) => [...prev, { id, message, type, isVisible: true }]);
-    setTimeout(() => hideToast(id), 4500);
-  };
-  const hideToast = (id) =>
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  return { toasts, showToast, hideToast };
-};
-
-
-/* ===========================
-   Animations
-=========================== */
 const pageVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
@@ -136,11 +47,7 @@ const cardVariants = {
   },
 };
 
-/* ===========================
-   Page
-=========================== */
 export default function ResourcesPage() {
-  const { toasts, showToast, hideToast } = useToast();
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -226,16 +133,17 @@ const modalCategories = useMemo(() => {
         const paginationData = result.pagination || {};
 
         const transformed = resourcesData.map((r) => {
+          const authorObj = r.uploadedBy || r.author;
           let authorName = "Unknown";
-          if (typeof r.author === 'string') {
-            authorName = r.author;
-          } else if (r.author && typeof r.author === 'object') {
-            if (r.author.name) {
-              authorName = r.author.name;
-            } else if (r.author.username) {
-              authorName = r.author.username;
-            } else if (r.author.firstName || r.author.lastName) {
-              authorName = `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim();
+          if (typeof authorObj === 'string') {
+            authorName = authorObj;
+          } else if (authorObj && typeof authorObj === 'object') {
+            if (authorObj.name) {
+              authorName = authorObj.name;
+            } else if (authorObj.username) {
+              authorName = authorObj.username;
+            } else if (authorObj.firstName || authorObj.lastName) {
+              authorName = `${authorObj.firstName || ''} ${authorObj.lastName || ''}`.trim();
             }
           }
 
@@ -251,22 +159,22 @@ const modalCategories = useMemo(() => {
             title: r.title || "Untitled Resource",
             description: r.description || "No description available.",
             type: r.type || "document",
-            fileUrl: r.fileUrl || r.downloadUrl || "",
-            fileName: r.fileName || "file",
-            fileSize: r.fileSize || 0,
+            fileUrl: r.fileUrl || r.url || (r.file?.path ? `/uploads/${r.file.path}` : ""),
+            fileName: r.fileName || r.file?.originalName || r.file?.filename || "file",
+            fileSize: r.fileSize || r.file?.size || 0,
             duration: r.duration || 0,
             category: r.category || "General",
             tags: tags,
             author: authorName,
-            status: r.isPublic || r.isActive ? "published" : "draft",
+            status: r.isPublic !== false && r.isActive !== false ? "published" : "draft",
             thumbnail:
               r.thumbnail ||
               "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&q=80",
             createdAt: toISODate(r.createdAt),
             updatedAt: toISODate(r.updatedAt),
             views: typeof r.views === 'number' ? r.views : 0,
-            likes: typeof r.likes === 'number' ? r.likes : 0,
-            downloads: typeof r.downloads === 'number' ? r.downloads : 0,
+            likes: Array.isArray(r.likes) ? r.likes.length : (typeof r.likes === 'number' ? r.likes : 0),
+            downloads: typeof r.downloadCount === 'number' ? r.downloadCount : (typeof r.downloads === 'number' ? r.downloads : 0),
             featured: !!r.featured,
             quality: r.quality || "Standard",
             language: r.language || "English",
@@ -282,7 +190,10 @@ const modalCategories = useMemo(() => {
             Math.ceil((paginationData.totalResources || paginationData.total || transformed.length) / p.limit)
           ),
         }));
-        showToast(`Loaded ${transformed.length} resources`, "success");
+        
+        if (transformed.length === 0) {
+          toast("No resources found", { icon: 'ℹ️' });
+        }
       } else {
         setResources([]);
         setPagination((p) => ({
@@ -290,7 +201,7 @@ const modalCategories = useMemo(() => {
           total: 0,
           totalPages: 0,
         }));
-        showToast(result.message || "Failed to load resources", "error");
+        toast.error(result.message || "Failed to load resources");
       }
     } catch (err) {
       console.error("Failed to load resources:", err);
@@ -300,7 +211,7 @@ const modalCategories = useMemo(() => {
         total: 0,
         totalPages: 0,
       }));
-      showToast(err.message || "Failed to load resources", "error");
+      toast.error(err.message || "Failed to load resources");
     } finally {
       setLoading(false);
     }
@@ -352,10 +263,7 @@ const modalCategories = useMemo(() => {
   const handleAddResource = async (payload) => {
     try {
       setLoading(true);
-      showToast("Uploading resource…", "info");
-      console.log("🔍 Checking createResource method:", !!ResourcesService.createResource);
 
-      // Clean and validate data before sending
       const cleanPayload = {
         title: payload.title?.trim() || "Untitled Resource",
         description: payload.description?.trim() || "No description",
@@ -367,8 +275,6 @@ const modalCategories = useMemo(() => {
         featured: payload.featured || false,
       };
   
-      console.log("🧹 Cleaned payload:", cleanPayload);
-  
       let res;
       if (payload.file) {
         res = await ResourcesService.uploadDocumentResource(cleanPayload, payload.file);
@@ -379,13 +285,12 @@ const modalCategories = useMemo(() => {
       if (res?.success) {
         setIsAddModalOpen(false);
         await loadResources();
-        showToast(`"${cleanPayload.title}" uploaded successfully`, "success");
+        toast.success(`"${cleanPayload.title}" uploaded successfully`);
       } else {
-        showToast(`Upload failed: ${res?.message}`, "error");
+        toast.error(`Upload failed: ${res?.message}`);
       }
     } catch (e) {
-      console.error("Add resource error:", e);
-      showToast("Upload failed. Please try again.", "error");
+      toast.error("Upload failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -393,13 +298,6 @@ const modalCategories = useMemo(() => {
   const handleViewResource = (resource) => {
     setSelectedResource(resource);
     setIsViewModalOpen(true);
-    const icon =
-      resource.type === "video"
-        ? "🎥"
-        : resource.type === "audio"
-        ? "🎧"
-        : "📄";
-    showToast(`${icon} Viewing “${resource.title}”`, "info");
   };
 
   const handleEditResource = (resource) => {
@@ -409,8 +307,6 @@ const modalCategories = useMemo(() => {
 
   const handleSaveEditedResource = async (resourceData) => {
     try {
-      showToast("Updating resource…", "info");
-
       if (resourceData.id) {
         const res = await ResourcesService.updateResource(resourceData.id, resourceData);
         
@@ -418,14 +314,13 @@ const modalCategories = useMemo(() => {
           await loadResources();
           setIsEditModalOpen(false);
           setSelectedResource(null);
-          showToast("Resource updated successfully", "success");
+          toast.success("Resource updated successfully");
       } else {
-          showToast(res?.message || "Failed to update resource", "error");
+          toast.error(res?.message || "Failed to update resource");
         }
       }
     } catch (e) {
-      console.error("Failed to update resource:", e);
-      showToast(e.message || "Update failed", "error");
+      toast.error(e.message || "Update failed");
     }
   };
 
@@ -433,34 +328,25 @@ const modalCategories = useMemo(() => {
     const target = resources.find((r) => r.id === id);
     setSelectedResource(target || null);
     setIsDeleteModalOpen(true);
-    if (target) {
-      showToast(
-        `Ready to delete “${target.title}” (${humanBytes(target.fileSize)})`,
-        "warning"
-      );
-    }
   };
 
   const confirmDelete = async () => {
     if (!selectedResource) return;
     try {
-      showToast("Deleting resource…", "info");
       const res = await ResourcesService.deleteResource?.(selectedResource.id);
       if (res?.success) {
         setResources((prev) =>
           prev.filter((r) => r.id !== selectedResource.id)
         );
-        showToast("Resource deleted", "success");
+        toast.success("Resource deleted");
       } else {
-        // Optimistic fallback
         setResources((prev) =>
           prev.filter((r) => r.id !== selectedResource.id)
         );
-        showToast("Resource deleted (local)", "success");
+        toast.success("Resource deleted");
       }
     } catch (e) {
-      console.error(e);
-      showToast("Delete failed. Please try again.", "error");
+      toast.error("Delete failed. Please try again.");
     } finally {
       setIsDeleteModalOpen(false);
       setSelectedResource(null);
@@ -469,73 +355,29 @@ const modalCategories = useMemo(() => {
 
   const handleViewModeChange = (mode) => {
     setViewMode(mode);
-    showToast(
-      mode === "card" ? "Switched to Card Gallery" : "Switched to Table List",
-      "info"
-    );
   };
 
   const handleSearchChange = (q) => {
     setSearchQuery(q);
-    // The debounced loader will fire; toast only when query is substantive
-    if (q.trim().length > 2) {
-      const count = filteredResources.length;
-      showToast(
-        `Found ${count} result${count === 1 ? "" : "s"} for “${q.trim()}”`,
-        "info"
-      );
-    }
   };
 
   const handleCategoryFilter = (category) => {
     setPagination((p) => ({ ...p, page: 1 }));
     setFilterCategory(category);
-    showToast(
-      category === "all" ? "Filter: All Categories" : `Filter: ${category}`,
-      "info"
-    );
   };
 
   const handleTypeFilter = (type) => {
     setPagination((p) => ({ ...p, page: 1 }));
     setFilterType(type);
-    const label =
-      type === "video"
-        ? "Video"
-        : type === "audio"
-        ? "Audio"
-        : type === "document"
-        ? "Document"
-        : "All Types";
-    showToast(`Filter: ${label}`, "info");
   };
 
   const handleStatusFilter = (status) => {
     setPagination((p) => ({ ...p, page: 1 }));
     setFilterStatus(status);
-    const label =
-      status === "all"
-        ? "All Status"
-        : status === "published"
-        ? "Published"
-        : "Draft";
-    showToast(`Filter: ${label}`, "info");
   };
 
   const handleResourceDownload = (resource) => {
-    const icon =
-      resource.type === "video"
-        ? "🎥"
-        : resource.type === "audio"
-        ? "🎧"
-        : "📄";
-    showToast(
-      `${icon} Download started: “${resource.title}” (${humanBytes(
-        resource.fileSize
-      )})`,
-      "download"
-    );
-    // You can trigger actual download in the child component’s click handler.
+    // Download handled in component
   };
 
   const types = ["all", "video", "audio", "document"];
@@ -547,22 +389,6 @@ const modalCategories = useMemo(() => {
       initial="hidden"
       animate="visible"
     >
-      {/* Toasts */}
-      <div className="fixed top-0 right-0 z-50 p-4">
-        <AnimatePresence>
-          {toasts.map((t, i) => (
-            <div key={t.id} style={{ marginBottom: i > 0 ? "12px" : 0 }}>
-              <Toast
-                message={t.message}
-                type={t.type}
-                isVisible={t.isVisible}
-                onClose={() => hideToast(t.id)}
-              />
-            </div>
-          ))}
-        </AnimatePresence>
-      </div>
-
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div variants={cardVariants}>
@@ -585,7 +411,6 @@ const modalCategories = useMemo(() => {
             types={types}
             onAddResource={() => {
               setIsAddModalOpen(true);
-              showToast("Opening upload form", "info");
             }}
             totalResources={filteredResources.length}
           />
@@ -628,7 +453,6 @@ const modalCategories = useMemo(() => {
           isOpen={isAddModalOpen}
           onClose={() => {
             setIsAddModalOpen(false);
-            showToast("Upload canceled", "info");
           }}
           onSubmit={handleAddResource}
           categories={modalCategories}
@@ -639,7 +463,6 @@ const modalCategories = useMemo(() => {
           onClose={() => {
             setIsEditModalOpen(false);
             setSelectedResource(null);
-            showToast("Cancelled resource editing", "info");
           }}
           onSubmit={handleSaveEditedResource}
           categories={modalCategories}
@@ -650,7 +473,6 @@ const modalCategories = useMemo(() => {
           isOpen={isViewModalOpen}
           onClose={() => {
             setIsViewModalOpen(false);
-            showToast("Closed resource view", "info");
           }}
           resource={selectedResource}
           onEdit={handleEditResource}
@@ -661,7 +483,6 @@ const modalCategories = useMemo(() => {
           onClose={() => {
             setIsDeleteModalOpen(false);
             setSelectedResource(null);
-            showToast("Deletion canceled", "info");
           }}
           onConfirm={confirmDelete}
           resourceTitle={selectedResource?.title}

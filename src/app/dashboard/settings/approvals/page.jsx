@@ -2,12 +2,8 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import toast from "react-hot-toast";
 import {
-  CheckCircle,
-  AlertCircle,
-  X,
-  Info,
-  AlertTriangle,
   Eye,
   Pencil,
   Trash2,
@@ -35,72 +31,6 @@ import {
   Clock,
 } from "lucide-react";
 import { AdminService } from "@/services/adminService";
-
-const Toast = ({ message, type, onClose, isVisible }) => {
-  useEffect(() => {
-    if (isVisible) {
-      const t = setTimeout(onClose, 4000);
-      return () => clearTimeout(t);
-    }
-  }, [isVisible, onClose]);
-  if (!isVisible) return null;
-
-  const styles =
-    type === "success"
-      ? "bg-green-500 border-green-600 shadow-green-500/20"
-      : type === "error"
-        ? "bg-red-500 border-red-600 shadow-red-500/20"
-        : type === "warning"
-          ? "bg-yellow-500 border-yellow-600 shadow-yellow-500/20"
-          : type === "info"
-            ? "bg-blue-500 border-blue-600 shadow-blue-500/20"
-            : "bg-gray-500 border-gray-600 shadow-gray-500/20";
-
-  const Icon =
-    type === "success"
-      ? CheckCircle
-      : type === "error"
-        ? AlertCircle
-        : type === "warning"
-          ? AlertTriangle
-          : Info;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: 300, scale: 0.95 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 300, scale: 0.95 }}
-      transition={{ duration: 0.25 }}
-      className="fixed top-4 right-4 z-[100]"
-    >
-      <div
-        className={`${styles} border rounded-lg shadow-2xl p-4 min-w-[300px] max-w-[420px]`}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Icon className="h-5 w-5 text-white" />
-            <p className="text-white text-sm font-medium">{message}</p>
-          </div>
-          <button onClick={onClose} className="text-white/80 hover:text-white">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
-const useToast = () => {
-  const [toasts, setToasts] = useState([]);
-  const showToast = (message, type = "info") => {
-    const id = Date.now() + Math.random();
-    setToasts((prev) => [...prev, { id, message, type, isVisible: true }]);
-    setTimeout(() => hideToast(id), 4000);
-  };
-  const hideToast = (id) =>
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  return { toasts, showToast, hideToast };
-};
 
 const pageVariants = {
   hidden: { opacity: 0, y: 16 },
@@ -242,7 +172,6 @@ const RejectModal = ({ isOpen, onClose, onConfirm, title }) => {
    Approvals Page
 =========================== */
 export default function ApprovalsPage() {
-  const { toasts, showToast, hideToast } = useToast();
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -306,15 +235,14 @@ export default function ApprovalsPage() {
       if (res?.success && res.data) {
         const list = transform(res.data);
         setItems(list);
-        showToast(`Loaded ${list.length} pending approvals`, "success");
       } else {
         setItems([]);
-        showToast(res?.message || "Failed to load approvals", "error");
+        toast.error(res?.message || "Failed to load approvals");
       }
     } catch (e) {
       console.error("Approvals load error:", e);
       setItems([]);
-      showToast(e.message || "Failed to load approvals", "error");
+      toast.error(e.message || "Failed to load approvals");
     } finally {
       setLoading(false);
     }
@@ -412,8 +340,6 @@ export default function ApprovalsPage() {
     // optimistic remove from list
     const prev = items;
     setItems((cur) => cur.filter((x) => x.contentId !== item.contentId));
-    showToast("Approving user…", "info");
-
     try {
       if (item.contentType === "user-registration") {
         const userId = item.id || item.contentId;
@@ -423,19 +349,19 @@ export default function ApprovalsPage() {
         });
 
         if (res?.success) {
-          showToast(`User approved successfully: ${item.userData?.fullName || item.authorName}`, "success");
+          toast.success(`User approved successfully: ${item.userData?.fullName || item.authorName}`);
 
           try {
             const privilegeRes = await AdminService.grantAutoApprovePrivilege(userId);
             if (privilegeRes?.success) {
-              showToast(`Auto-approve privilege granted to user`, "success");
+              toast.success(`Auto-approve privilege granted to user`);
             }
           } catch (privilegeError) {
             console.warn("Could not grant auto-approve privilege:", privilegeError);
           }
         } else {
           setItems(prev); // rollback
-          showToast(res?.message || "User approval failed", "error");
+          toast.error(res?.message || "User approval failed");
         }
       } else {
         const res = await AdminService.approveContent(
@@ -444,15 +370,15 @@ export default function ApprovalsPage() {
           {}
         );
         if (res?.success) {
-          showToast(`Approved: “${item.title}”`, "success");
+          toast.success(`Approved: "${item.title}"`);
         } else {
           setItems(prev); // rollback
-          showToast(res?.message || "Approve failed", "error");
+          toast.error(res?.message || "Approve failed");
         }
       }
     } catch (e) {
       setItems(prev); // rollback
-      showToast("Approve error — rolled back", "error");
+      toast.error("Approve error — rolled back");
       console.error("Approve error:", e);
     }
   };
@@ -469,7 +395,6 @@ export default function ApprovalsPage() {
 
     const prev = items;
     setItems((cur) => cur.filter((x) => x.contentId !== item.contentId));
-    showToast("Rejecting user registration…", "info");
 
     try {
       let res;
@@ -485,14 +410,14 @@ export default function ApprovalsPage() {
       }
 
       if (res?.success) {
-        showToast(`Rejected: “${item.title}”`, "success");
+        toast.success(`Rejected: "${item.title}"`);
       } else {
         setItems(prev); // rollback
-        showToast(res?.message || "Reject failed", "error");
+        toast.error(res?.message || "Reject failed");
       }
     } catch (e) {
       setItems(prev); // rollback
-      showToast("Reject error — rolled back", "error");
+      toast.error("Reject error — rolled back");
     } finally {
       setRejectTarget(null);
     }
@@ -532,16 +457,6 @@ export default function ApprovalsPage() {
       animate="visible"
     >
       {/* Toasts */}
-      <div className="fixed top-0 right-0 z-50 p-4">
-        <AnimatePresence>
-          {toasts.map((t, i) => (
-            <div key={t.id} style={{ marginBottom: i > 0 ? 8 : 0 }}>
-              <Toast {...t} onClose={() => hideToast(t.id)} />
-            </div>
-          ))}
-        </AnimatePresence>
-      </div>
-
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header / Controls */}
         <motion.div

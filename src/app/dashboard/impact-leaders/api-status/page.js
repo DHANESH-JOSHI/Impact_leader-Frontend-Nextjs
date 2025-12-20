@@ -23,8 +23,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 // Import our services for testing
-import { ExternalApiService } from "@/services/externalApiService";
-import { ImpactLeadersAuthService } from "@/services/impactLeadersAuthService";
+import { apiClient } from "@/lib/apiClient";
+import { authStorage } from "@/lib/storage";
 
 export default function APIStatusPage() {
   const [loading, setLoading] = useState(false);
@@ -109,10 +109,12 @@ export default function APIStatusPage() {
 
     // First check basic health
     try {
-      const healthResult = await ExternalApiService.healthCheck();
+      const startTime = performance.now();
+      const healthResult = await apiClient.healthCheck();
+      const endTime = performance.now();
       newStatus["health"] = {
         status: healthResult.success ? "online" : "offline",
-        responseTime: Date.now() - performance.now(),
+        responseTime: endTime - startTime,
         message: healthResult.success
           ? "Server is healthy"
           : healthResult.message,
@@ -159,13 +161,13 @@ export default function APIStatusPage() {
     }
 
     // Check other endpoints (these will likely fail without auth, but we can check if they're reachable)
-    const token = ImpactLeadersAuthService.getStoredTokens().accessToken;
+    const token = authStorage.getAccessToken();
 
     for (const endpoint of apiEndpoints.slice(2)) {
       // Skip health and auth since we already checked them
       try {
         const startTime = performance.now();
-        const result = await ExternalApiService.get(endpoint.endpoint, token);
+        const result = await apiClient.get(endpoint.endpoint, { token });
         const endTime = performance.now();
 
         newStatus[endpoint.id] = {

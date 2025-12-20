@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Loader2, Tag, AlertCircle } from "lucide-react";
 import { SupportService } from "@/services/supportService";
+import toast from "react-hot-toast";
 
 const modalVariants = {
   hidden: { opacity: 0, scale: 0.95 },
@@ -81,43 +82,29 @@ export default function AddTicketModal({ isOpen, onClose, onSuccess }) {
     setError("");
 
     try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Get existing tickets from localStorage
-      const storedTickets = localStorage.getItem("supportTickets");
-      const allTickets = storedTickets ? JSON.parse(storedTickets) : [];
-
-      // Generate new ticket ID and number
-      const newId = String(allTickets.length + 1);
-      const ticketNumber = `#TK-${String(allTickets.length + 1).padStart(5, '0')}`;
-
-      const newTicket = {
-        id: newId,
-        _id: newId,
-        ticketNumber,
+      const ticketData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
         category: formData.category,
         priority: formData.priority,
-        status: "open",
-        requester: {
-          name: formData.requesterName.trim(),
-          email: formData.requesterEmail.trim(),
-        },
-        replies: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        requesterName: formData.requesterName.trim(),
+        requesterEmail: formData.requesterEmail.trim(),
       };
 
-      // Add new ticket to array
-      const updatedTickets = [...allTickets, newTicket];
-      localStorage.setItem("supportTickets", JSON.stringify(updatedTickets));
+      const result = await SupportService.createTicket(ticketData);
 
-      onSuccess();
-      handleClose();
+      if (result.success) {
+        toast.success("Ticket created successfully");
+        onSuccess();
+        handleClose();
+      } else {
+        setError(result.message || "Failed to create ticket");
+        toast.error(result.message || "Failed to create ticket");
+      }
     } catch (err) {
-      setError(err.message || "An error occurred while creating the ticket");
+      const errorMessage = err.message || "An error occurred while creating the ticket";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

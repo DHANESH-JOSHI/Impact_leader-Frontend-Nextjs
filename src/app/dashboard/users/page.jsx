@@ -103,64 +103,6 @@ const useToast = () => {
 };
 
 /* ===========================
-   Mock Data (fallback)
-=========================== */
-const initialUsers = [
-  {
-    id: "u_1",
-    name: "Alexandra Chen",
-    username: "alexchen",
-    email: "alexandra.chen@example.com",
-    role: "admin",
-    status: "active",
-    createdAt: "2024-01-05",
-    lastActive: "2025-08-20",
-    posts: 42,
-    followers: 1203,
-    avatar: "https://i.pravatar.cc/100?img=1",
-  },
-  {
-    id: "u_2",
-    name: "Marcus Rodriguez",
-    username: "marcus",
-    email: "marcus.rod@example.com",
-    role: "editor",
-    status: "active",
-    createdAt: "2024-02-18",
-    lastActive: "2025-08-23",
-    posts: 31,
-    followers: 890,
-    avatar: "https://i.pravatar.cc/100?img=2",
-  },
-  {
-    id: "u_3",
-    name: "Sarah Kim",
-    username: "sarahk",
-    email: "sarah.kim@example.com",
-    role: "author",
-    status: "suspended",
-    createdAt: "2024-03-02",
-    lastActive: "2025-07-30",
-    posts: 18,
-    followers: 501,
-    avatar: "https://i.pravatar.cc/100?img=5",
-  },
-  {
-    id: "u_4",
-    name: "David Thompson",
-    username: "davidth",
-    email: "david.t@example.com",
-    role: "viewer",
-    status: "invited",
-    createdAt: "2024-05-11",
-    lastActive: null,
-    posts: 0,
-    followers: 12,
-    avatar: "https://i.pravatar.cc/100?img=7",
-  },
-];
-
-/* ===========================
    Page Animations
 =========================== */
 const pageVariants = {
@@ -507,18 +449,18 @@ export default function UsersPage() {
         }));
         // showToast(`Loaded ${transformed.length} users`, "success");
       } else {
-        setUsers(initialUsers);
+        setUsers([]);
         setPagination((p) => ({
           ...p,
-          total: initialUsers.length,
-          totalPages: Math.ceil(initialUsers.length / p.limit),
+          total: 0,
+          totalPages: 0,
         }));
-        showToast("Using demo directory (API unavailable)", "warning");
+        showToast("No users found", "warning");
       }
     } catch (e) {
       console.error("Users load error:", e);
-      setUsers(initialUsers);
-      showToast("Failed to load users — using demo directory", "error");
+      setUsers([]);
+      showToast("Failed to load users", "error");
     } finally {
       setLoading(false);
     }
