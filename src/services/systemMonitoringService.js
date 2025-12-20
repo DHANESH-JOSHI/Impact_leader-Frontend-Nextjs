@@ -280,7 +280,7 @@ export class SystemMonitoringService {
     try {
       console.log('🔧 SystemMonitoring: Making API call (token will be automatically injected by apiClient)');
 
-      const response = await apiClient.get(MONITORING.SYSTEM.HEALTH || '/admin/monitoring/system');
+      const response = await apiClient.get(MONITORING.SYSTEM.HEALTH);
       const backendResponse = response.data || {};
       
       console.log('🔧 SystemMonitoring: API Response:', {
@@ -312,7 +312,7 @@ export class SystemMonitoringService {
   static async getAPIAnalyticsFromAPI() {
     try {
 
-      const response = await apiClient.get(MONITORING.API.ANALYTICS || '/admin/monitoring/api-analytics');
+      const response = await apiClient.get(MONITORING.API.ANALYTICS);
       const backendResponse = response.data || {};
       
       if (!response.success) {

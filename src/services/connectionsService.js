@@ -367,7 +367,7 @@ export class ConnectionsService {
       if (startDate) queryParams.startDate = startDate;
       if (endDate) queryParams.endDate = endDate;
 
-      const response = await apiClient.get('/admin/connections', {
+      const response = await apiClient.get(ADMIN.CONNECTIONS.BASE, {
         params: queryParams
       });
       const backendResponse = response.data || {};
@@ -391,7 +391,7 @@ export class ConnectionsService {
     try {
       const { timeframe = '30d', groupBy = 'day' } = params;
 
-      const response = await apiClient.get('/admin/connections/analytics', {
+      const response = await apiClient.get(ADMIN.CONNECTIONS.ANALYTICS, {
         params: { timeframe, groupBy }
       });
       const backendResponse = response.data || {};
@@ -412,7 +412,7 @@ export class ConnectionsService {
 
   static async adminDeleteConnection(connectionId, reason = '') {
     try {
-      const response = await apiClient.delete(`/admin/connections/${connectionId}`);
+      const response = await apiClient.delete(ADMIN.CONNECTIONS.BY_ID(connectionId));
       const backendResponse = response.data || {};
 
       return {
@@ -431,7 +431,7 @@ export class ConnectionsService {
 
   static async forceConnection(requesterId, recipientId, connectionData) {
     try {
-      const response = await apiClient.post('/admin/connections/force', {
+      const response = await apiClient.post(ADMIN.CONNECTIONS.FORCE, {
         requesterId,
         recipientId,
         ...connectionData
@@ -456,7 +456,7 @@ export class ConnectionsService {
     try {
       const { format = 'csv', filters = {} } = params;
 
-      const response = await apiClient.post('/admin/connections/export', {
+      const response = await apiClient.post(ADMIN.CONNECTIONS.EXPORT, {
         format,
         filters
       });
@@ -480,7 +480,7 @@ export class ConnectionsService {
     try {
       const { limit = 10, criteria = 'mixed' } = params;
 
-      const response = await apiClient.get('/connections/ai-suggestions', {
+      const response = await apiClient.get(CONNECTIONS.AI_SUGGESTIONS, {
         params: { limit, criteria }
       });
       const backendResponse = response.data || {};

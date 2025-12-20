@@ -2,6 +2,7 @@ import { apiClient } from '@/lib/apiClient';
 import { QNA } from '@/constants/apiEndpoints';
 
 export class QnAService {
+  
   static async getQuestions(params = {}) {
     try {
       const { 
@@ -28,7 +29,7 @@ export class QnAService {
         ...(status && { status }),
       };
 
-      const response = await apiClient.get('/qa/questions', { params: queryParams });
+      const response = await apiClient.get(QNA.BASE, { params: queryParams });
       const backendResponse = response.data || {};
       
       return {
@@ -50,7 +51,7 @@ export class QnAService {
 
   static async getQuestionById(questionId) {
     try {
-      const response = await apiClient.get(`/qa/questions/${questionId}`);
+      const response = await apiClient.get(QNA.BY_ID(questionId));
 
       return {
         success: response.success,
@@ -70,7 +71,7 @@ export class QnAService {
   // Ask a new question
   static async askQuestion(questionData) {
     try {
-      const response = await apiClient.post('/qa/questions', questionData);
+      const response = await apiClient.post(QNA.BASE, questionData);
 
       return {
         success: response.success,
@@ -88,7 +89,7 @@ export class QnAService {
 
   static async updateQuestion(questionId, updateData) {
     try {
-      const response = await apiClient.put(`/qa/questions/${questionId}`, updateData);
+      const response = await apiClient.put(QNA.BY_ID(questionId), updateData);
 
       return {
         success: response.success,
@@ -106,7 +107,7 @@ export class QnAService {
 
   static async deleteQuestion(questionId) {
     try {
-      const response = await apiClient.delete(`/qa/questions/${questionId}`);
+      const response = await apiClient.delete(QNA.BY_ID(questionId));
 
       return {
         success: response.success,
@@ -126,7 +127,7 @@ export class QnAService {
   // Answer a question
   static async answerQuestion(questionId, answerData) {
     try {
-      const response = await apiClient.post(`/qa/questions/${questionId}/answers`, answerData);
+      const response = await apiClient.post(QNA.ANSWERS(questionId), answerData);
 
       return {
         success: response.success,
@@ -144,7 +145,7 @@ export class QnAService {
 
   static async updateAnswer(questionId, answerId, updateData) {
     try {
-      const response = await apiClient.put(`/qa/questions/${questionId}/answers/${answerId}`, updateData);
+      const response = await apiClient.put(QNA.ANSWER_BY_ID(questionId, answerId), updateData);
 
       return {
         success: response.success,
@@ -162,7 +163,7 @@ export class QnAService {
 
   static async deleteAnswer(questionId, answerId) {
     try {
-      const response = await apiClient.delete(`/qa/questions/${questionId}/answers/${answerId}`);
+      const response = await apiClient.delete(QNA.ANSWER_BY_ID(questionId, answerId));
 
       return {
         success: response.success,
@@ -182,7 +183,7 @@ export class QnAService {
   // Upvote question
   static async upvoteQuestion(questionId) {
     try {
-      const response = await apiClient.post(`/qa/questions/${questionId}/vote`, { voteType: 'up' });
+      const response = await apiClient.post(QNA.UPVOTE(questionId), { voteType: 'up' });
 
       return {
         success: response.success,
@@ -202,7 +203,7 @@ export class QnAService {
   // Upvote answer
   static async upvoteAnswer(questionId, answerId) {
     try {
-      const response = await apiClient.post(`/qa/questions/${questionId}/answers/${answerId}/vote`, { voteType: 'up' });
+      const response = await apiClient.post(QNA.ANSWER_UPVOTE(questionId, answerId), { voteType: 'up' });
 
       return {
         success: response.success,
@@ -222,7 +223,7 @@ export class QnAService {
   // Mark answer as accepted (question author or admin)
   static async acceptAnswer(questionId, answerId) {
     try {
-      const response = await apiClient.post(`/qa/questions/${questionId}/answers/${answerId}/accept`, {});
+      const response = await apiClient.post(QNA.ACCEPT_ANSWER(questionId, answerId), {});
 
       return {
         success: response.success,
@@ -240,7 +241,7 @@ export class QnAService {
 
   static async getQnAStats() {
     try {
-      const response = await apiClient.get('/qa/stats');
+      const response = await apiClient.get(QNA.STATS);
 
       return {
         success: response.success,
@@ -258,7 +259,7 @@ export class QnAService {
 
   static async getTrendingQuestions(limit = 10) {
     try {
-      const response = await apiClient.get('/qa/questions/trending', { params: { limit } });
+      const response = await apiClient.get(QNA.TRENDING, { params: { limit } });
 
       return {
         success: response.success,
@@ -284,7 +285,7 @@ export class QnAService {
         status: 'open'
       };
 
-      const response = await apiClient.get('/qa/questions', { params: queryParams });
+      const response = await apiClient.get(QNA.BASE, { params: queryParams });
 
       return {
         success: response.success,

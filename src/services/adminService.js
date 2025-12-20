@@ -264,7 +264,7 @@ export class AdminService {
   // Handle flagged content
   static async handleFlaggedContent(flagId, action, data = {}) {
     try {
-      const response = await apiClient.post(`/admin/flagged-content/${flagId}/${action}`, data);
+      const response = await apiClient.post(ADMIN.FLAGGED_CONTENT_HANDLE(flagId, action), data);
       const backendResponse = response.data || {};
 
       return {

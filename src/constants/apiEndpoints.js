@@ -73,6 +73,8 @@ export const API_ENDPOINTS = {
     VIEW: (id) => `/stories/${id}/view`,
     LIKE: (id) => `/stories/${id}/like`,
     SHARE: (id) => `/stories/${id}/share`,
+    UPLOAD: '/stories/upload',
+    ANALYTICS: '/stories/analytics',
   },
 
   // ==================== RESOURCES ====================
@@ -92,6 +94,7 @@ export const API_ENDPOINTS = {
     BY_ID: (id) => `/qna/${id}`,
     TRENDING: '/qna/trending',
     UNANSWERED: '/qna/unanswered',
+    STATS: '/qna/stats',
 
     // Actions
     UPVOTE: (id) => `/qna/${id}/upvote`,
@@ -114,6 +117,13 @@ export const API_ENDPOINTS = {
     JOIN: (id) => `/meetings/${id}/join`,
     LEAVE: (id) => `/meetings/${id}/leave`,
     ATTENDEES: (id) => `/meetings/${id}/attendees`,
+    START_CREATION: '/meetings/start-creation',
+    VERIFY_ORGANIZER_EMAIL: '/meetings/verify-organizer-email',
+    CONFIRM_ORGANIZER_EMAIL: '/meetings/confirm-organizer-email',
+    VERIFY_ATTENDEE_EMAILS: '/meetings/verify-attendee-emails',
+    CONFIRM_ATTENDEE_EMAIL: '/meetings/confirm-attendee-email',
+    COMPLETE_CREATION: '/meetings/complete-creation',
+    CREATION_STATUS: (sessionId) => `/meetings/creation-status/${sessionId}`,
   },
 
   // ==================== SUPPORT ====================
@@ -145,6 +155,19 @@ export const API_ENDPOINTS = {
     SEND: '/messages/send',
     READ: (id) => `/messages/${id}/read`,
     DELETE: (id) => `/messages/${id}/delete`,
+    UPLOAD: '/messages/upload',
+    BLOCKED_USERS: '/messages/blocked-users',
+    UNREAD_COUNT: '/messages/unread/count',
+    SEARCH: '/messages/search',
+    BY_USER_ID: (userId) => `/messages/${userId}`,
+    BLOCK_USER: (userId) => `/messages/users/${userId}/block`,
+    UNBLOCK_USER: (userId) => `/messages/users/${userId}/unblock`,
+    GROUPS: '/messages/groups',
+    GROUP_BY_ID: (groupId) => `/messages/groups/${groupId}`,
+    GROUP_MESSAGES: (groupId) => `/messages/groups/${groupId}/messages`,
+    GROUP_MEMBERS: (groupId) => `/messages/groups/${groupId}/members`,
+    GROUP_MEMBER_BY_ID: (groupId, userId) => `/messages/groups/${groupId}/members/${userId}`,
+    GROUP_LEAVE: (groupId) => `/messages/groups/${groupId}/leave`,
   },
 
   // ==================== CONNECTIONS ====================
@@ -163,6 +186,7 @@ export const API_ENDPOINTS = {
     STAR: (id) => `/connections/${id}/star`,
     NOTE: (id) => `/connections/${id}/note`,
     PREFERENCES: '/connections/preferences',
+    AI_SUGGESTIONS: '/connections/ai-suggestions',
   },
 
   // ==================== DIRECTORY ====================
@@ -171,6 +195,9 @@ export const API_ENDPOINTS = {
     SEARCH: '/directory/search',
     FILTER: '/directory/filter',
     BY_ID: (id) => `/directory/${id}`,
+    STATS: '/directory/stats',
+    FEATURED: '/directory/featured',
+    SET_FEATURED: (profileId) => `/admin/directory/featured/${profileId}`,
   },
 
   // ==================== NOTIFICATIONS ====================
@@ -206,6 +233,7 @@ export const API_ENDPOINTS = {
     
     // Flagged Content
     FLAGGED_CONTENT: '/admin/flagged-content',
+    FLAGGED_CONTENT_HANDLE: (flagId, action) => `/admin/flagged-content/${flagId}/${action}`,
     
     // Audit Logs
     AUDIT_LOGS: '/admin/audit-logs',
@@ -247,6 +275,33 @@ export const API_ENDPOINTS = {
       REPORTS: (id) => `/admin/posts/reports/${id}`,
       BULK_ACTION: '/admin/posts/bulk-action',
       ANALYTICS: '/admin/posts/analytics',
+    },
+
+    // Messages Management
+    MESSAGES: {
+      BASE: '/admin/messages',
+      BY_ID: (id) => `/admin/messages/${id}`,
+      ANALYTICS: '/admin/messages/analytics',
+    },
+
+    // Meetings Management
+    MEETINGS: {
+      BASE: '/admin/meetings',
+      ANALYTICS: '/admin/meetings/analytics',
+    },
+
+    // Directory Management
+    DIRECTORY: {
+      ANALYTICS: '/admin/directory/analytics',
+    },
+
+    // Connections Management
+    CONNECTIONS: {
+      BASE: '/admin/connections',
+      BY_ID: (id) => `/admin/connections/${id}`,
+      ANALYTICS: '/admin/connections/analytics',
+      FORCE: '/admin/connections/force',
+      EXPORT: '/admin/connections/export',
     },
 
     // Users Management

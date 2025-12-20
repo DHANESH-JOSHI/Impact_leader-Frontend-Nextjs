@@ -74,7 +74,7 @@ export class StoriesService {
         formData.append("media", imageFile);
       }
 
-      const response = await apiClient.upload("/stories/upload", formData);
+      const response = await apiClient.upload(STORIES.UPLOAD, formData);
 
       return {
         success: response.success,
@@ -109,7 +109,7 @@ export class StoriesService {
         formData.append("media", videoFile);
       }
 
-      const response = await apiClient.upload("/stories/upload", formData);
+      const response = await apiClient.upload(STORIES.UPLOAD, formData);
 
       return {
         success: response.success,
@@ -147,7 +147,7 @@ export class StoriesService {
 
   static async getStoryAnalytics() {
     try {
-      const response = await apiClient.get("/stories/analytics");
+      const response = await apiClient.get(STORIES.ANALYTICS);
 
       return {
         success: response.success,

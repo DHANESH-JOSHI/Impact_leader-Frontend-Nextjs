@@ -247,7 +247,7 @@ export class DirectoryService {
 
   static async getDirectoryStats() {
     try {
-      const response = await apiClient.get("/directory/stats");
+      const response = await apiClient.get(DIRECTORY.STATS);
       const backendResponse = response.data || {};
 
       return {
@@ -268,7 +268,7 @@ export class DirectoryService {
     try {
       const { limit = 10, category = "all" } = params;
 
-      const response = await apiClient.get("/directory/featured", {
+      const response = await apiClient.get(DIRECTORY.FEATURED, {
         params: { limit, category }
       });
       const backendResponse = response.data || {};
@@ -289,7 +289,7 @@ export class DirectoryService {
 
   static async setFeaturedProfile(profileId, featured = true) {
     try {
-      const response = await apiClient.post(`/admin/directory/featured/${profileId}`, {
+      const response = await apiClient.post(DIRECTORY.SET_FEATURED(profileId), {
         featured
       });
       const backendResponse = response.data || {};
@@ -312,7 +312,7 @@ export class DirectoryService {
     try {
       const { timeframe = "30d", groupBy = "day" } = params;
 
-      const response = await apiClient.get("/admin/directory/analytics", {
+      const response = await apiClient.get(ADMIN.DIRECTORY.ANALYTICS, {
         params: { timeframe, groupBy }
       });
       const backendResponse = response.data || {};

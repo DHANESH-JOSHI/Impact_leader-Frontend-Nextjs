@@ -1,10 +1,10 @@
 import { apiClient } from '@/lib/apiClient';
-import { MEETINGS } from '@/constants/apiEndpoints';
+import { MEETINGS, ADMIN } from '@/constants/apiEndpoints';
 
 export class MeetingsService {
   static async startMeetingCreation(meetingData) {
     try {
-      const response = await apiClient.post("/meetings/start-creation", meetingData);
+      const response = await apiClient.post(MEETINGS.START_CREATION, meetingData);
       const backendResponse = response.data || {};
 
       return {
@@ -23,7 +23,7 @@ export class MeetingsService {
 
   static async verifyOrganizerEmail(sessionId, useCurrentEmail = true, newEmail = "") {
     try {
-      const response = await apiClient.post("/meetings/verify-organizer-email", {
+      const response = await apiClient.post(MEETINGS.VERIFY_ORGANIZER_EMAIL, {
         sessionId,
         useCurrentEmail,
         newEmail,
@@ -46,7 +46,7 @@ export class MeetingsService {
 
   static async confirmOrganizerEmail(sessionId, email, otp) {
     try {
-      const response = await apiClient.post("/meetings/confirm-organizer-email", {
+      const response = await apiClient.post(MEETINGS.CONFIRM_ORGANIZER_EMAIL, {
         sessionId,
         email,
         otp,
@@ -69,7 +69,7 @@ export class MeetingsService {
 
   static async verifyAttendeeEmails(sessionId, attendeeEmailUpdates = []) {
     try {
-      const response = await apiClient.post("/meetings/verify-attendee-emails", {
+      const response = await apiClient.post(MEETINGS.VERIFY_ATTENDEE_EMAILS, {
         sessionId,
         attendeeEmailUpdates,
       });
@@ -91,7 +91,7 @@ export class MeetingsService {
 
   static async confirmAttendeeEmail(sessionId, email, otp) {
     try {
-      const response = await apiClient.post("/meetings/confirm-attendee-email", {
+      const response = await apiClient.post(MEETINGS.CONFIRM_ATTENDEE_EMAIL, {
         sessionId,
         email,
         otp,
@@ -114,7 +114,7 @@ export class MeetingsService {
 
   static async completeMeetingCreation(sessionId) {
     try {
-      const response = await apiClient.post("/meetings/complete-creation", {
+      const response = await apiClient.post(MEETINGS.COMPLETE_CREATION, {
         sessionId,
       });
       const backendResponse = response.data || {};
@@ -135,7 +135,7 @@ export class MeetingsService {
 
   static async getCreationStatus(sessionId) {
     try {
-      const response = await apiClient.get(`/meetings/creation-status/${sessionId}`);
+      const response = await apiClient.get(MEETINGS.CREATION_STATUS(sessionId));
       const backendResponse = response.data || {};
 
       return {
@@ -175,7 +175,7 @@ export class MeetingsService {
       if (endDate) queryParams.endDate = endDate;
       if (search) queryParams.search = search;
 
-      const response = await apiClient.get("/admin/meetings", {
+      const response = await apiClient.get(ADMIN.MEETINGS.BASE, {
         params: queryParams
       });
       const backendResponse = response.data || {};
@@ -199,7 +199,7 @@ export class MeetingsService {
     try {
       const { timeframe = "30d", groupBy = "day" } = params;
 
-      const response = await apiClient.get("/admin/meetings/analytics", {
+      const response = await apiClient.get(ADMIN.MEETINGS.ANALYTICS, {
         params: { timeframe, groupBy }
       });
       const backendResponse = response.data || {};

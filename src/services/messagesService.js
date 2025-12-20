@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/apiClient';
-import { MESSAGES } from '@/constants/apiEndpoints';
+import { MESSAGES, ADMIN } from '@/constants/apiEndpoints';
 
 export class MessagesService {
   static async getConversations(params = {}) {
@@ -95,7 +95,7 @@ export class MessagesService {
         formData.append("attachment", attachmentFile);
       }
 
-      const response = await apiClient.upload("/messages/upload", formData);
+      const response = await apiClient.upload(MESSAGES.UPLOAD, formData);
       const backendResponse = response.data || {};
 
       return {
@@ -228,7 +228,7 @@ export class MessagesService {
 
   static async blockUser(userId) {
     try {
-      const response = await apiClient.post(`/messages/users/${userId}/block`, {});
+      const response = await apiClient.post(MESSAGES.BLOCK_USER(userId), {});
       const backendResponse = response.data || {};
 
       return {
@@ -247,7 +247,7 @@ export class MessagesService {
 
   static async unblockUser(userId) {
     try {
-      const response = await apiClient.post(`/messages/users/${userId}/unblock`, {});
+      const response = await apiClient.post(MESSAGES.UNBLOCK_USER(userId), {});
       const backendResponse = response.data || {};
 
       return {
@@ -268,7 +268,7 @@ export class MessagesService {
     try {
       const { page = 1, limit = 20 } = params;
 
-      const response = await apiClient.get("/messages/blocked-users", {
+      const response = await apiClient.get(MESSAGES.BLOCKED_USERS, {
         params: { page, limit }
       });
       const backendResponse = response.data || {};
@@ -290,7 +290,7 @@ export class MessagesService {
 
   static async getUnreadCount() {
     try {
-      const response = await apiClient.get("/messages/unread/count");
+      const response = await apiClient.get(MESSAGES.UNREAD_COUNT);
       const backendResponse = response.data || {};
 
       return {
@@ -334,7 +334,7 @@ export class MessagesService {
       if (senderId) queryParams.senderId = senderId;
       if (recipientId) queryParams.recipientId = recipientId;
 
-      const response = await apiClient.get("/admin/messages", {
+      const response = await apiClient.get(ADMIN.MESSAGES.BASE, {
         params: queryParams
       });
       const backendResponse = response.data || {};
@@ -358,7 +358,7 @@ export class MessagesService {
     try {
       const { timeframe = "30d", groupBy = "day" } = params;
 
-      const response = await apiClient.get("/admin/messages/analytics", {
+      const response = await apiClient.get(ADMIN.MESSAGES.ANALYTICS, {
         params: { timeframe, groupBy }
       });
       const backendResponse = response.data || {};
@@ -379,7 +379,7 @@ export class MessagesService {
 
   static async adminDeleteMessage(messageId, reason = "") {
     try {
-      const response = await apiClient.delete(`/admin/messages/${messageId}`);
+      const response = await apiClient.delete(ADMIN.MESSAGES.BY_ID(messageId));
       const backendResponse = response.data || {};
 
       return {
@@ -428,7 +428,7 @@ export class MessagesService {
     try {
       const { page = 1, limit = 50 } = params;
 
-      const response = await apiClient.get(`/messages/${userId}`, {
+      const response = await apiClient.get(MESSAGES.BY_USER_ID(userId), {
         params: { page, limit }
       });
       const backendResponse = response.data || {};
@@ -486,7 +486,7 @@ export class MessagesService {
 
       if (userId) queryParams.userId = userId;
 
-      const response = await apiClient.get("/messages/search", {
+      const response = await apiClient.get(MESSAGES.SEARCH, {
         params: queryParams
       });
       const backendResponse = response.data || {};
@@ -516,7 +516,7 @@ export class MessagesService {
         formData.append("groupImage", groupImageFile);
       }
 
-      const response = await apiClient.post("/messages/groups", formData, {
+      const response = await apiClient.post(MESSAGES.GROUPS, formData, {
         isFormData: true
       });
       const backendResponse = response.data || {};
@@ -537,7 +537,7 @@ export class MessagesService {
 
   static async getGroupDetails(groupId) {
     try {
-      const response = await apiClient.get(`/messages/groups/${groupId}`);
+      const response = await apiClient.get(MESSAGES.GROUP_BY_ID(groupId));
       const backendResponse = response.data || {};
 
       return {
@@ -564,7 +564,7 @@ export class MessagesService {
         formData.append("groupImage", groupImageFile);
       }
 
-      const response = await apiClient.put(`/messages/groups/${groupId}`, formData, {
+      const response = await apiClient.put(MESSAGES.GROUP_BY_ID(groupId), formData, {
         isFormData: true
       });
       const backendResponse = response.data || {};
@@ -585,7 +585,7 @@ export class MessagesService {
 
   static async addGroupMembers(groupId, memberIds) {
     try {
-      const response = await apiClient.post(`/messages/groups/${groupId}/members`, {
+      const response = await apiClient.post(MESSAGES.GROUP_MEMBERS(groupId), {
         memberIds
       });
       const backendResponse = response.data || {};
@@ -606,7 +606,7 @@ export class MessagesService {
 
   static async removeGroupMember(groupId, userId) {
     try {
-      const response = await apiClient.delete(`/messages/groups/${groupId}/members/${userId}`);
+      const response = await apiClient.delete(MESSAGES.GROUP_MEMBER_BY_ID(groupId, userId));
       const backendResponse = response.data || {};
 
       return {
@@ -625,7 +625,7 @@ export class MessagesService {
 
   static async leaveGroup(groupId) {
     try {
-      const response = await apiClient.post(`/messages/groups/${groupId}/leave`, {});
+      const response = await apiClient.post(MESSAGES.GROUP_LEAVE(groupId), {});
       const backendResponse = response.data || {};
 
       return {
@@ -644,7 +644,7 @@ export class MessagesService {
 
   static async deleteGroup(groupId) {
     try {
-      const response = await apiClient.delete(`/messages/groups/${groupId}`);
+      const response = await apiClient.delete(MESSAGES.GROUP_BY_ID(groupId));
       const backendResponse = response.data || {};
 
       return {
@@ -665,7 +665,7 @@ export class MessagesService {
     try {
       const { page = 1, limit = 50 } = params;
 
-      const response = await apiClient.get(`/messages/groups/${groupId}/messages`, {
+      const response = await apiClient.get(MESSAGES.GROUP_MESSAGES(groupId), {
         params: { page, limit }
       });
       const backendResponse = response.data || {};
