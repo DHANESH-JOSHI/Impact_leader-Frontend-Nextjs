@@ -90,22 +90,22 @@ export const API_ENDPOINTS = {
 
   // ==================== QNA ====================
   QNA: {
-    BASE: '/qna',
-    BY_ID: (id) => `/qna/${id}`,
-    TRENDING: '/qna/trending',
-    UNANSWERED: '/qna/unanswered',
-    STATS: '/qna/stats',
+    BASE: '/qa/questions',
+    BY_ID: (id) => `/qa/questions/${id}`,
+    TRENDING: '/qa/questions/trending',
+    UNANSWERED: '/qa/questions/unanswered',
+    STATS: '/qa/stats',
 
     // Actions
-    UPVOTE: (id) => `/qna/${id}/upvote`,
-    DOWNVOTE: (id) => `/qna/${id}/downvote`,
+    UPVOTE: (id) => `/qa/questions/${id}/vote`,
+    DOWNVOTE: (id) => `/qa/questions/${id}/vote`,
 
     // Answers
-    ANSWERS: (id) => `/qna/${id}/answers`,
-    ANSWER_BY_ID: (questionId, answerId) => `/qna/${questionId}/answers/${answerId}`,
-    ACCEPT_ANSWER: (questionId, answerId) => `/qna/${questionId}/answers/${answerId}/accept`,
-    ANSWER_UPVOTE: (questionId, answerId) => `/qna/${questionId}/answers/${answerId}/upvote`,
-    ANSWER_DOWNVOTE: (questionId, answerId) => `/qna/${questionId}/answers/${answerId}/downvote`,
+    ANSWERS: (id) => `/qa/questions/${id}/answers`,
+    ANSWER_BY_ID: (questionId, answerId) => `/qa/questions/${questionId}/answers/${answerId}`,
+    ACCEPT_ANSWER: (questionId, answerId) => `/qa/questions/${questionId}/answers/${answerId}/accept`,
+    ANSWER_UPVOTE: (questionId, answerId) => `/qa/questions/${questionId}/answers/${answerId}/vote`,
+    ANSWER_DOWNVOTE: (questionId, answerId) => `/qa/questions/${questionId}/answers/${answerId}/vote`,
   },
 
   // ==================== MEETINGS ====================

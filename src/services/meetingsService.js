@@ -175,7 +175,7 @@ export class MeetingsService {
       if (endDate) queryParams.endDate = endDate;
       if (search) queryParams.search = search;
 
-      const response = await apiClient.get(ADMIN.MEETINGS.BASE, {
+      const response = await apiClient.get(MEETINGS.BASE, {
         params: queryParams
       });
       const backendResponse = response.data || {};
