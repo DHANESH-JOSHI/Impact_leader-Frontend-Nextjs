@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -51,6 +51,7 @@ export default function AddResourceModal({
   onClose,
   onSubmit,
   categories = [],
+  initialResource = null,
 }) {
   const [formData, setFormData] = useState({
     title: "",
@@ -72,6 +73,42 @@ export default function AddResourceModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedFile, setSelectedFile] = useState(null);
+
+  useEffect(() => {
+    if (initialResource) {
+      setFormData({
+        title: initialResource.title || "",
+        description: initialResource.description || "",
+        type: initialResource.type || "video",
+        fileUrl: initialResource.fileUrl || "",
+        fileName: initialResource.fileName || "",
+        fileSize: initialResource.fileSize || 0,
+        duration: initialResource.duration || 0,
+        category: initialResource.category || categories[0] || "",
+        tags: Array.isArray(initialResource.tags) ? initialResource.tags.join(", ") : (initialResource.tags || ""),
+        author: initialResource.author || "",
+        status: initialResource.status || "draft",
+        thumbnail: initialResource.thumbnail || "",
+        featured: initialResource.featured || false,
+      });
+    } else {
+      setFormData({
+        title: "",
+        description: "",
+        type: "video",
+        fileUrl: "",
+        fileName: "",
+        fileSize: 0,
+        duration: 0,
+        category: categories[0] || "",
+        tags: "",
+        author: "",
+        status: "draft",
+        thumbnail: "",
+        featured: false,
+      });
+    }
+  }, [initialResource, isOpen, categories]);
 
   // Handle input changes
   const handleInputChange = (e) => {
@@ -171,7 +208,6 @@ export default function AddResourceModal({
     setIsSubmitting(true);
 
     try {
-      // Prepare the data for API submission
       const resourceData = {
         title: formData.title,
         description: formData.description,
@@ -183,11 +219,13 @@ export default function AddResourceModal({
           .filter((tag) => tag),
         isPublic: formData.status === "published",
         featured: formData.featured,
-        // Include file if uploaded
         ...(selectedFile && { file: selectedFile }),
-        // Include URL if provided (for external resources)
         ...(formData.fileUrl && { fileUrl: formData.fileUrl }),
       };
+
+      if (initialResource) {
+        resourceData.id = initialResource.id;
+      }
 
       console.log("📤 Submitting resource data:", resourceData);
 
@@ -294,7 +332,7 @@ export default function AddResourceModal({
                     className="text-xl font-semibold"
                     style={{ color: "#040606" }}
                   >
-                    Add New Resource
+                    {initialResource ? "Edit Resource" : "Add New Resource"}
                   </h2>
                   <p className="text-sm" style={{ color: "#646464" }}>
                     Upload and manage your media resources
@@ -680,7 +718,7 @@ export default function AddResourceModal({
                 ) : (
                   <>
                     <Save className="h-4 w-4" />
-                    <span>Create Resource</span>
+                    <span>{initialResource ? "Update Resource" : "Create Resource"}</span>
                   </>
                 )}
               </motion.button>

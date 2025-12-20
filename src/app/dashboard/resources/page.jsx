@@ -10,7 +10,6 @@ import {
   AlertTriangle,
   FileText,
   Video,
-  Headphones,
 } from "lucide-react";
 import ResourcesHeader from "@/components/resources/ResourcesHeader";
 import ResourcesCardView from "@/components/resources/ResourcesCardView";
@@ -20,9 +19,6 @@ import ViewResourceModal from "@/components/resources/ViewResourceModal";
 import DeleteConfirmModal from "@/components/resources/DeleteConfirmModal";
 import { ResourcesService } from "@/services/resourcesService";
 
-/* ===========================
-   Utilities
-=========================== */
 const toISODate = (d) => {
   try {
     const dt = new Date(d);
@@ -42,9 +38,6 @@ const humanBytes = (bytes = 0) => {
   return `${val.toFixed(val >= 10 ? 0 : 1)} ${units[i]}`;
 };
 
-/* ===========================
-   Toasts (refined, English)
-=========================== */
 const Toast = ({ message, type, onClose, isVisible }) => {
   useEffect(() => {
     if (!isVisible) return;
@@ -122,217 +115,6 @@ const useToast = () => {
   return { toasts, showToast, hideToast };
 };
 
-/* ===========================
-   Demo Data (fallback)
-=========================== */
-const initialResources = [
-  {
-    id: 1,
-    title: "Mastering React 18: Complete Guide to Modern Development",
-    description:
-      "A 4-hour masterclass covering Suspense, Concurrent Rendering, Server Components, and advanced hooks with real projects.",
-    type: "video",
-    fileUrl:
-      "https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4",
-    fileName: "react18-masterclass.mp4",
-    fileSize: 1250000000,
-    duration: 14400,
-    category: "Web Development",
-    tags: [
-      "react",
-      "react18",
-      "javascript",
-      "frontend",
-      "suspense",
-      "hooks",
-      "server components",
-    ],
-    author: "Sarah Chen",
-    status: "published",
-    thumbnail:
-      "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&q=80",
-    createdAt: "2024-01-20T09:00:00Z",
-    updatedAt: "2024-01-20T09:00:00Z",
-    views: 15420,
-    likes: 892,
-    downloads: 2340,
-    featured: true,
-    quality: "4K",
-    language: "English",
-    subtitles: ["English", "Spanish", "French"],
-  },
-  {
-    id: 2,
-    title: "Deep Focus: Ambient Soundscape for Productivity",
-    description:
-      "A 2-hour ambient soundscape combining nature textures, white noise, and subtle music for deep work.",
-    type: "audio",
-    fileUrl: "https://www.soundjay.com/misc/sounds-animals/bell-ringing-05.mp3",
-    fileName: "deep-focus-ambient.mp3",
-    fileSize: 240000000,
-    duration: 7200,
-    category: "Productivity Audio",
-    tags: [
-      "ambient",
-      "focus",
-      "productivity",
-      "meditation",
-      "white noise",
-      "concentration",
-    ],
-    author: "Alex Rivera",
-    status: "published",
-    thumbnail:
-      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",
-    createdAt: "2024-01-18T15:30:00Z",
-    updatedAt: "2024-01-18T15:30:00Z",
-    views: 8750,
-    likes: 1240,
-    downloads: 3890,
-    featured: true,
-    quality: "320kbps",
-    language: "Instrumental",
-    genre: "Ambient/Electronic",
-  },
-  {
-    id: 3,
-    title: "Full-Stack JavaScript Bootcamp: Node.js & Express",
-    description:
-      "Backend fundamentals with Node, Express, MongoDB, auth, API design, testing, and deployment patterns.",
-    type: "video",
-    fileUrl:
-      "https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4",
-    fileName: "nodejs-express-bootcamp.mp4",
-    fileSize: 2100000000,
-    duration: 18000,
-    category: "Backend Development",
-    tags: [
-      "nodejs",
-      "express",
-      "mongodb",
-      "javascript",
-      "backend",
-      "api",
-      "authentication",
-      "testing",
-    ],
-    author: "Marcus Thompson",
-    status: "published",
-    thumbnail:
-      "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&q=80",
-    createdAt: "2024-01-15T11:20:00Z",
-    updatedAt: "2024-01-15T11:20:00Z",
-    views: 12800,
-    likes: 687,
-    downloads: 1950,
-    featured: true,
-    quality: "1080p",
-    language: "English",
-    subtitles: ["English", "Portuguese", "German"],
-  },
-  {
-    id: 4,
-    title: "AI-Powered Development Tools: Complete Guide",
-    description:
-      "An overview of Copilot, LLM coding, automated testing, and integrating AI into daily engineering workflows.",
-    type: "video",
-    fileUrl:
-      "https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4",
-    fileName: "ai-development-tools.mp4",
-    fileSize: 850000000,
-    duration: 5400,
-    category: "AI & Development",
-    tags: [
-      "artificial intelligence",
-      "github copilot",
-      "ai tools",
-      "automation",
-      "productivity",
-      "chatgpt",
-    ],
-    author: "Emma Rodriguez",
-    status: "published",
-    thumbnail:
-      "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&q=80",
-    createdAt: "2024-01-25T14:15:00Z",
-    updatedAt: "2024-01-25T14:15:00Z",
-    views: 9200,
-    likes: 456,
-    downloads: 1120,
-    featured: false,
-    quality: "1080p",
-    language: "English",
-    subtitles: ["English", "Japanese", "Korean"],
-  },
-  {
-    id: 5,
-    title: "Binaural Beats: Learning & Memory",
-    description:
-      "Targeted frequencies to support learning, memory retention, and focus during study sessions.",
-    type: "audio",
-    fileUrl: "https://www.soundjay.com/misc/sounds-animals/bell-ringing-05.mp3",
-    fileName: "binaural-learning-beats.mp3",
-    fileSize: 180000000,
-    duration: 3600,
-    category: "Study Audio",
-    tags: [
-      "binaural beats",
-      "learning",
-      "memory",
-      "study",
-      "cognitive enhancement",
-      "brain training",
-    ],
-    author: "Dr. Jennifer Park",
-    status: "published",
-    thumbnail:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80",
-    createdAt: "2024-01-22T10:45:00Z",
-    updatedAt: "2024-01-22T10:45:00Z",
-    views: 6890,
-    likes: 892,
-    downloads: 2670,
-    featured: false,
-    quality: "320kbps",
-    language: "Instrumental",
-    frequency: "40Hz Alpha Waves",
-  },
-  {
-    id: 6,
-    title: "Cloud Architecture Masterclass: AWS & Azure",
-    description:
-      "Architecture patterns across AWS/Azure, serverless, microservices, and cost optimization.",
-    type: "video",
-    fileUrl:
-      "https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4",
-    fileName: "cloud-architecture-masterclass.mp4",
-    fileSize: 1800000000,
-    duration: 16200,
-    category: "Cloud Computing",
-    tags: [
-      "aws",
-      "azure",
-      "cloud architecture",
-      "serverless",
-      "microservices",
-      "devops",
-      "scalability",
-    ],
-    author: "David Kim",
-    status: "draft",
-    thumbnail:
-      "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&q=80",
-    createdAt: "2024-01-28T16:30:00Z",
-    updatedAt: "2024-01-28T16:30:00Z",
-    views: 0,
-    likes: 0,
-    downloads: 0,
-    featured: false,
-    quality: "4K",
-    language: "English",
-    subtitles: ["English", "Chinese", "Hindi"],
-  },
-];
 
 /* ===========================
    Animations
@@ -368,8 +150,8 @@ export default function ResourcesPage() {
   const [filterType, setFilterType] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
 
-  const [sortBy, setSortBy] = useState("createdAt"); // createdAt | updatedAt | title | views | likes | downloads
-  const [sortOrder, setSortOrder] = useState("desc"); // asc | desc
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState("desc");
 
   const [pagination, setPagination] = useState({
     page: 1,
@@ -379,11 +161,11 @@ export default function ResourcesPage() {
   });
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedResource, setSelectedResource] = useState(null);
 
-// Add this line after your categories useMemo to ensure it always has values
 const categories = useMemo(
   () => {
     const uniqueCategories = Array.from(
@@ -394,8 +176,6 @@ const categories = useMemo(
           .filter(c => c !== "all" && c !== "")
       )
     );
-    
-    // Fallback categories if none found
     return uniqueCategories.length > 0 
       ? ["all", ...uniqueCategories]
       : ["all", "General", "Web Development", "Productivity", "Study", "Cloud Computing"];
@@ -406,15 +186,13 @@ const modalCategories = useMemo(() => {
   return categories.filter((c) => c !== "all" && c !== "");
 }, [categories]);
 
-  // Debounce ref for search
   const searchDebounceRef = useRef(null);
 
-  // Load on mount and whenever filters/sort/paging change (search debounced)
   useEffect(() => {
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     searchDebounceRef.current = setTimeout(() => {
       loadResources();
-    }, 300); // 300ms debounce for smoother UX
+    }, 300);
     return () => clearTimeout(searchDebounceRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -444,11 +222,32 @@ const modalCategories = useMemo(() => {
       });
 
       if (result?.success) {
-      
-        const api = result.data.data;
-        const transformed =
-          api?.map((r) => ({
-            id: r._id,
+        const resourcesData = Array.isArray(result.data) ? result.data : [];
+        const paginationData = result.pagination || {};
+
+        const transformed = resourcesData.map((r) => {
+          let authorName = "Unknown";
+          if (typeof r.author === 'string') {
+            authorName = r.author;
+          } else if (r.author && typeof r.author === 'object') {
+            if (r.author.name) {
+              authorName = r.author.name;
+            } else if (r.author.username) {
+              authorName = r.author.username;
+            } else if (r.author.firstName || r.author.lastName) {
+              authorName = `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim();
+            }
+          }
+
+          let tags = [];
+          if (Array.isArray(r.tags)) {
+            tags = r.tags;
+          } else if (r.tags && typeof r.tags === 'string') {
+            tags = [r.tags];
+          }
+
+          return {
+            id: r._id || r.id,
             title: r.title || "Untitled Resource",
             description: r.description || "No description available.",
             type: r.type || "document",
@@ -457,50 +256,51 @@ const modalCategories = useMemo(() => {
             fileSize: r.fileSize || 0,
             duration: r.duration || 0,
             category: r.category || "General",
-            tags: Array.isArray(r.tags) ? r.tags : [],
-            author: r.author?.name || r.author?.username || "Unknown",
+            tags: tags,
+            author: authorName,
             status: r.isPublic || r.isActive ? "published" : "draft",
             thumbnail:
               r.thumbnail ||
               "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&q=80",
             createdAt: toISODate(r.createdAt),
             updatedAt: toISODate(r.updatedAt),
-            views: r.views ?? 0,
-            likes: r.likes ?? 0,
-            downloads: r.downloads ?? 0,
+            views: typeof r.views === 'number' ? r.views : 0,
+            likes: typeof r.likes === 'number' ? r.likes : 0,
+            downloads: typeof r.downloads === 'number' ? r.downloads : 0,
             featured: !!r.featured,
             quality: r.quality || "Standard",
             language: r.language || "English",
-          })) || [];
+          };
+        });
 
         setResources(transformed);
         setPagination((p) => ({
           ...p,
-          total: api.total ?? transformed.length,
+          total: paginationData.totalResources || paginationData.total || transformed.length,
           totalPages: Math.max(
             1,
-            Math.ceil((api.total ?? transformed.length) / p.limit)
+            Math.ceil((paginationData.totalResources || paginationData.total || transformed.length) / p.limit)
           ),
         }));
         showToast(`Loaded ${transformed.length} resources`, "success");
       } else {
-        setResources(initialResources);
+        setResources([]);
         setPagination((p) => ({
           ...p,
-          total: initialResources.length,
-          totalPages: Math.ceil(initialResources.length / p.limit),
+          total: 0,
+          totalPages: 0,
         }));
-        showToast("Using demo data (API unavailable)", "warning");
+        showToast(result.message || "Failed to load resources", "error");
       }
     } catch (err) {
       console.error("Failed to load resources:", err);
-      setResources(initialResources);
+      setResources([]);
       setPagination((p) => ({
         ...p,
-        total: initialResources.length,
-        totalPages: Math.ceil(initialResources.length / p.limit),
+        total: 0,
+        totalPages: 0,
       }));
-      showToast("Failed to load resources — using demo data", "error");
+      showToast(err.message || "Failed to load resources", "error");
     } finally {
       setLoading(false);
     }
@@ -602,33 +402,30 @@ const modalCategories = useMemo(() => {
     showToast(`${icon} Viewing “${resource.title}”`, "info");
   };
 
-  const handleEditResource = async (updated) => {
+  const handleEditResource = (resource) => {
+    setSelectedResource(resource);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEditedResource = async (resourceData) => {
     try {
       showToast("Updating resource…", "info");
-      const res = await ResourcesService.updateResource?.(updated.id, updated);
+
+      if (resourceData.id) {
+        const res = await ResourcesService.updateResource(resourceData.id, resourceData);
+        
       if (res?.success) {
-        setResources((prev) =>
-          prev.map((r) =>
-            r.id === updated.id
-              ? { ...r, ...updated, updatedAt: new Date().toISOString() }
-              : r
-          )
-        );
-        showToast("Resource updated", "success");
+          await loadResources();
+          setIsEditModalOpen(false);
+          setSelectedResource(null);
+          showToast("Resource updated successfully", "success");
       } else {
-        // Optimistic update if API doesn’t return success in dev
-        setResources((prev) =>
-          prev.map((r) =>
-            r.id === updated.id
-              ? { ...r, ...updated, updatedAt: new Date().toISOString() }
-              : r
-          )
-        );
-        showToast("Resource updated (local)", "success");
+          showToast(res?.message || "Failed to update resource", "error");
+        }
       }
     } catch (e) {
-      console.error(e);
-      showToast("Update failed", "error");
+      console.error("Failed to update resource:", e);
+      showToast(e.message || "Update failed", "error");
     }
   };
 
@@ -835,6 +632,18 @@ const modalCategories = useMemo(() => {
           }}
           onSubmit={handleAddResource}
           categories={modalCategories}
+        />
+
+        <AddResourceModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedResource(null);
+            showToast("Cancelled resource editing", "info");
+          }}
+          onSubmit={handleSaveEditedResource}
+          categories={modalCategories}
+          initialResource={selectedResource}
         />
 
         <ViewResourceModal

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -48,14 +48,15 @@ export default function AddQuestionModal({
   onClose,
   onSubmit,
   categories,
+  initialQuestion = null,
 }) {
   const [formData, setFormData] = useState({
     question: "",
     answer: "",
-    category: "General", // Default category
+    category: "General",
     tags: "",
-    author: "Admin", // Default author
-    status: "open", // Changed to match API
+    author: "Admin",
+    status: "open",
     priority: "medium",
     difficulty: "easy",
     featured: false,
@@ -65,6 +66,36 @@ export default function AddQuestionModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const [parsedTags, setParsedTags] = useState([]);
+
+  useEffect(() => {
+    if (initialQuestion) {
+      setFormData({
+        question: initialQuestion.question || "",
+        answer: initialQuestion.answer || "",
+        category: initialQuestion.category || "General",
+        tags: Array.isArray(initialQuestion.tags) ? initialQuestion.tags.join(", ") : (initialQuestion.tags || ""),
+        author: initialQuestion.author || "Admin",
+        status: initialQuestion.status || "open",
+        priority: initialQuestion.priority || "medium",
+        difficulty: initialQuestion.difficulty || "easy",
+        featured: initialQuestion.featured || false,
+      });
+      setParsedTags(Array.isArray(initialQuestion.tags) ? initialQuestion.tags : []);
+    } else {
+      setFormData({
+        question: "",
+        answer: "",
+        category: "General",
+        tags: "",
+        author: "Admin",
+        status: "open",
+        priority: "medium",
+        difficulty: "easy",
+        featured: false,
+      });
+      setParsedTags([]);
+    }
+  }, [initialQuestion, isOpen]);
 
   // Handle input changes
   const handleInputChange = (e) => {
@@ -132,7 +163,11 @@ export default function AddQuestionModal({
       ...formData,
       tags: finalTags,
     };
-    console.log(questionData)
+
+    if (initialQuestion) {
+      questionData.id = initialQuestion.id;
+    }
+
     onSubmit(questionData);
 
     // Reset form
@@ -219,10 +254,10 @@ export default function AddQuestionModal({
                     className="text-xl font-semibold"
                     style={{ color: "#040606" }}
                   >
-                    Add New Question
+                    {initialQuestion ? "Edit Question" : "Add New Question"}
                   </h2>
                   <p className="text-sm" style={{ color: "#646464" }}>
-                    Create a new Q&A entry for your knowledge base
+                    {initialQuestion ? "Update the Q&A entry" : "Create a new Q&A entry for your knowledge base"}
                   </p>
                 </div>
               </div>

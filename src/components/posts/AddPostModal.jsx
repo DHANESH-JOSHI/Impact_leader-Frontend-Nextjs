@@ -46,6 +46,7 @@ export default function AddPostModal({
   onClose,
   onSubmit,
   categories = [],
+  initialPost = null,
 }) {
   const [formData, setFormData] = useState({
     title: "",
@@ -61,7 +62,30 @@ export default function AddPostModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tagInput, setTagInput] = useState("");
 
-  // Initialize category when categories prop changes
+  useEffect(() => {
+    if (initialPost) {
+      setFormData({
+        title: initialPost.title || "",
+        excerpt: initialPost.excerpt || "",
+        content: initialPost.content || "",
+        category: initialPost.category || "",
+        status: initialPost.status || "draft",
+        tags: Array.isArray(initialPost.tags) ? initialPost.tags : [],
+        featured: initialPost.featured || false,
+      });
+    } else {
+      setFormData({
+        title: "",
+        excerpt: "",
+        content: "",
+        category: "",
+        status: "draft",
+        tags: [],
+        featured: false,
+      });
+    }
+  }, [initialPost, isOpen]);
+
   useEffect(() => {
     if (categories && categories.length > 0 && !formData.category) {
       setFormData(prev => ({
@@ -163,19 +187,20 @@ export default function AddPostModal({
 
     setIsSubmitting(true);
 
-    // Transform data to match API structure
     const postData = {
       title: formData.title,
       content: formData.content,
       type: formData.category,
-      themes: formData.tags, // Now using the tags array directly
+      themes: formData.tags,
       isPublic: formData.status === "published",
       isPinned: formData.featured,
       status: formData.status,
       allowComments: true,
     };
 
-    console.log("Submitting to API:", postData);
+    if (initialPost) {
+      postData.id = initialPost.id;
+    }
 
     try {
       await onSubmit(postData);
@@ -254,7 +279,7 @@ export default function AddPostModal({
                     className="text-xl font-semibold"
                     style={{ color: "#040606" }}
                   >
-                    Create New Post
+                    {initialPost ? "Edit Post" : "Create New Post"}
                   </h2>
                   <p className="text-sm" style={{ color: "#646464" }}>
                     Add a new blog post or article
@@ -612,7 +637,7 @@ export default function AddPostModal({
                 ) : (
                   <>
                     <Save className="h-4 w-4" />
-                    <span>Create Post</span>
+                    <span>{initialPost ? "Update Post" : "Create Post"}</span>
                   </>
                 )}
               </motion.button>

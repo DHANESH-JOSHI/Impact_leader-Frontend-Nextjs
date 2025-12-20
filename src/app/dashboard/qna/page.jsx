@@ -102,87 +102,6 @@ const useToast = () => {
   return { toasts, showToast, hideToast };
 };
 
-// ye sample QnA data hai - baad me API se fetch krna hai
-const initialQnaData = [
-  {
-    id: 1,
-    question: "How do I reset my password?",
-    answer:
-      "To reset your password, go to the login page and click 'Forgot Password'. Enter your email address and we'll send you a reset link.",
-    category: "Account",
-    tags: ["password", "account", "login", "security"],
-    author: "Admin",
-    status: "published",
-    isAnswered: true,
-    createdAt: "2024-01-15T10:30:00Z",
-    updatedAt: "2024-01-15T12:45:00Z",
-    views: 1250,
-    likes: 45,
-    helpful: 38,
-    notHelpful: 7,
-    featured: true,
-    difficulty: "easy",
-  },
-  {
-    id: 2,
-    question: "What payment methods do you accept?",
-    answer:
-      "We accept all major credit cards (Visa, MasterCard, American Express), PayPal, Apple Pay, Google Pay, and bank transfers for enterprise accounts.",
-    category: "Billing",
-    tags: ["payment", "billing", "credit card", "paypal"],
-    author: "Support Team",
-    status: "published",
-    priority: "medium",
-    isAnswered: true,
-    createdAt: "2024-01-12T14:20:00Z",
-    updatedAt: "2024-01-12T16:30:00Z",
-    views: 890,
-    likes: 32,
-    helpful: 28,
-    notHelpful: 4,
-    featured: false,
-    difficulty: "easy",
-  },
-  {
-    id: 3,
-    question: "How can I integrate your API with my existing system?",
-    answer: "",
-    category: "Technical",
-    tags: ["api", "integration", "development", "technical"],
-    author: "John Doe",
-    status: "draft",
-    priority: "high",
-    isAnswered: false,
-    createdAt: "2024-01-18T09:15:00Z",
-    updatedAt: "2024-01-18T09:15:00Z",
-    views: 156,
-    likes: 8,
-    helpful: 0,
-    notHelpful: 0,
-    featured: false,
-    difficulty: "hard",
-  },
-  {
-    id: 4,
-    question: "Is there a mobile app available?",
-    answer:
-      "Yes! We have mobile apps available for both iOS and Android. You can download them from the App Store and Google Play Store respectively.",
-    category: "General",
-    tags: ["mobile", "app", "ios", "android"],
-    author: "Support Team",
-    status: "published",
-    priority: "low",
-    isAnswered: true,
-    createdAt: "2024-01-10T11:45:00Z",
-    updatedAt: "2024-01-11T08:20:00Z",
-    views: 2340,
-    likes: 156,
-    helpful: 142,
-    notHelpful: 14,
-    featured: true,
-    difficulty: "easy",
-  },
-];
 
 // animation variants - page aur card ke liye
 const pageVariants = {
@@ -256,47 +175,71 @@ export default function QnaPage() {
       });
 
       if (result.success) {
-        const apiData = result.data.data;
-        console.log("result: ", apiData);
+        // apiClient normalizes response: { success, data: [...], pagination: {...} }
+        const questionsData = Array.isArray(result.data) ? result.data : [];
+        const paginationData = result.pagination || {};
+
         // Transform API response to match our UI expectations
-        const transformedQnaData =
-          apiData?.map((qna) => ({
-            id: qna._id,
-            question: qna.title || qna.content || "Untitled Question", // FIX: Use title/content from API
-            answer: qna.answer || qna.content || "", // FIX: Adjust based on actual API fields
-            category: qna.category || "General",
-            tags: qna.tags || [],
-            author:
-              qna.author?.firstName || qna.author?.lastName || "Anonymous", // FIX: Use firstName/lastName from API
+        const transformedQnaData = questionsData.map((qna) => {
+          // Safely extract author name
+          let authorName = "Anonymous";
+          if (typeof qna.author === 'string') {
+            authorName = qna.author;
+          } else if (qna.author && typeof qna.author === 'object') {
+            if (qna.author.name) {
+              authorName = qna.author.name;
+            } else if (qna.author.firstName || qna.author.lastName) {
+              authorName = `${qna.author.firstName || ''} ${qna.author.lastName || ''}`.trim();
+            } else if (qna.author.username) {
+              authorName = qna.author.username;
+            }
+          }
+
+          // Safely extract tags
+          let tags = [];
+          if (Array.isArray(qna.tags)) {
+            tags = qna.tags;
+          } else if (qna.tags && typeof qna.tags === 'string') {
+            tags = [qna.tags];
+          }
+
+          return {
+            id: qna._id || qna.id,
+            question: qna.title || qna.question || qna.content || "Untitled Question",
+            answer: qna.answer || qna.content || "",
+            category: qna.category || qna.theme || "General",
+            tags: tags,
+            author: authorName,
             status: qna.status || "active",
             createdAt: qna.createdAt,
             updatedAt: qna.updatedAt,
-            views: qna.views || 0,
-            likes: qna.upvotes?.length || qna.upvotes || 0, // FIX: upvotes might be an array
-            helpful: qna.helpful || 0,
-            notHelpful: qna.notHelpful || 0,
-            isAnswered: !!(qna.answer || qna.answers), // FIX: Check if answer exists
-            answerCount: qna.answerCount || 0,
+            views: typeof qna.views === 'number' ? qna.views : 0,
+            likes: Array.isArray(qna.upvotes) ? qna.upvotes.length : (typeof qna.upvotes === 'number' ? qna.upvotes : 0),
+            helpful: typeof qna.helpful === 'number' ? qna.helpful : 0,
+            notHelpful: typeof qna.notHelpful === 'number' ? qna.notHelpful : 0,
+            isAnswered: !!(qna.answer || qna.answers || (qna.answerCount && qna.answerCount > 0)),
+            answerCount: typeof qna.answerCount === 'number' ? qna.answerCount : 0,
             acceptedAnswer: qna.acceptedAnswer || null,
-          })) || [];
+          };
+        });
 
         setQnaData(transformedQnaData);
 
         setPagination((prev) => ({
           ...prev,
-          total: apiData.total || 0,
-          totalPages: Math.ceil((apiData.total || 0) / pagination.limit),
+          total: paginationData.totalQuestions || paginationData.total || transformedQnaData.length,
+          totalPages: paginationData.totalPages || Math.ceil((paginationData.totalQuestions || paginationData.total || transformedQnaData.length) / pagination.limit),
         }));
 
         // Data loaded successfully - no toast needed for initial load
       } else {
-        // Fallback to mock data if API fails
-        setQnaData(initialQnaData);
+        setQnaData([]);
+        showToast(result.message || "Failed to load questions", "error");
       }
     } catch (error) {
       console.error("Failed to load Q&A data:", error);
-      setQnaData(initialQnaData);
-      showToast("Failed to load questions", "error");
+      setQnaData([]);
+      showToast(error.message || "Failed to load questions", "error");
     } finally {
       setLoading(false);
     }
@@ -385,26 +328,30 @@ export default function QnaPage() {
   };
 
   // edit krne ka function
-  const handleEditQna = async (updatedQna) => {
+  const handleEditQna = (qna) => {
+    setSelectedQna(qna);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEditedQna = async (qnaData) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      showToast("Updating question…", "info");
 
-      setQnaData((prev) =>
-        prev.map((qna) =>
-          qna.id === updatedQna.id
-            ? {
-                ...updatedQna,
-                updatedAt: new Date().toISOString(),
-                isAnswered:
-                  updatedQna.answer && updatedQna.answer.trim() !== "",
-              }
-            : qna
-        )
-      );
-
+      if (qnaData.id) {
+        const result = await QnAService.updateQuestion(qnaData.id, qnaData);
+        
+        if (result.success) {
+          await loadQnaData();
+          setIsEditModalOpen(false);
+          setSelectedQna(null);
       showToast("Question updated successfully", "success");
+        } else {
+          showToast(result.message || "Failed to update question", "error");
+        }
+      }
     } catch (error) {
-      showToast("Failed to update question", "error");
+      console.error("Failed to update question:", error);
+      showToast(error.message || "Failed to update question", "error");
     }
   };
 
@@ -539,7 +486,17 @@ export default function QnaPage() {
           categories={categories.filter((cat) => cat !== "all")}
         />
 
-        {/* question view krne ka modal */}
+        <AddQuestionModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedQna(null);
+          }}
+          onSubmit={handleSaveEditedQna}
+          categories={categories.filter((cat) => cat !== "all")}
+          initialQuestion={selectedQna}
+        />
+
         <ViewQnaModal
           isOpen={isViewModalOpen}
           onClose={() => {

@@ -11,7 +11,6 @@ import ViewPostModal from "@/components/posts/ViewPostModal";
 import DeleteConfirmModal from "@/components/posts/DeleteConfirmModal";
 import { PostsService } from "@/services/postsService";
 
-// Toast Component
 const Toast = ({ message, type, onClose, isVisible }) => {
   useEffect(() => {
     if (isVisible) {
@@ -74,19 +73,16 @@ const Toast = ({ message, type, onClose, isVisible }) => {
   );
 };
 
-// Custom hook for toast management - only success and error types
 const useToast = () => {
   const [toasts, setToasts] = useState([]);
 
   const showToast = (message, type = "error") => {
-    // Only allow 'success' or 'error' types
     const validType = type === "success" ? "success" : "error";
     const id = Date.now() + Math.random();
     const newToast = { id, message, type: validType, isVisible: true };
 
     setToasts((prev) => [...prev, newToast]);
 
-    // Auto-remove after 4 seconds
     setTimeout(() => {
       hideToast(id);
     }, 4000);
@@ -99,139 +95,6 @@ const useToast = () => {
   return { toasts, showToast, hideToast };
 };
 
-// Mock data - yahan se backend API fetch karni hai
-const initialPosts = [
-  {
-    id: 1,
-    title: "Mastering Full-Stack Development with Next.js 14",
-    excerpt:
-      "Dive deep into Next.js 14's revolutionary features including App Router, Server Components, and edge runtime optimization for lightning-fast web applications.",
-    content:
-      "Next.js 14 has transformed the way we build full-stack applications. With its powerful App Router, React Server Components, and enhanced performance optimizations, developers can now create blazingly fast web experiences. This comprehensive guide covers everything from setup to deployment, including advanced patterns like streaming, parallel routing, and edge computing integration. Learn how to leverage TypeScript, Tailwind CSS, and modern authentication patterns to build production-ready applications that scale effortlessly.",
-    author: "Alexandra Chen",
-    category: "Full-Stack Development",
-    status: "published",
-    publishDate: "2024-01-22",
-    tags: [
-      "nextjs",
-      "react",
-      "full-stack",
-      "server components",
-      "typescript",
-      "performance",
-    ],
-    views: 4580,
-    likes: 287,
-    featured: true,
-    readTime: 12,
-    image:
-      "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&q=80",
-  },
-  {
-    id: 2,
-    title: "Building Scalable Design Systems: From Concept to Implementation",
-    excerpt:
-      "A comprehensive guide to creating design systems that grow with your product, featuring real-world examples from leading tech companies and actionable implementation strategies.",
-    content:
-      "Design systems are the backbone of consistent user experiences across digital products. This in-depth exploration covers the entire lifecycle of design system creation, from initial token definition to component library maintenance. Learn how companies like Airbnb, Shopify, and GitHub structure their systems, implement design tokens effectively, and maintain consistency across multiple platforms. We'll dive into tools like Figma, Storybook, and design token management, plus strategies for getting organizational buy-in and measuring success.",
-    author: "Marcus Rodriguez",
-    category: "Design Systems",
-    status: "published",
-    publishDate: "2024-01-20",
-    tags: [
-      "design systems",
-      "ui/ux",
-      "figma",
-      "storybook",
-      "design tokens",
-      "component library",
-    ],
-    views: 3240,
-    likes: 198,
-    featured: true,
-    readTime: 15,
-    image:
-      "https://images.unsplash.com/photo-1558655146-364adaf1fcc9?w=800&q=80",
-  },
-  {
-    id: 3,
-    title: "React Performance Mastery: Advanced Optimization Techniques",
-    excerpt:
-      "Unlock the full potential of React applications with cutting-edge optimization strategies, from bundle splitting to memory management and runtime performance tuning.",
-    content:
-      "React performance optimization goes far beyond basic memoization. This advanced guide explores sophisticated techniques including strategic code splitting, lazy loading patterns, virtual scrolling implementation, and memory leak prevention. Discover how to leverage React's concurrent features, optimize re-renders with precision, and implement effective caching strategies. We'll also cover performance monitoring tools, profiling techniques, and real-world case studies showing 300%+ performance improvements in production applications.",
-    author: "Sarah Kim",
-    category: "React Development",
-    status: "published",
-    publishDate: "2024-01-18",
-    tags: [
-      "react",
-      "performance",
-      "optimization",
-      "concurrent features",
-      "profiling",
-      "web vitals",
-    ],
-    views: 5120,
-    likes: 342,
-    featured: true,
-    readTime: 18,
-    image:
-      "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80",
-  },
-  {
-    id: 4,
-    title: "The Future of Web Development: AI-Powered Coding Tools",
-    excerpt:
-      "Explore how AI assistants and automated code generation are revolutionizing development workflows, boosting productivity, and reshaping the industry landscape.",
-    content:
-      "Artificial Intelligence is fundamentally changing how we write code. From GitHub Copilot to specialized AI tools for testing, debugging, and optimization, developers now have unprecedented support in their daily workflows. This comprehensive analysis examines the current state of AI-powered development tools, their impact on productivity, and what the future holds. Learn how to integrate AI assistants effectively, maintain code quality, and prepare for the evolving landscape of software development careers.",
-    author: "David Thompson",
-    category: "AI & Development",
-    status: "published",
-    publishDate: "2024-01-25",
-    tags: [
-      "artificial intelligence",
-      "ai tools",
-      "github copilot",
-      "automation",
-      "future tech",
-      "productivity",
-    ],
-    views: 2890,
-    likes: 156,
-    featured: false,
-    readTime: 10,
-    image:
-      "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&q=80",
-  },
-  {
-    id: 5,
-    title: "Microservices Architecture: Lessons from Production",
-    excerpt:
-      "Real-world insights into building, deploying, and maintaining microservices at scale, including common pitfalls and battle-tested solutions.",
-    content:
-      "Microservices architecture promises scalability and flexibility, but implementation challenges are often underestimated. Drawing from five years of production experience across multiple high-traffic applications, this article provides practical guidance on service boundaries, inter-service communication, data consistency patterns, and operational complexity management. Learn about distributed tracing, circuit breakers, service mesh implementation, and the organizational changes required for successful microservices adoption.",
-    author: "Jennifer Walsh",
-    category: "Architecture",
-    status: "draft",
-    publishDate: "2024-01-28",
-    tags: [
-      "microservices",
-      "architecture",
-      "scalability",
-      "devops",
-      "distributed systems",
-      "kubernetes",
-    ],
-    views: 0,
-    likes: 0,
-    featured: false,
-    readTime: 20,
-    image:
-      "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&q=80",
-  },
-];
 
 const pageVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -275,8 +138,8 @@ export default function PostsPage() {
     totalPages: 0
   });
 
-  // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
@@ -300,43 +163,85 @@ export default function PostsPage() {
       });
 
       if (result.success) {
-        // console.log(result.data.data,": hey")
-        const apiData = result.data.data;
+        // apiClient normalizes response: { success, data: [...], pagination: {...} }
+        const postsData = Array.isArray(result.data) ? result.data : [];
+        const paginationData = result.pagination || {};
+
         // Transform API response to match our UI expectations
-        const transformedPosts = apiData?.map(post => ({
-          id: post._id,
+        const transformedPosts = postsData?.map(post => {
+          // Safely extract author name - handle both object and string cases
+          let authorName = 'Unknown';
+          if (typeof post.author === 'string') {
+            authorName = post.author;
+          } else if (post.author && typeof post.author === 'object') {
+            // Handle populated author object
+            if (post.author.name) {
+              authorName = post.author.name;
+            } else if (post.author.firstName || post.author.lastName) {
+              authorName = `${post.author.firstName || ''} ${post.author.lastName || ''}`.trim();
+            } else if (post.author.username) {
+              authorName = post.author.username;
+            } else if (post.author.email) {
+              authorName = post.author.email;
+            }
+          }
+
+          // Safely extract tags - ensure it's always an array
+          let tags = [];
+          if (Array.isArray(post.tags)) {
+            tags = post.tags;
+          } else if (Array.isArray(post.themes)) {
+            tags = post.themes;
+          } else if (post.theme) {
+            tags = [post.theme];
+          } else if (post.tags && typeof post.tags === 'string') {
+            tags = [post.tags];
+          }
+
+          // Safely extract excerpt
+          const content = post.content || '';
+          const excerpt = content.length > 150 
+            ? content.slice(0, 150) + '...' 
+            : content || 'No content available';
+
+          return {
+            id: post._id || post.id,
           title: post.title || 'Untitled Post',
-          excerpt: post.content?.slice(0, 150) + '...' || 'No content available',
-          content: post.content || '',
-          author: post.author?.name ||`${post.author?.firstName} ${post.author?.lastName}` || post.author?.username || 'Unknown',
-          category: post.type || 'General',
+            excerpt: excerpt,
+            content: content,
+            author: authorName,
+            category: post.type || post.category || 'General',
           status: post.isPublic ? 'published' : 'draft',
-          publishDate: post.createdAt ? new Date(post.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-          tags: post.theme ? [post.theme] : [],
-          views: post.views || 0,
-          likes: post.upvotes || 0,
-          featured: post.isPinned || false,
-          readTime: Math.ceil((post.content?.length || 0) / 200), // Approximate read time
-          image: post.images && post.images.length > 0 ? post.images[0] : "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&q=80"
-        })) || [];
+            publishDate: post.createdAt 
+              ? new Date(post.createdAt).toISOString().split('T')[0] 
+              : new Date().toISOString().split('T')[0],
+            tags: tags,
+            views: typeof post.views === 'number' ? post.views : 0,
+            likes: typeof post.upvotes === 'number' ? post.upvotes : 0,
+            featured: post.isPinned || post.featured || false,
+            readTime: Math.ceil((content.length || 0) / 200),
+            image: (post.images && Array.isArray(post.images) && post.images.length > 0) 
+              ? post.images[0] 
+              : (post.image || "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&q=80")
+          };
+        }) || [];
 
         setPosts(transformedPosts);
         setPagination(prev => ({
           ...prev,
-          total: apiData.total || 0,
-          totalPages: Math.ceil((apiData.total || 0) / pagination.limit)
+          total: paginationData.totalPosts || paginationData.total || transformedPosts.length,
+          totalPages: paginationData.totalPages || Math.ceil((paginationData.totalPosts || paginationData.total || transformedPosts.length) / pagination.limit)
         }));
 
         showToast(`${transformedPosts.length} posts loaded successfully! 📚`, "success");
       } else {
-        // Fallback to mock data if API fails
-        setPosts(initialPosts);
-        showToast("Using demo data - API connection issue! 🔌", "warning");
+        setPosts([]);
+        showToast(result.message || "Failed to load posts", "error");
       }
     } catch (error) {
       console.error('Failed to load posts:', error);
-      setPosts(initialPosts);
-      showToast("Failed to load posts - using demo data! ❌", "error");
+      setPosts([]);
+      showToast(error.message || "Failed to load posts", "error");
     } finally {
       setLoading(false);
     }
@@ -439,20 +344,30 @@ export default function PostsPage() {
     showToast(`Viewing "${post.title}"`, "info");
   };
 
-  const handleEditPost = async (updatedPost) => {
+  const handleEditPost = (post) => {
+    setSelectedPost(post);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEditedPost = async (postData) => {
     try {
       showToast("Updating post...", "info");
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      setPosts((prev) =>
-        prev.map((post) => (post.id === updatedPost.id ? updatedPost : post))
-      );
-
-      showToast(`Post "${updatedPost.title}" updated successfully!`, "success");
+      if (postData.id) {
+        const result = await PostsService.updatePost(postData.id, postData);
+        
+        if (result.success) {
+          await loadPosts();
+          setIsEditModalOpen(false);
+          setSelectedPost(null);
+          showToast(`Post "${postData.title}" updated successfully!`, "success");
+        } else {
+          showToast(result.message || "Failed to update post", "error");
+        }
+      }
     } catch (error) {
-      showToast("Failed to update post. Please try again.", "error");
+      console.error("Failed to update post:", error);
+      showToast(error.message || "Failed to update post. Please try again.", "error");
     }
   };
 
@@ -598,7 +513,6 @@ export default function PostsPage() {
           )}
         </motion.div>
 
-        {/* Modals */}
         <AddPostModal
           isOpen={isAddModalOpen}
           onClose={() => {
@@ -607,6 +521,18 @@ export default function PostsPage() {
           }}
           onSubmit={handleAddPost}
           categories={categories.filter((cat) => cat !== "all")}
+        />
+
+        <AddPostModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedPost(null);
+            showToast("Cancelled post editing", "info");
+          }}
+          onSubmit={handleSaveEditedPost}
+          categories={categories.filter((cat) => cat !== "all")}
+          initialPost={selectedPost}
         />
 
         <ViewPostModal
