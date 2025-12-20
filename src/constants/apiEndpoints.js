@@ -67,7 +67,8 @@ export const API_ENDPOINTS = {
   STORIES: {
     BASE: '/stories',
     BY_ID: (id) => `/stories/${id}`,
-    ACTIVE: '/stories/active',
+    FEED: '/stories/feed',
+    ACTIVE: '/stories',
     ARCHIVE: '/stories/archive',
     VIEW: (id) => `/stories/${id}/view`,
     LIKE: (id) => `/stories/${id}/like`,
@@ -79,6 +80,7 @@ export const API_ENDPOINTS = {
     BASE: '/resources',
     BY_ID: (id) => `/resources/${id}`,
     CATEGORIES: '/resources/categories',
+    STATS: '/resources/stats',
     BY_CATEGORY: (category) => `/resources/category/${category}`,
     DOWNLOAD: (id) => `/resources/${id}/download`,
     BOOKMARK: (id) => `/resources/${id}/bookmark`,
@@ -157,8 +159,11 @@ export const API_ENDPOINTS = {
   NOTIFICATIONS: {
     BASE: '/notifications',
     BY_ID: (id) => `/notifications/${id}`,
+    UNREAD_COUNT: '/notifications/unread-count',
     UNREAD: '/notifications/unread',
+    MARK_READ: (id) => `/notifications/${id}/mark-read`,
     READ: (id) => `/notifications/${id}/read`,
+    MARK_ALL_READ: '/notifications/mark-all-read',
     READ_ALL: '/notifications/read-all',
     DELETE: (id) => `/notifications/${id}`,
     DELETE_ALL: '/notifications/delete-all',
@@ -168,10 +173,41 @@ export const API_ENDPOINTS = {
   // ==================== ADMIN ====================
   ADMIN: {
     // Dashboard
+    DASHBOARD_ANALYTICS: '/admin/analytics',
     DASHBOARD: {
       STATS: '/admin/dashboard/stats',
-      ANALYTICS: '/admin/dashboard/analytics',
+      ANALYTICS: '/admin/analytics',
     },
+    
+    // Approvals
+    PENDING_APPROVALS: '/admin/approvals/pending',
+    APPROVE_USER: (id) => `/admin/approvals/users/${id}/approve`,
+    REJECT_USER: (id) => `/admin/approvals/users/${id}/reject`,
+    APPROVE_CONTENT: (type, id) => `/admin/approvals/content/${type}/${id}/approve`,
+    REJECT_CONTENT: (type, id) => `/admin/approvals/content/${type}/${id}/reject`,
+    
+    // Flagged Content
+    FLAGGED_CONTENT: '/admin/flagged-content',
+    
+    // Audit Logs
+    AUDIT_LOGS: '/admin/audit-logs',
+    
+    // System
+    SYSTEM_HEALTH: '/admin/system/health',
+    SYSTEM_CONFIG: '/admin/system/config',
+    
+    // Analytics
+    USER_ACTIVITY_ANALYTICS: '/admin/analytics/user-activity',
+    CONTENT_ANALYTICS: '/admin/analytics/content',
+    
+    // Maintenance
+    MAINTENANCE_NOTIFY: '/admin/maintenance/notify',
+    
+    // Pending Users
+    PENDING_USERS: '/admin/pending-users',
+    
+    // Export
+    EXPORT: (type) => `/admin/export/${type}`,
 
     // Posts Management
     POSTS: {
