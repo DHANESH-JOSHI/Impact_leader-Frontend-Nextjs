@@ -251,8 +251,8 @@ export default function SupportPage() {
 
       if (result.success) {
         toast.success("Ticket deleted successfully");
-        setShowDeleteModal(false);
-        setSelectedTicket(null);
+      setShowDeleteModal(false);
+      setSelectedTicket(null);
         await fetchTickets();
       } else {
         toast.error(result.message || "Failed to delete ticket");

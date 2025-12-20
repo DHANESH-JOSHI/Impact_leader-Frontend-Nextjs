@@ -24,7 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from "framer-motion";
 
 // Import services
-import { ImpactLeadersAuthService } from '@/services/impactLeadersAuthService';
+import { AuthService } from '@/services/authService';
 import { UsersService } from '@/services/usersService';
 
 const ModalWrapper = ({ isOpen, onClose, children, title }) => {
@@ -130,7 +130,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
 
     try {
       // Use the Impact Leaders registration API
-      const response = await ImpactLeadersAuthService.register({
+      const response = await AuthService.register({
         email: formData.email,
         password: formData.password,
         firstName: formData.firstName,

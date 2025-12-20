@@ -75,8 +75,8 @@ class ApiClient {
     // Auto-inject token if available and not skipped
     if (!skipAuth) {
       const authToken = token || (this.tokenGetter ? this.tokenGetter() : null);
-      if (authToken) {
-        headers["Authorization"] = "Bearer " + authToken;
+    if (authToken) {
+      headers["Authorization"] = "Bearer " + authToken;
       } else {
         if (typeof window !== 'undefined') {
           try {

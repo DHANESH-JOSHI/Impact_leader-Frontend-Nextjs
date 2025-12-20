@@ -1,5 +1,5 @@
 import { ExternalApiService } from "./externalApiService";
-import { ImpactLeadersAuthService } from "./impactLeadersAuthService";
+import { AuthService } from "./authService";
 
 export class MessagesService {
   static async getConversations(params = {}) {

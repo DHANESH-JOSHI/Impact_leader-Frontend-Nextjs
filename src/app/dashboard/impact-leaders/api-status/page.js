@@ -46,7 +46,7 @@ export default function APIStatusPage() {
       name: "Authentication",
       description: "User login and authentication",
       endpoint: "/auth/login",
-      service: "ImpactLeadersAuthService",
+      service: "AuthService",
       category: "Authentication",
     },
     {

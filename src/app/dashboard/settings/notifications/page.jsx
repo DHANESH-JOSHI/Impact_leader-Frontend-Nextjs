@@ -420,10 +420,10 @@ export default function NotificationSettings() {
 
   const handleSave = async (notificationData) => {
     try {
-      if (editingNotification) {
+    if (editingNotification) {
         const result = await NotificationsService.sendTargetedNotification({
-          ...notificationData,
-          id: editingNotification.id,
+                ...notificationData,
+                id: editingNotification.id,
         });
         if (result.success) {
           toast.success("Notification updated successfully");
@@ -436,12 +436,12 @@ export default function NotificationSettings() {
         if (result.success) {
           toast.success("Notification created successfully");
           await loadNotifications();
-        } else {
+    } else {
           toast.error(result.message || "Failed to create notification");
         }
-      }
-      setShowForm(false);
-      setEditingNotification(null);
+    }
+    setShowForm(false);
+    setEditingNotification(null);
     } catch (error) {
       console.error("Failed to save notification:", error);
       toast.error("Failed to save notification");

@@ -139,7 +139,7 @@ export default function PostsPage() {
           total: paginationData.totalPosts || paginationData.total || transformedPosts.length,
           totalPages: paginationData.totalPages || Math.ceil((paginationData.totalPosts || paginationData.total || transformedPosts.length) / prev.limit)
         }));
-        
+
         if (transformedPosts.length === 0) {
           toast("No posts found", { icon: 'ℹ️' });
         }

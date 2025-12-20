@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ImpactLeadersAuthService } from "@/services/impactLeadersAuthService";
+import { AuthService } from "@/services/authService";
 
 export async function POST(request) {
   try {
@@ -17,7 +17,7 @@ export async function POST(request) {
     }
 
     // Call Impact Leaders API via our service
-    const result = await ImpactLeadersAuthService.login(email, password);
+    const result = await AuthService.login(email, password);
 
     if (result.success) {
       // Check if user has admin role or admin privileges
@@ -40,7 +40,7 @@ export async function POST(request) {
       }
 
       // Store tokens in our auth service for subsequent requests
-      ImpactLeadersAuthService.setStoredTokens({
+      AuthService.setStoredTokens({
         accessToken: result.token,
         refreshToken: result.refreshToken,
         user: result.user,

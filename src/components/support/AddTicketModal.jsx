@@ -95,8 +95,8 @@ export default function AddTicketModal({ isOpen, onClose, onSuccess }) {
 
       if (result.success) {
         toast.success("Ticket created successfully");
-        onSuccess();
-        handleClose();
+      onSuccess();
+      handleClose();
       } else {
         setError(result.message || "Failed to create ticket");
         toast.error(result.message || "Failed to create ticket");

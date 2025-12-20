@@ -247,7 +247,7 @@ export const authStorage = {
    */
   getAccessToken() {
     try {
-      const tokens = this.getTokens();
+    const tokens = this.getTokens();
       const token = tokens?.accessToken || tokens?.token || null;
       if (!token) {
         console.warn('[AuthStorage] No access token found in storage');

@@ -77,59 +77,59 @@ export class ResourcesService {
     }
   }
 
-  static async createResource(resourceData) {
-    try {
+static async createResource(resourceData) {
+  try {
       const response = await apiClient.post(RESOURCES.BASE, resourceData);
 
-      return {
-        success: response.success,
-        data: response.data,
-        message: response.message
-      };
-    } catch (error) {
+    return {
+      success: response.success,
+      data: response.data,
+      message: response.message
+    };
+  } catch (error) {
       console.error('[Resources] Create resource error:', error);
-      return {
-        success: false,
-        message: error.message
-      };
-    }
+    return {
+      success: false,
+      message: error.message
+    };
   }
+}
 
 
-  static async uploadDocumentResource(resourceData, file) {
-    try {
-      const formData = new FormData();
-      
-      // Add resource metadata
-      Object.keys(resourceData).forEach(key => {
-        if (Array.isArray(resourceData[key])) {
-          resourceData[key].forEach(item => {
-            formData.append(key, item);
-          });
-        } else {
-          formData.append(key, resourceData[key]);
-        }
-      });
-      
-      if (file) {
-        formData.append('file', file);
+static async uploadDocumentResource(resourceData, file) {
+  try {
+    const formData = new FormData();
+    
+    // Add resource metadata
+    Object.keys(resourceData).forEach(key => {
+      if (Array.isArray(resourceData[key])) {
+        resourceData[key].forEach(item => {
+          formData.append(key, item);
+        });
+      } else {
+        formData.append(key, resourceData[key]);
       }
+    });
+    
+    if (file) {
+      formData.append('file', file);
+    }
 
       const response = await apiClient.upload(RESOURCES.BASE, formData);
 
-      return {
-        success: response.success,
-        data: response.data,
-        message: response.message
-      };
-    } catch (error) {
+    return {
+      success: response.success,
+      data: response.data,
+      message: response.message
+    };
+  } catch (error) {
       console.error('[Resources] Upload document resource error:', error);
-      return {
-        success: false,
-        message: error.message
-      };
-    }
+    return {
+      success: false,
+      message: error.message
+    };
   }
+}
 
 
   static async uploadVideoResource(resourceData, file) {

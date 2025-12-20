@@ -235,9 +235,9 @@ export class UsersService {
   static async bulkUserAction(action, userIds, additionalData = {}) {
     try {
       const response = await apiClient.post(ADMIN.USERS.BULK_ACTION, {
-        action,
-        userIds,
-        ...additionalData,
+          action,
+          userIds,
+          ...additionalData,
       });
       const backendResponse = response.data || {};
 
@@ -261,8 +261,8 @@ export class UsersService {
       const { format = "csv", filters = {} } = params;
 
       const response = await apiClient.post(ADMIN.USERS.BASE + '/export', {
-        format,
-        filters,
+          format,
+          filters,
       });
       const backendResponse = response.data || {};
 

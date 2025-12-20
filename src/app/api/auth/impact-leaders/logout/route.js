@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { ImpactLeadersAuthService } from '@/services/impactLeadersAuthService';
+import { AuthService } from '@/services/authService';
 
 export async function POST(request) {
   try {
     // Call logout on Impact Leaders API
-    const result = await ImpactLeadersAuthService.logout();
+    const result = await AuthService.logout();
 
     // Create response
     const response = NextResponse.json({
