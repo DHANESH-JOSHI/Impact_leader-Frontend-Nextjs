@@ -191,7 +191,9 @@ export default function AdminLoginPage() {
       }
 
       // Call Next.js API route (standard structure)
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/login`, {
+      // Use proxied URL in browser
+      const apiUrl = typeof window !== 'undefined' ? '/api/v1' : `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000'}/api/v1`;
+      const response = await fetch(`${apiUrl}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

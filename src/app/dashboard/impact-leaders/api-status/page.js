@@ -133,10 +133,13 @@ export default function APIStatusPage() {
     try {
       const startTime = performance.now();
       // We can't actually test login without credentials, so we'll test the endpoint availability
+      // Use proxied URL in browser, full URL on server
+      const backendUrl = typeof window !== 'undefined' 
+        ? '' // Browser uses relative URL (proxied)
+        : (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000");
+      const apiUrl = typeof window !== 'undefined' ? '/api/v1' : `${backendUrl}/api/v1`;
       const authResult = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost"
-        }/api/v1/auth/login`,
+        `${apiUrl}/auth/login`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -403,7 +406,9 @@ export default function APIStatusPage() {
             <div>
               <p className="font-medium">Base URL</p>
               <p className="text-sm text-gray-600">
-                {process.env.NEXT_PUBLIC_API_BASE_URL || "http://13.60.221.160"}
+                {typeof window !== 'undefined' 
+                  ? '/api/v1 (proxied)' 
+                  : (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000")}
               </p>
             </div>
             <div>

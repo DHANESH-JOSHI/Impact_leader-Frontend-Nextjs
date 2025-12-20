@@ -7,7 +7,9 @@ async function verifyImpactLeadersToken(token) {
     
     // Since we can't verify external JWT without the secret, 
     // we'll make a simple request to check if token is valid
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://13.60.221.160'}/api/v1/auth/me`, {
+    // Use proxied URL in middleware (server-side)
+    const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+    const response = await fetch(`${backendUrl}/api/v1/auth/me`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'

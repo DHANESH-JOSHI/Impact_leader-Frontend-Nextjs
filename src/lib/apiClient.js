@@ -5,14 +5,23 @@
 
 import { authStorage } from './storage';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://13.60.221.160";
+// Use Next.js API proxy route in browser
+// Use full URL on server-side
+const getBaseURL = () => {
+  // In browser, use Next.js API proxy route
+  if (typeof window !== 'undefined') {
+    return '/api/proxy';
+  }
+  
+  // On server-side, use full URL
+  const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+  const cleanBaseURL = backendUrl.replace(/\/$/, '');
+  return cleanBaseURL + '/api/v1';
+};
 
 class ApiClient {
   constructor() {
-    // Remove trailing slash from base URL if present
-    const cleanBaseURL = API_BASE_URL.replace(/\/$/, '');
-    this.baseURL = cleanBaseURL + '/api/v1';
+    this.baseURL = getBaseURL();
     this.defaultTimeout = 30000; // 30 seconds
     
     // Initialize token getter to retrieve token from storage
@@ -48,10 +57,21 @@ class ApiClient {
    * Build complete URL with query parameters
    */
   buildURL(endpoint, params = {}) {
+    // Remove leading slash from endpoint
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-    const fullURL = `${this.baseURL}/${cleanEndpoint}`;
+    
+    // In browser, use proxy route: /api/proxy/auth/login
+    // On server, use full URL: http://localhost:5000/api/v1/auth/login
+    let fullURL;
+    if (typeof window !== 'undefined') {
+      // Browser: use Next.js API proxy
+      fullURL = `${this.baseURL}/${cleanEndpoint}`;
+    } else {
+      // Server: use full backend URL
+      fullURL = `${this.baseURL}/${cleanEndpoint}`;
+    }
 
-    const url = new URL(fullURL);
+    const url = new URL(fullURL, typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         url.searchParams.append(key, value);

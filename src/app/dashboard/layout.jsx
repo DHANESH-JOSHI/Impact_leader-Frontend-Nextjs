@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import Sidebar from "@/components/core/Sidebar";
-import Navbar from "@/components/core/Navbar";
 
 export default function DashboardLayout({ children }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
