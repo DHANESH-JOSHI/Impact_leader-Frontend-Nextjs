@@ -1,23 +1,19 @@
-import { ExternalApiService } from "./externalApiService";
-import { AuthService } from "./authService";
+import { apiClient } from '@/lib/apiClient';
+import { MEETINGS } from '@/constants/apiEndpoints';
 
 export class MeetingsService {
-
-  // Start meeting creation process
   static async startMeetingCreation(meetingData) {
     try {
-      const response = await ExternalApiService.post(
-        "/meetings/start-creation",
-        meetingData,
-      );
+      const response = await apiClient.post("/meetings/start-creation", meetingData);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Start meeting creation error:", error);
+      console.error('[Meetings] Start meeting creation error:', error);
       return {
         success: false,
         message: error.message,
@@ -25,26 +21,22 @@ export class MeetingsService {
     }
   }
 
-
-  // Verify organizer email - can use current email or provide new one
   static async verifyOrganizerEmail(sessionId, useCurrentEmail = true, newEmail = "") {
     try {
-      const response = await ExternalApiService.post(
-        "/meetings/verify-organizer-email",
-        {
-          sessionId,
-          useCurrentEmail,
-          newEmail,
-        },
-      );
+      const response = await apiClient.post("/meetings/verify-organizer-email", {
+        sessionId,
+        useCurrentEmail,
+        newEmail,
+      });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Verify organizer email error:", error);
+      console.error('[Meetings] Verify organizer email error:', error);
       return {
         success: false,
         message: error.message,
@@ -52,26 +44,22 @@ export class MeetingsService {
     }
   }
 
-
-  // Confirm organizer email with OTP
   static async confirmOrganizerEmail(sessionId, email, otp) {
     try {
-      const response = await ExternalApiService.post(
-        "/meetings/confirm-organizer-email",
-        {
-          sessionId,
-          email,
-          otp,
-        },
-      );
+      const response = await apiClient.post("/meetings/confirm-organizer-email", {
+        sessionId,
+        email,
+        otp,
+      });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Confirm organizer email error:", error);
+      console.error('[Meetings] Confirm organizer email error:', error);
       return {
         success: false,
         message: error.message,
@@ -79,25 +67,21 @@ export class MeetingsService {
     }
   }
 
-
-  // Verify attendee emails - can provide updates for individual emails
   static async verifyAttendeeEmails(sessionId, attendeeEmailUpdates = []) {
     try {
-      const response = await ExternalApiService.post(
-        "/meetings/verify-attendee-emails",
-        {
-          sessionId,
-          attendeeEmailUpdates,
-        },
-      );
+      const response = await apiClient.post("/meetings/verify-attendee-emails", {
+        sessionId,
+        attendeeEmailUpdates,
+      });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Verify attendee emails error:", error);
+      console.error('[Meetings] Verify attendee emails error:', error);
       return {
         success: false,
         message: error.message,
@@ -105,27 +89,22 @@ export class MeetingsService {
     }
   }
 
-
-  // Confirm attendee email with OTP (public endpoint - no auth required)
   static async confirmAttendeeEmail(sessionId, email, otp) {
     try {
-      const response = await ExternalApiService.post(
-        "/meetings/confirm-attendee-email",
-        {
-          sessionId,
-          email,
-          otp,
-        }
-        // Note: No auth token for public endpoint
-      );
+      const response = await apiClient.post("/meetings/confirm-attendee-email", {
+        sessionId,
+        email,
+        otp,
+      }, { skipAuth: true });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Confirm attendee email error:", error);
+      console.error('[Meetings] Confirm attendee email error:', error);
       return {
         success: false,
         message: error.message,
@@ -133,24 +112,20 @@ export class MeetingsService {
     }
   }
 
-
-  // Complete meeting creation
   static async completeMeetingCreation(sessionId) {
     try {
-      const response = await ExternalApiService.post(
-        "/meetings/complete-creation",
-        {
-          sessionId,
-        },
-      );
+      const response = await apiClient.post("/meetings/complete-creation", {
+        sessionId,
+      });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Complete meeting creation error:", error);
+      console.error('[Meetings] Complete meeting creation error:', error);
       return {
         success: false,
         message: error.message,
@@ -160,17 +135,16 @@ export class MeetingsService {
 
   static async getCreationStatus(sessionId) {
     try {
-      const response = await ExternalApiService.get(
-        `/meetings/creation-status/${sessionId}`,
-      );
+      const response = await apiClient.get(`/meetings/creation-status/${sessionId}`);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Get creation status error:", error);
+      console.error('[Meetings] Get creation status error:', error);
       return {
         success: false,
         message: error.message,
@@ -190,29 +164,30 @@ export class MeetingsService {
         search,
       } = params;
 
-      let queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
+      const queryParams = {
+        page,
+        limit,
+      };
+
+      if (status) queryParams.status = status;
+      if (meetingType) queryParams.meetingType = meetingType;
+      if (startDate) queryParams.startDate = startDate;
+      if (endDate) queryParams.endDate = endDate;
+      if (search) queryParams.search = search;
+
+      const response = await apiClient.get("/admin/meetings", {
+        params: queryParams
       });
-
-      if (status) queryParams.append("status", status);
-      if (meetingType) queryParams.append("meetingType", meetingType);
-      if (startDate) queryParams.append("startDate", startDate);
-      if (endDate) queryParams.append("endDate", endDate);
-      if (search) queryParams.append("search", search);
-
-      const endpoint = `/admin/meetings?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(
-        endpoint,
-      );
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        pagination: backendResponse.pagination,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Get all meetings error:", error);
+      console.error('[Meetings] Get all meetings error:', error);
       return {
         success: false,
         message: error.message,
@@ -224,23 +199,18 @@ export class MeetingsService {
     try {
       const { timeframe = "30d", groupBy = "day" } = params;
 
-      let queryParams = new URLSearchParams({
-        timeframe,
-        groupBy,
+      const response = await apiClient.get("/admin/meetings/analytics", {
+        params: { timeframe, groupBy }
       });
-
-      const endpoint = `/admin/meetings/analytics?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(
-        endpoint,
-      );
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Get meeting analytics error:", error);
+      console.error('[Meetings] Get meeting analytics error:', error);
       return {
         success: false,
         message: error.message,
@@ -248,8 +218,6 @@ export class MeetingsService {
     }
   }
 
-
-  // Meeting types options
   static getMeetingTypes() {
     return [
       { value: "google-meet", label: "Google Meet" },
@@ -260,8 +228,6 @@ export class MeetingsService {
     ];
   }
 
-
-  // Meeting status options
   static getMeetingStatuses() {
     return [
       { value: "scheduled", label: "Scheduled" },
@@ -272,8 +238,6 @@ export class MeetingsService {
     ];
   }
 
-
-  // Timezone options (common ones)
   static getTimezones() {
     return [
       { value: "Asia/Kolkata", label: "Asia/Kolkata (IST)" },
@@ -285,5 +249,4 @@ export class MeetingsService {
       { value: "America/Los_Angeles", label: "America/Los_Angeles (PST/PDT)" },
     ];
   }
-
 }

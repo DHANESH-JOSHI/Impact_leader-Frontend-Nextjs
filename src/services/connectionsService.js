@@ -1,5 +1,5 @@
-import { ExternalApiService } from './externalApiService';
-import { AuthService } from './authService';
+import { apiClient } from '@/lib/apiClient';
+import { CONNECTIONS, ADMIN } from '@/constants/apiEndpoints';
 
 export class ConnectionsService {
   static async getMyConnections(params = {}) {
@@ -11,24 +11,25 @@ export class ConnectionsService {
         search 
       } = params;
       
-      let queryParams = new URLSearchParams({
+      const queryParams = {
         status,
-        page: page.toString(),
-        limit: limit.toString()
-      });
+        page,
+        limit
+      };
 
-      if (search) queryParams.append('search', search);
+      if (search) queryParams.search = search;
 
-      const endpoint = `/connections?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const response = await apiClient.get(CONNECTIONS.BASE, { params: queryParams });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        pagination: backendResponse.pagination,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Get my connections error:', error);
+      console.error('[Connections] Get my connections error:', error);
       return {
         success: false,
         message: error.message
@@ -36,19 +37,18 @@ export class ConnectionsService {
     }
   }
 
-
-  // Send connection request
   static async sendConnectionRequest(requestData) {
     try {
-      const response = await ExternalApiService.post('/connections/request', requestData);
+      const response = await apiClient.post(CONNECTIONS.REQUEST, requestData);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Send connection request error:', error);
+      console.error('[Connections] Send connection request error:', error);
       return {
         success: false,
         message: error.message
@@ -56,19 +56,18 @@ export class ConnectionsService {
     }
   }
 
-
-  // Accept connection request - Using PUT method as per Postman
   static async acceptConnectionRequest(connectionId) {
     try {
-      const response = await ExternalApiService.put(`/connections/${connectionId}/accept`, {});
+      const response = await apiClient.put(CONNECTIONS.ACCEPT(connectionId), {});
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Accept connection request error:', error);
+      console.error('[Connections] Accept connection request error:', error);
       return {
         success: false,
         message: error.message
@@ -76,21 +75,20 @@ export class ConnectionsService {
     }
   }
 
-
-  // Reject connection request - Using PUT method as per Postman
   static async rejectConnectionRequest(connectionId, reason = '') {
     try {
-      const response = await ExternalApiService.put(`/connections/${connectionId}/reject`, {
+      const response = await apiClient.put(CONNECTIONS.REJECT(connectionId), {
         reason
       });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Reject connection request error:', error);
+      console.error('[Connections] Reject connection request error:', error);
       return {
         success: false,
         message: error.message
@@ -100,16 +98,18 @@ export class ConnectionsService {
 
   static async getConnectionSuggestions(limit = 5) {
     try {
-      const endpoint = `/connections/suggestions?limit=${limit}`;
-      const response = await ExternalApiService.get(endpoint);
+      const response = await apiClient.get(CONNECTIONS.SUGGESTIONS, {
+        params: { limit }
+      });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Get connection suggestions error:', error);
+      console.error('[Connections] Get connection suggestions error:', error);
       return {
         success: false,
         message: error.message
@@ -117,19 +117,18 @@ export class ConnectionsService {
     }
   }
 
-
-  // Remove connection
   static async removeConnection(connectionId) {
     try {
-      const response = await ExternalApiService.delete(`/connections/${connectionId}`);
+      const response = await apiClient.delete(CONNECTIONS.BY_ID(connectionId));
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Remove connection error:', error);
+      console.error('[Connections] Remove connection error:', error);
       return {
         success: false,
         message: error.message
@@ -141,22 +140,19 @@ export class ConnectionsService {
     try {
       const { page = 1, limit = 10, type = 'received' } = params;
 
-      let queryParams = new URLSearchParams({
-        type,
-        page: page.toString(),
-        limit: limit.toString()
+      const response = await apiClient.get(CONNECTIONS.REQUESTS, {
+        params: { type, page, limit }
       });
-
-      const endpoint = `/connections/requests?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        pagination: backendResponse.pagination,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Get pending requests error:', error);
+      console.error('[Connections] Get pending requests error:', error);
       return {
         success: false,
         message: error.message
@@ -168,22 +164,19 @@ export class ConnectionsService {
     try {
       const { page = 1, limit = 10 } = params;
 
-      let queryParams = new URLSearchParams({
-        type: 'sent',
-        page: page.toString(),
-        limit: limit.toString()
+      const response = await apiClient.get(CONNECTIONS.REQUESTS, {
+        params: { type: 'sent', page, limit }
       });
-
-      const endpoint = `/connections/requests?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        pagination: backendResponse.pagination,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Get sent requests error:', error);
+      console.error('[Connections] Get sent requests error:', error);
       return {
         success: false,
         message: error.message
@@ -193,16 +186,17 @@ export class ConnectionsService {
 
   static async getConnectionStats(userId = null) {
     try {
-      const endpoint = userId ? `/users/${userId}/connections/stats` : '/connections/stats';
-      const response = await ExternalApiService.get(endpoint);
+      const endpoint = userId ? `/users/${userId}/connections/stats` : CONNECTIONS.STATS;
+      const response = await apiClient.get(endpoint);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Get connection stats error:', error);
+      console.error('[Connections] Get connection stats error:', error);
       return {
         success: false,
         message: error.message
@@ -231,19 +225,18 @@ export class ConnectionsService {
     ];
   }
 
-
-  // Block user connection
   static async blockConnection(connectionId) {
     try {
-      const response = await ExternalApiService.post(`/connections/${connectionId}/block`, {});
+      const response = await apiClient.post(CONNECTIONS.BLOCK(connectionId), {});
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Block connection error:', error);
+      console.error('[Connections] Block connection error:', error);
       return {
         success: false,
         message: error.message
@@ -251,19 +244,18 @@ export class ConnectionsService {
     }
   }
 
-
-  // Unblock user connection
   static async unblockConnection(connectionId) {
     try {
-      const response = await ExternalApiService.post(`/connections/${connectionId}/unblock`, {});
+      const response = await apiClient.post(CONNECTIONS.UNBLOCK(connectionId), {});
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Unblock connection error:', error);
+      console.error('[Connections] Unblock connection error:', error);
       return {
         success: false,
         message: error.message
@@ -275,21 +267,19 @@ export class ConnectionsService {
     try {
       const { page = 1, limit = 10 } = params;
 
-      let queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString()
+      const response = await apiClient.get(CONNECTIONS.MUTUAL(userId), {
+        params: { page, limit }
       });
-
-      const endpoint = `/connections/mutual/${userId}?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        pagination: backendResponse.pagination,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Get mutual connections error:', error);
+      console.error('[Connections] Get mutual connections error:', error);
       return {
         success: false,
         message: error.message
@@ -297,19 +287,18 @@ export class ConnectionsService {
     }
   }
 
-
-  // Cancel sent connection request
   static async cancelConnectionRequest(connectionId) {
     try {
-      const response = await ExternalApiService.delete(`/connections/request/${connectionId}`);
+      const response = await apiClient.delete(`/connections/request/${connectionId}`);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Cancel connection request error:', error);
+      console.error('[Connections] Cancel connection request error:', error);
       return {
         success: false,
         message: error.message
@@ -319,15 +308,16 @@ export class ConnectionsService {
 
   static async updateConnectionPreferences(preferences) {
     try {
-      const response = await ExternalApiService.put('/connections/preferences', preferences);
+      const response = await apiClient.put(CONNECTIONS.PREFERENCES, preferences);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Update connection preferences error:', error);
+      console.error('[Connections] Update connection preferences error:', error);
       return {
         success: false,
         message: error.message
@@ -337,15 +327,16 @@ export class ConnectionsService {
 
   static async getConnectionPreferences() {
     try {
-      const response = await ExternalApiService.get('/connections/preferences');
+      const response = await apiClient.get(CONNECTIONS.PREFERENCES);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Get connection preferences error:', error);
+      console.error('[Connections] Get connection preferences error:', error);
       return {
         success: false,
         message: error.message
@@ -353,8 +344,6 @@ export class ConnectionsService {
     }
   }
 
-
-  // Admin: Get all connections
   static async getAllConnections(params = {}) {
     try {
       const {
@@ -367,27 +356,30 @@ export class ConnectionsService {
         endDate
       } = params;
 
-      let queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString()
+      const queryParams = {
+        page,
+        limit
+      };
+
+      if (status) queryParams.status = status;
+      if (connectionType) queryParams.connectionType = connectionType;
+      if (search) queryParams.search = search;
+      if (startDate) queryParams.startDate = startDate;
+      if (endDate) queryParams.endDate = endDate;
+
+      const response = await apiClient.get('/admin/connections', {
+        params: queryParams
       });
-
-      if (status) queryParams.append('status', status);
-      if (connectionType) queryParams.append('connectionType', connectionType);
-      if (search) queryParams.append('search', search);
-      if (startDate) queryParams.append('startDate', startDate);
-      if (endDate) queryParams.append('endDate', endDate);
-
-      const endpoint = `/admin/connections?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        pagination: backendResponse.pagination,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Get all connections (admin) error:', error);
+      console.error('[Connections] Get all connections (admin) error:', error);
       return {
         success: false,
         message: error.message
@@ -395,27 +387,22 @@ export class ConnectionsService {
     }
   }
 
-
-  // Admin: Get connection analytics
   static async getConnectionAnalytics(params = {}) {
     try {
       const { timeframe = '30d', groupBy = 'day' } = params;
 
-      let queryParams = new URLSearchParams({
-        timeframe,
-        groupBy
+      const response = await apiClient.get('/admin/connections/analytics', {
+        params: { timeframe, groupBy }
       });
-
-      const endpoint = `/admin/connections/analytics?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Get connection analytics error:', error);
+      console.error('[Connections] Get connection analytics error:', error);
       return {
         success: false,
         message: error.message
@@ -423,19 +410,18 @@ export class ConnectionsService {
     }
   }
 
-
-  // Admin: Delete connection
   static async adminDeleteConnection(connectionId, reason = '') {
     try {
-      const response = await ExternalApiService.delete(`/admin/connections/${connectionId}`);
+      const response = await apiClient.delete(`/admin/connections/${connectionId}`);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Admin delete connection error:', error);
+      console.error('[Connections] Admin delete connection error:', error);
       return {
         success: false,
         message: error.message
@@ -443,23 +429,22 @@ export class ConnectionsService {
     }
   }
 
-
-  // Admin: Force connection between users
   static async forceConnection(requesterId, recipientId, connectionData) {
     try {
-      const response = await ExternalApiService.post('/admin/connections/force', {
+      const response = await apiClient.post('/admin/connections/force', {
         requesterId,
         recipientId,
         ...connectionData
       });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Force connection error:', error);
+      console.error('[Connections] Force connection error:', error);
       return {
         success: false,
         message: error.message
@@ -467,24 +452,23 @@ export class ConnectionsService {
     }
   }
 
-
-  // Export connections data
   static async exportConnections(params = {}) {
     try {
       const { format = 'csv', filters = {} } = params;
 
-      const response = await ExternalApiService.post('/admin/connections/export', {
+      const response = await apiClient.post('/admin/connections/export', {
         format,
         filters
       });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Export connections error:', error);
+      console.error('[Connections] Export connections error:', error);
       return {
         success: false,
         message: error.message
@@ -496,21 +480,18 @@ export class ConnectionsService {
     try {
       const { limit = 10, criteria = 'mixed' } = params;
 
-      let queryParams = new URLSearchParams({
-        limit: limit.toString(),
-        criteria
+      const response = await apiClient.get('/connections/ai-suggestions', {
+        params: { limit, criteria }
       });
-
-      const endpoint = `/connections/ai-suggestions?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Get AI suggestions error:', error);
+      console.error('[Connections] Get AI suggestions error:', error);
       return {
         success: false,
         message: error.message
@@ -549,5 +530,4 @@ export class ConnectionsService {
       { value: 'other', label: 'Other' }
     ];
   }
-
 }

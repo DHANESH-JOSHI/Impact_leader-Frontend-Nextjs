@@ -455,7 +455,6 @@ export default function UsersPage() {
           total: 0,
           totalPages: 0,
         }));
-        showToast("No users found", "warning");
       }
     } catch (e) {
       console.error("Users load error:", e);

@@ -191,9 +191,6 @@ const modalCategories = useMemo(() => {
           ),
         }));
         
-        if (transformed.length === 0) {
-          toast("No resources found", { icon: 'ℹ️' });
-        }
       } else {
         setResources([]);
         setPagination((p) => ({

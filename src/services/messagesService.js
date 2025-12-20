@@ -1,31 +1,32 @@
-import { ExternalApiService } from "./externalApiService";
-import { AuthService } from "./authService";
+import { apiClient } from '@/lib/apiClient';
+import { MESSAGES } from '@/constants/apiEndpoints';
 
 export class MessagesService {
   static async getConversations(params = {}) {
     try {
       const { page = 1, limit = 20, search, status } = params;
 
-      let queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
+      const queryParams = {
+        page,
+        limit,
+      };
+
+      if (search) queryParams.search = search;
+      if (status) queryParams.status = status;
+
+      const response = await apiClient.get(MESSAGES.CONVERSATIONS, {
+        params: queryParams
       });
-
-      if (search) queryParams.append("search", search);
-      if (status) queryParams.append("status", status);
-
-      const endpoint = `/messages/conversations?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(
-        endpoint,
-      );
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        pagination: backendResponse.pagination,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Get conversations error:", error);
+      console.error('[Messages] Get conversations error:', error);
       return {
         success: false,
         message: error.message,
@@ -37,26 +38,27 @@ export class MessagesService {
     try {
       const { page = 1, limit = 50, before, after } = params;
 
-      let queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
+      const queryParams = {
+        page,
+        limit,
+      };
+
+      if (before) queryParams.before = before;
+      if (after) queryParams.after = after;
+
+      const response = await apiClient.get(`${MESSAGES.CONVERSATION_BY_ID(conversationId)}/messages`, {
+        params: queryParams
       });
-
-      if (before) queryParams.append("before", before);
-      if (after) queryParams.append("after", after);
-
-      const endpoint = `/messages/conversations/${conversationId}/messages?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(
-        endpoint,
-      );
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        pagination: backendResponse.pagination,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Get conversation messages error:", error);
+      console.error('[Messages] Get conversation messages error:', error);
       return {
         success: false,
         message: error.message,
@@ -64,22 +66,18 @@ export class MessagesService {
     }
   }
 
-
-  // Send a new message
   static async sendMessage(messageData) {
     try {
-      const response = await ExternalApiService.post(
-        "/messages",
-        messageData,
-      );
+      const response = await apiClient.post(MESSAGES.BASE, messageData);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Send message error:", error);
+      console.error('[Messages] Send message error:', error);
       return {
         success: false,
         message: error.message,
@@ -87,8 +85,6 @@ export class MessagesService {
     }
   }
 
-
-  // Send message with attachment
   static async sendMessageWithAttachment(messageData, attachmentFile) {
     try {
       const formData = new FormData();
@@ -99,20 +95,16 @@ export class MessagesService {
         formData.append("attachment", attachmentFile);
       }
 
-      const response = await ExternalApiService.post(
-        "/messages/upload",
-        formData,
-        undefined,
-        true // isFormData
-      );
+      const response = await apiClient.upload("/messages/upload", formData);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Send message with attachment error:", error);
+      console.error('[Messages] Send message with attachment error:', error);
       return {
         success: false,
         message: error.message,
@@ -120,22 +112,18 @@ export class MessagesService {
     }
   }
 
-
-  // Mark message as read
   static async markMessageAsRead(messageId) {
     try {
-      const response = await ExternalApiService.post(
-        `/messages/${messageId}/read`,
-        {},
-      );
+      const response = await apiClient.post(MESSAGES.READ(messageId), {});
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Mark message as read error:", error);
+      console.error('[Messages] Mark message as read error:', error);
       return {
         success: false,
         message: error.message,
@@ -143,22 +131,18 @@ export class MessagesService {
     }
   }
 
-
-  // Mark conversation as read
   static async markConversationAsRead(conversationId) {
     try {
-      const response = await ExternalApiService.post(
-        `/messages/conversations/${conversationId}/read`,
-        {},
-      );
+      const response = await apiClient.post(`${MESSAGES.CONVERSATION_BY_ID(conversationId)}/read`, {});
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Mark conversation as read error:", error);
+      console.error('[Messages] Mark conversation as read error:', error);
       return {
         success: false,
         message: error.message,
@@ -168,17 +152,16 @@ export class MessagesService {
 
   static async deleteMessage(messageId) {
     try {
-      const response = await ExternalApiService.delete(
-        `/messages/${messageId}`,
-      );
+      const response = await apiClient.delete(MESSAGES.DELETE(messageId));
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Delete message error:", error);
+      console.error('[Messages] Delete message error:', error);
       return {
         success: false,
         message: error.message,
@@ -188,17 +171,16 @@ export class MessagesService {
 
   static async deleteConversation(conversationId) {
     try {
-      const response = await ExternalApiService.delete(
-        `/messages/conversations/${conversationId}`,
-      );
+      const response = await apiClient.delete(MESSAGES.CONVERSATION_BY_ID(conversationId));
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Delete conversation error:", error);
+      console.error('[Messages] Delete conversation error:', error);
       return {
         success: false,
         message: error.message,
@@ -206,22 +188,18 @@ export class MessagesService {
     }
   }
 
-
-  // Archive conversation
   static async archiveConversation(conversationId) {
     try {
-      const response = await ExternalApiService.post(
-        `/messages/conversations/${conversationId}/archive`,
-        {},
-      );
+      const response = await apiClient.post(`${MESSAGES.CONVERSATION_BY_ID(conversationId)}/archive`, {});
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Archive conversation error:", error);
+      console.error('[Messages] Archive conversation error:', error);
       return {
         success: false,
         message: error.message,
@@ -229,22 +207,18 @@ export class MessagesService {
     }
   }
 
-
-  // Unarchive conversation
   static async unarchiveConversation(conversationId) {
     try {
-      const response = await ExternalApiService.post(
-        `/messages/conversations/${conversationId}/unarchive`,
-        {},
-      );
+      const response = await apiClient.post(`${MESSAGES.CONVERSATION_BY_ID(conversationId)}/unarchive`, {});
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Unarchive conversation error:", error);
+      console.error('[Messages] Unarchive conversation error:', error);
       return {
         success: false,
         message: error.message,
@@ -252,22 +226,18 @@ export class MessagesService {
     }
   }
 
-
-  // Block user
   static async blockUser(userId) {
     try {
-      const response = await ExternalApiService.post(
-        `/messages/users/${userId}/block`,
-        {},
-      );
+      const response = await apiClient.post(`/messages/users/${userId}/block`, {});
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Block user error:", error);
+      console.error('[Messages] Block user error:', error);
       return {
         success: false,
         message: error.message,
@@ -275,22 +245,18 @@ export class MessagesService {
     }
   }
 
-
-  // Unblock user
   static async unblockUser(userId) {
     try {
-      const response = await ExternalApiService.post(
-        `/messages/users/${userId}/unblock`,
-        {},
-      );
+      const response = await apiClient.post(`/messages/users/${userId}/unblock`, {});
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Unblock user error:", error);
+      console.error('[Messages] Unblock user error:', error);
       return {
         success: false,
         message: error.message,
@@ -302,23 +268,19 @@ export class MessagesService {
     try {
       const { page = 1, limit = 20 } = params;
 
-      let queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
+      const response = await apiClient.get("/messages/blocked-users", {
+        params: { page, limit }
       });
-
-      const endpoint = `/messages/blocked-users?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(
-        endpoint,
-      );
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        pagination: backendResponse.pagination,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Get blocked users error:", error);
+      console.error('[Messages] Get blocked users error:', error);
       return {
         success: false,
         message: error.message,
@@ -328,17 +290,16 @@ export class MessagesService {
 
   static async getUnreadCount() {
     try {
-      const response = await ExternalApiService.get(
-        "/messages/unread/count",
-      );
+      const response = await apiClient.get("/messages/unread/count");
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Get unread count error:", error);
+      console.error('[Messages] Get unread count error:', error);
       return {
         success: false,
         message: error.message,
@@ -346,8 +307,6 @@ export class MessagesService {
     }
   }
 
-
-  // Admin: Get all messages (admin only)
   static async getAllMessages(params = {}) {
     try {
       const {
@@ -362,31 +321,32 @@ export class MessagesService {
         recipientId,
       } = params;
 
-      let queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
+      const queryParams = {
+        page,
+        limit,
+      };
+
+      if (search) queryParams.search = search;
+      if (messageType) queryParams.messageType = messageType;
+      if (status) queryParams.status = status;
+      if (startDate) queryParams.startDate = startDate;
+      if (endDate) queryParams.endDate = endDate;
+      if (senderId) queryParams.senderId = senderId;
+      if (recipientId) queryParams.recipientId = recipientId;
+
+      const response = await apiClient.get("/admin/messages", {
+        params: queryParams
       });
-
-      if (search) queryParams.append("search", search);
-      if (messageType) queryParams.append("messageType", messageType);
-      if (status) queryParams.append("status", status);
-      if (startDate) queryParams.append("startDate", startDate);
-      if (endDate) queryParams.append("endDate", endDate);
-      if (senderId) queryParams.append("senderId", senderId);
-      if (recipientId) queryParams.append("recipientId", recipientId);
-
-      const endpoint = `/admin/messages?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(
-        endpoint,
-      );
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        pagination: backendResponse.pagination,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Get all messages (admin) error:", error);
+      console.error('[Messages] Get all messages (admin) error:', error);
       return {
         success: false,
         message: error.message,
@@ -394,29 +354,22 @@ export class MessagesService {
     }
   }
 
-
-  // Admin: Get message analytics
   static async getMessageAnalytics(params = {}) {
     try {
       const { timeframe = "30d", groupBy = "day" } = params;
 
-      let queryParams = new URLSearchParams({
-        timeframe,
-        groupBy,
+      const response = await apiClient.get("/admin/messages/analytics", {
+        params: { timeframe, groupBy }
       });
-
-      const endpoint = `/admin/messages/analytics?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(
-        endpoint,
-      );
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Get message analytics error:", error);
+      console.error('[Messages] Get message analytics error:', error);
       return {
         success: false,
         message: error.message,
@@ -424,21 +377,18 @@ export class MessagesService {
     }
   }
 
-
-  // Admin: Delete message (admin action)
   static async adminDeleteMessage(messageId, reason = "") {
     try {
-      const response = await ExternalApiService.delete(
-        `/admin/messages/${messageId}`,
-      );
+      const response = await apiClient.delete(`/admin/messages/${messageId}`);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Admin delete message error:", error);
+      console.error('[Messages] Admin delete message error:', error);
       return {
         success: false,
         message: error.message,
@@ -446,8 +396,6 @@ export class MessagesService {
     }
   }
 
-
-  // Message types
   static getMessageTypes() {
     return [
       { value: "text", label: "Text" },
@@ -458,8 +406,6 @@ export class MessagesService {
     ];
   }
 
-
-  // Message status options
   static getMessageStatuses() {
     return [
       { value: "sent", label: "Sent" },
@@ -469,8 +415,6 @@ export class MessagesService {
     ];
   }
 
-
-  // Conversation status options
   static getConversationStatuses() {
     return [
       { value: "active", label: "Active" },
@@ -480,27 +424,23 @@ export class MessagesService {
     ];
   }
 
-
-  // ==================== 1-to-1 Chat Functions ====================
   static async getChatHistory(userId, params = {}) {
     try {
       const { page = 1, limit = 50 } = params;
 
-      let queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
+      const response = await apiClient.get(`/messages/${userId}`, {
+        params: { page, limit }
       });
-
-      const endpoint = `/messages/${userId}?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        pagination: backendResponse.pagination,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Get chat history error:", error);
+      console.error('[Messages] Get chat history error:', error);
       return {
         success: false,
         message: error.message,
@@ -508,8 +448,6 @@ export class MessagesService {
     }
   }
 
-
-  // Send 1-to-1 message (text or file)
   static async send1to1Message(messageData, attachmentFile = null) {
     try {
       const formData = new FormData();
@@ -521,20 +459,16 @@ export class MessagesService {
         formData.append("attachment", attachmentFile);
       }
 
-      const response = await ExternalApiService.post(
-        "/messages",
-        formData,
-        undefined,
-        true // isFormData
-      );
+      const response = await apiClient.upload(MESSAGES.BASE, formData);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Send 1-to-1 message error:", error);
+      console.error('[Messages] Send 1-to-1 message error:', error);
       return {
         success: false,
         message: error.message,
@@ -546,22 +480,24 @@ export class MessagesService {
     try {
       const { query, userId } = params;
 
-      let queryParams = new URLSearchParams({
+      const queryParams = {
         query: query || "",
+      };
+
+      if (userId) queryParams.userId = userId;
+
+      const response = await apiClient.get("/messages/search", {
+        params: queryParams
       });
-
-      if (userId) queryParams.append("userId", userId);
-
-      const endpoint = `/messages/search?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Search messages error:", error);
+      console.error('[Messages] Search messages error:', error);
       return {
         success: false,
         message: error.message,
@@ -569,8 +505,6 @@ export class MessagesService {
     }
   }
 
-
-  // ==================== Group Management Functions ====================
   static async createGroup(groupData, groupImageFile = null) {
     try {
       const formData = new FormData();
@@ -582,20 +516,18 @@ export class MessagesService {
         formData.append("groupImage", groupImageFile);
       }
 
-      const response = await ExternalApiService.post(
-        "/messages/groups",
-        formData,
-        undefined,
-        true // isFormData
-      );
+      const response = await apiClient.post("/messages/groups", formData, {
+        isFormData: true
+      });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Create group error:", error);
+      console.error('[Messages] Create group error:', error);
       return {
         success: false,
         message: error.message,
@@ -605,16 +537,16 @@ export class MessagesService {
 
   static async getGroupDetails(groupId) {
     try {
-      const endpoint = `/messages/groups/${groupId}`;
-      const response = await ExternalApiService.get(endpoint);
+      const response = await apiClient.get(`/messages/groups/${groupId}`);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Get group details error:", error);
+      console.error('[Messages] Get group details error:', error);
       return {
         success: false,
         message: error.message,
@@ -632,20 +564,18 @@ export class MessagesService {
         formData.append("groupImage", groupImageFile);
       }
 
-      const response = await ExternalApiService.put(
-        `/messages/groups/${groupId}`,
-        formData,
-        undefined,
-        true // isFormData
-      );
+      const response = await apiClient.put(`/messages/groups/${groupId}`, formData, {
+        isFormData: true
+      });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Update group error:", error);
+      console.error('[Messages] Update group error:', error);
       return {
         success: false,
         message: error.message,
@@ -653,22 +583,20 @@ export class MessagesService {
     }
   }
 
-
-  // Add members to group (Creator only)
   static async addGroupMembers(groupId, memberIds) {
     try {
-      const response = await ExternalApiService.post(
-        `/messages/groups/${groupId}/members`,
-        { memberIds }
-      );
+      const response = await apiClient.post(`/messages/groups/${groupId}/members`, {
+        memberIds
+      });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Add group members error:", error);
+      console.error('[Messages] Add group members error:', error);
       return {
         success: false,
         message: error.message,
@@ -676,21 +604,18 @@ export class MessagesService {
     }
   }
 
-
-  // Remove member from group (Creator only)
   static async removeGroupMember(groupId, userId) {
     try {
-      const response = await ExternalApiService.delete(
-        `/messages/groups/${groupId}/members/${userId}`
-      );
+      const response = await apiClient.delete(`/messages/groups/${groupId}/members/${userId}`);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Remove group member error:", error);
+      console.error('[Messages] Remove group member error:', error);
       return {
         success: false,
         message: error.message,
@@ -698,22 +623,18 @@ export class MessagesService {
     }
   }
 
-
-  // Leave group
   static async leaveGroup(groupId) {
     try {
-      const response = await ExternalApiService.post(
-        `/messages/groups/${groupId}/leave`,
-        {}
-      );
+      const response = await apiClient.post(`/messages/groups/${groupId}/leave`, {});
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Leave group error:", error);
+      console.error('[Messages] Leave group error:', error);
       return {
         success: false,
         message: error.message,
@@ -723,17 +644,16 @@ export class MessagesService {
 
   static async deleteGroup(groupId) {
     try {
-      const response = await ExternalApiService.delete(
-        `/messages/groups/${groupId}`
-      );
+      const response = await apiClient.delete(`/messages/groups/${groupId}`);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Delete group error:", error);
+      console.error('[Messages] Delete group error:', error);
       return {
         success: false,
         message: error.message,
@@ -741,27 +661,23 @@ export class MessagesService {
     }
   }
 
-
-  // ==================== Group Chat Functions ====================
   static async getGroupMessages(groupId, params = {}) {
     try {
       const { page = 1, limit = 50 } = params;
 
-      let queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
+      const response = await apiClient.get(`/messages/groups/${groupId}/messages`, {
+        params: { page, limit }
       });
-
-      const endpoint = `/messages/groups/${groupId}/messages?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        pagination: backendResponse.pagination,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Get group messages error:", error);
+      console.error('[Messages] Get group messages error:', error);
       return {
         success: false,
         message: error.message,
@@ -769,8 +685,6 @@ export class MessagesService {
     }
   }
 
-
-  // Send group message (text or file)
   static async sendGroupMessage(groupId, messageData, attachmentFile = null) {
     try {
       const formData = new FormData();
@@ -782,25 +696,20 @@ export class MessagesService {
         formData.append("attachment", attachmentFile);
       }
 
-      const response = await ExternalApiService.post(
-        "/messages",
-        formData,
-        undefined,
-        true // isFormData
-      );
+      const response = await apiClient.upload(MESSAGES.BASE, formData);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Send group message error:", error);
+      console.error('[Messages] Send group message error:', error);
       return {
         success: false,
         message: error.message,
       };
     }
   }
-
 }

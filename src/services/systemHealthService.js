@@ -1,20 +1,20 @@
-import { ExternalApiService } from "./externalApiService";
+import { apiClient } from '@/lib/apiClient';
+import { HEALTH, ADMIN } from '@/constants/apiEndpoints';
 
 export class SystemHealthService {
-
-  // Health check endpoint
   static async healthCheck() {
     try {
-      const response = await ExternalApiService.healthCheck();
+      const response = await apiClient.get(HEALTH.CHECK, { skipAuth: true });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message || (response.success ? 'System is healthy' : 'System health check failed'),
-        status: response.status
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || (response.success ? 'System is healthy' : 'System health check failed'),
+        status: response.status || (response.success ? 200 : 500)
       };
     } catch (error) {
-      console.error('Health check error:', error);
+      console.error('[SystemHealth] Health check error:', error);
       return {
         success: false,
         message: error.message,
@@ -23,20 +23,19 @@ export class SystemHealthService {
     }
   }
 
-
-  // API status endpoint
   static async getApiStatus() {
     try {
-      const response = await ExternalApiService.get('/status');
+      const response = await apiClient.get(HEALTH.STATUS, { skipAuth: true });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
         status: response.status
       };
     } catch (error) {
-      console.error('Get API status error:', error);
+      console.error('[SystemHealth] Get API status error:', error);
       return {
         success: false,
         message: error.message,
@@ -45,20 +44,19 @@ export class SystemHealthService {
     }
   }
 
-
-  // Test endpoint
   static async testEndpoint() {
     try {
-      const response = await ExternalApiService.get('/test');
+      const response = await apiClient.get(HEALTH.PING, { skipAuth: true });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
         status: response.status
       };
     } catch (error) {
-      console.error('Test endpoint error:', error);
+      console.error('[SystemHealth] Test endpoint error:', error);
       return {
         success: false,
         message: error.message,
@@ -67,20 +65,19 @@ export class SystemHealthService {
     }
   }
 
-
-  // Advanced system diagnostics
   static async getSystemDiagnostics() {
     try {
-      const response = await ExternalApiService.get('/admin/system/diagnostics');
+      const response = await apiClient.get(ADMIN.SYSTEM_DIAGNOSTICS);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
         status: response.status
       };
     } catch (error) {
-      console.error('Get system diagnostics error:', error);
+      console.error('[SystemHealth] Get system diagnostics error:', error);
       return {
         success: false,
         message: error.message,
@@ -89,20 +86,19 @@ export class SystemHealthService {
     }
   }
 
-
-  // Database health check
   static async getDatabaseHealth() {
     try {
-      const response = await ExternalApiService.get('/admin/system/database/health');
+      const response = await apiClient.get(ADMIN.SYSTEM_DATABASE_HEALTH);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
         status: response.status
       };
     } catch (error) {
-      console.error('Get database health error:', error);
+      console.error('[SystemHealth] Get database health error:', error);
       return {
         success: false,
         message: error.message,
@@ -111,20 +107,19 @@ export class SystemHealthService {
     }
   }
 
-
-  // Redis health check
   static async getRedisHealth() {
     try {
-      const response = await ExternalApiService.get('/admin/system/redis/health');
+      const response = await apiClient.get(ADMIN.SYSTEM_REDIS_HEALTH);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
         status: response.status
       };
     } catch (error) {
-      console.error('Get Redis health error:', error);
+      console.error('[SystemHealth] Get Redis health error:', error);
       return {
         success: false,
         message: error.message,
@@ -133,20 +128,19 @@ export class SystemHealthService {
     }
   }
 
-
-  // Email service health check
   static async getEmailServiceHealth() {
     try {
-      const response = await ExternalApiService.get('/admin/system/email/health');
+      const response = await apiClient.get(ADMIN.SYSTEM_EMAIL_HEALTH);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
         status: response.status
       };
     } catch (error) {
-      console.error('Get email service health error:', error);
+      console.error('[SystemHealth] Get email service health error:', error);
       return {
         success: false,
         message: error.message,
@@ -155,20 +149,19 @@ export class SystemHealthService {
     }
   }
 
-
-  // File storage health check
   static async getStorageHealth() {
     try {
-      const response = await ExternalApiService.get('/admin/system/storage/health');
+      const response = await apiClient.get(ADMIN.SYSTEM_STORAGE_HEALTH);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
         status: response.status
       };
     } catch (error) {
-      console.error('Get storage health error:', error);
+      console.error('[SystemHealth] Get storage health error:', error);
       return {
         success: false,
         message: error.message,
@@ -181,22 +174,19 @@ export class SystemHealthService {
     try {
       const { timeframe = '1h', metrics = 'all' } = params;
 
-      let queryParams = new URLSearchParams({
-        timeframe,
-        metrics
+      const response = await apiClient.get(ADMIN.SYSTEM_METRICS, {
+        params: { timeframe, metrics }
       });
-
-      const endpoint = `/admin/system/metrics?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
         status: response.status
       };
     } catch (error) {
-      console.error('Get system metrics error:', error);
+      console.error('[SystemHealth] Get system metrics error:', error);
       return {
         success: false,
         message: error.message,
@@ -209,22 +199,19 @@ export class SystemHealthService {
     try {
       const { timeframe = '24h', sortBy = 'requests' } = params;
 
-      let queryParams = new URLSearchParams({
-        timeframe,
-        sortBy
+      const response = await apiClient.get(ADMIN.SYSTEM_API_STATS, {
+        params: { timeframe, sortBy }
       });
-
-      const endpoint = `/admin/system/api-stats?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
         status: response.status
       };
     } catch (error) {
-      console.error('Get API endpoint stats error:', error);
+      console.error('[SystemHealth] Get API endpoint stats error:', error);
       return {
         success: false,
         message: error.message,
@@ -233,22 +220,21 @@ export class SystemHealthService {
     }
   }
 
-
-  // Clear system cache
   static async clearSystemCache(cacheType = 'all') {
     try {
-      const response = await ExternalApiService.post('/admin/system/cache/clear', {
+      const response = await apiClient.post(ADMIN.SYSTEM_CACHE_CLEAR, {
         cacheType
       });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
         status: response.status
       };
     } catch (error) {
-      console.error('Clear system cache error:', error);
+      console.error('[SystemHealth] Clear system cache error:', error);
       return {
         success: false,
         message: error.message,
@@ -257,22 +243,21 @@ export class SystemHealthService {
     }
   }
 
-
-  // Restart system service
   static async restartSystemService(serviceName) {
     try {
-      const response = await ExternalApiService.post('/admin/system/service/restart', {
+      const response = await apiClient.post(ADMIN.SYSTEM_SERVICE_RESTART, {
         serviceName
       });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
         status: response.status
       };
     } catch (error) {
-      console.error('Restart system service error:', error);
+      console.error('[SystemHealth] Restart system service error:', error);
       return {
         success: false,
         message: error.message,
@@ -291,26 +276,28 @@ export class SystemHealthService {
         service = 'all'
       } = params;
 
-      let queryParams = new URLSearchParams({
+      const queryParams = {
         level,
         limit: limit.toString(),
         service
+      };
+
+      if (startDate) queryParams.startDate = startDate;
+      if (endDate) queryParams.endDate = endDate;
+
+      const response = await apiClient.get(ADMIN.SYSTEM_LOGS, {
+        params: queryParams
       });
-
-      if (startDate) queryParams.append('startDate', startDate);
-      if (endDate) queryParams.append('endDate', endDate);
-
-      const endpoint = `/admin/system/logs?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
         status: response.status
       };
     } catch (error) {
-      console.error('Get system logs error:', error);
+      console.error('[SystemHealth] Get system logs error:', error);
       return {
         success: false,
         message: error.message,
@@ -319,11 +306,8 @@ export class SystemHealthService {
     }
   }
 
-
-  // Run system health check suite
   static async runHealthCheckSuite() {
     try {
-      // Run all health checks in parallel
       const [
         healthCheck,
         apiStatus,
@@ -353,7 +337,6 @@ export class SystemHealthService {
         timestamp: new Date().toISOString()
       };
 
-      // Determine overall health
       results.overall = Object.values(results.checks).every(check => check.success);
 
       return {
@@ -362,7 +345,7 @@ export class SystemHealthService {
         message: results.overall ? 'All systems operational' : 'Some systems have issues'
       };
     } catch (error) {
-      console.error('Run health check suite error:', error);
+      console.error('[SystemHealth] Run health check suite error:', error);
       return {
         success: false,
         message: error.message,
@@ -375,26 +358,25 @@ export class SystemHealthService {
     }
   }
 
-
-  // Performance test endpoint
   static async performanceTest(params = {}) {
     try {
       const { duration = 30, concurrency = 10, endpoint = '/health' } = params;
 
-      const response = await ExternalApiService.post('/admin/system/performance-test', {
+      const response = await apiClient.post(ADMIN.SYSTEM_PERFORMANCE_TEST, {
         duration,
         concurrency,
         endpoint
       });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
         status: response.status
       };
     } catch (error) {
-      console.error('Performance test error:', error);
+      console.error('[SystemHealth] Performance test error:', error);
       return {
         success: false,
         message: error.message,
@@ -403,10 +385,8 @@ export class SystemHealthService {
     }
   }
 
-
-  // Static helper methods
   static getHealthStatusColor(isHealthy) {
-    return isHealthy ? '#10b981' : '#ef4444'; // green-500 : red-500
+    return isHealthy ? '#10b981' : '#ef4444';
   }
 
   static getHealthStatusBadge(isHealthy) {
@@ -472,5 +452,4 @@ export class SystemHealthService {
       { value: '7d', label: 'Last 7 days' }
     ];
   }
-
 }

@@ -136,9 +136,6 @@ export default function QnaPage() {
           totalPages: paginationData.totalPages || Math.ceil((paginationData.totalQuestions || paginationData.total || transformedQnaData.length) / prev.limit),
         }));
 
-        if (transformedQnaData.length === 0) {
-          toast("No questions found", { icon: 'ℹ️' });
-        }
       } else {
         setQnaData([]);
         toast.error(result.message || "Failed to load questions");

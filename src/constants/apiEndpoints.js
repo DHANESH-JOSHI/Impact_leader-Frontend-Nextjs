@@ -147,6 +147,24 @@ export const API_ENDPOINTS = {
     DELETE: (id) => `/messages/${id}/delete`,
   },
 
+  // ==================== CONNECTIONS ====================
+  CONNECTIONS: {
+    BASE: '/connections',
+    STATS: '/connections/stats',
+    REQUESTS: '/connections/requests',
+    SUGGESTIONS: '/connections/suggestions',
+    MUTUAL: (userId) => `/connections/mutual/${userId}`,
+    REQUEST: '/connections/request',
+    BY_ID: (id) => `/connections/${id}`,
+    ACCEPT: (id) => `/connections/${id}/accept`,
+    REJECT: (id) => `/connections/${id}/reject`,
+    BLOCK: (id) => `/connections/${id}/block`,
+    UNBLOCK: (id) => `/connections/${id}/unblock`,
+    STAR: (id) => `/connections/${id}/star`,
+    NOTE: (id) => `/connections/${id}/note`,
+    PREFERENCES: '/connections/preferences',
+  },
+
   // ==================== DIRECTORY ====================
   DIRECTORY: {
     BASE: '/directory',
@@ -195,6 +213,17 @@ export const API_ENDPOINTS = {
     // System
     SYSTEM_HEALTH: '/admin/system/health',
     SYSTEM_CONFIG: '/admin/system/config',
+    SYSTEM_DIAGNOSTICS: '/admin/system/diagnostics',
+    SYSTEM_DATABASE_HEALTH: '/admin/system/database/health',
+    SYSTEM_REDIS_HEALTH: '/admin/system/redis/health',
+    SYSTEM_EMAIL_HEALTH: '/admin/system/email/health',
+    SYSTEM_STORAGE_HEALTH: '/admin/system/storage/health',
+    SYSTEM_METRICS: '/admin/system/metrics',
+    SYSTEM_API_STATS: '/admin/system/api-stats',
+    SYSTEM_CACHE_CLEAR: '/admin/system/cache/clear',
+    SYSTEM_SERVICE_RESTART: '/admin/system/service/restart',
+    SYSTEM_LOGS: '/admin/system/logs',
+    SYSTEM_PERFORMANCE_TEST: '/admin/system/performance-test',
     
     // Analytics
     USER_ACTIVITY_ANALYTICS: '/admin/analytics/user-activity',
@@ -289,4 +318,4 @@ export const buildURL = (endpoint, params = {}) => {
 };
 
 // Export individual categories for easier imports
-export const { AUTH, USERS, POSTS, STORIES, RESOURCES, QNA, MEETINGS, SUPPORT, MESSAGES, DIRECTORY, NOTIFICATIONS, ADMIN, MONITORING, HEALTH } = API_ENDPOINTS;
+export const { AUTH, USERS, POSTS, STORIES, RESOURCES, QNA, MEETINGS, SUPPORT, MESSAGES, CONNECTIONS, DIRECTORY, NOTIFICATIONS, ADMIN, MONITORING, HEALTH } = API_ENDPOINTS;

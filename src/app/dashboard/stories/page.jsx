@@ -104,11 +104,7 @@ export default function StoriesPage() {
 
         setStories(transformed);
         setPagination((prev) => ({ ...prev, total, totalPages }));
-
-        if (transformed.length === 0) {
-          toast("No stories found", { icon: 'ℹ️' });
-        }
-        } else {
+      } else {
         setStories([]);
         setPagination((prev) => ({ ...prev, total: 0, totalPages: 0 }));
         toast.error(result?.message || "Failed to load stories");

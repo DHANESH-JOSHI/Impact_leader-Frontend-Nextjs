@@ -1,9 +1,7 @@
-import { ExternalApiService } from "./externalApiService";
-import { AuthService } from "./authService";
+import { apiClient } from '@/lib/apiClient';
+import { DIRECTORY, ADMIN } from '@/constants/apiEndpoints';
 
 export class DirectoryService {
-
-  // Browse directory with search and filters
   static async browseDirectory(params = {}) {
     try {
       const {
@@ -18,39 +16,38 @@ export class DirectoryService {
         companySize,
         sortBy = "relevance",
         sortOrder = "desc",
-        type, // 'people', 'organization', or 'all'
-        startsWith, // For alphabetical browsing (A-Z)
+        type,
+        startsWith,
       } = params;
 
-      let queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
+      const queryParams = {
+        page,
+        limit,
         sortBy,
         sortOrder,
-      });
+      };
 
-      if (search) queryParams.append("search", search);
-      if (organizationType) queryParams.append("organizationType", organizationType);
-      if (themes) queryParams.append("themes", themes);
-      if (location) queryParams.append("location", location);
-      if (experience) queryParams.append("experience", experience);
-      if (designation) queryParams.append("designation", designation);
-      if (companySize) queryParams.append("companySize", companySize);
-      if (type) queryParams.append("type", type);
-      if (startsWith) queryParams.append("startsWith", startsWith);
+      if (search) queryParams.search = search;
+      if (organizationType) queryParams.organizationType = organizationType;
+      if (themes) queryParams.themes = themes;
+      if (location) queryParams.location = location;
+      if (experience) queryParams.experience = experience;
+      if (designation) queryParams.designation = designation;
+      if (companySize) queryParams.companySize = companySize;
+      if (type) queryParams.type = type;
+      if (startsWith) queryParams.startsWith = startsWith;
 
-      const endpoint = `/directory?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(
-        endpoint,
-      );
+      const response = await apiClient.get(DIRECTORY.BASE, { params: queryParams });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        pagination: backendResponse.pagination,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Browse directory error:", error);
+      console.error('[Directory] Browse directory error:', error);
       return {
         success: false,
         message: error.message,
@@ -62,26 +59,25 @@ export class DirectoryService {
     try {
       const { page = 1, limit = 20, sortBy = "name" } = params;
 
-      let queryParams = new URLSearchParams({
-        search: companyName,
-        type: "organization",
-        page: page.toString(),
-        limit: limit.toString(),
-        sortBy,
+      const response = await apiClient.get(DIRECTORY.BASE, {
+        params: {
+          search: companyName,
+          type: "organization",
+          page,
+          limit,
+          sortBy,
+        }
       });
-
-      const endpoint = `/directory?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(
-        endpoint,
-      );
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        pagination: backendResponse.pagination,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Search by company error:", error);
+      console.error('[Directory] Search by company error:', error);
       return {
         success: false,
         message: error.message,
@@ -93,26 +89,25 @@ export class DirectoryService {
     try {
       const { page = 1, limit = 20, sortBy = "name" } = params;
 
-      let queryParams = new URLSearchParams({
-        search: personName,
-        type: "people",
-        page: page.toString(),
-        limit: limit.toString(),
-        sortBy,
+      const response = await apiClient.get(DIRECTORY.BASE, {
+        params: {
+          search: personName,
+          type: "people",
+          page,
+          limit,
+          sortBy,
+        }
       });
-
-      const endpoint = `/directory?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(
-        endpoint,
-      );
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        pagination: backendResponse.pagination,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Search by person error:", error);
+      console.error('[Directory] Search by person error:', error);
       return {
         success: false,
         message: error.message,
@@ -120,32 +115,29 @@ export class DirectoryService {
     }
   }
 
-
-  // Alphabetical browse (A-Z)
   static async alphabeticalBrowse(letter, params = {}) {
     try {
       const { page = 1, limit = 20, type = "all", sortBy = "name" } = params;
 
-      let queryParams = new URLSearchParams({
-        startsWith: letter.toUpperCase(),
-        type,
-        page: page.toString(),
-        limit: limit.toString(),
-        sortBy,
+      const response = await apiClient.get(DIRECTORY.BASE, {
+        params: {
+          startsWith: letter.toUpperCase(),
+          type,
+          page,
+          limit,
+          sortBy,
+        }
       });
-
-      const endpoint = `/directory?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(
-        endpoint,
-      );
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        pagination: backendResponse.pagination,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Alphabetical browse error:", error);
+      console.error('[Directory] Alphabetical browse error:', error);
       return {
         success: false,
         message: error.message,
@@ -153,8 +145,6 @@ export class DirectoryService {
     }
   }
 
-
-  // Advanced search with multiple filters
   static async advancedSearch(filters) {
     try {
       const {
@@ -175,39 +165,37 @@ export class DirectoryService {
         sortBy = "relevance",
       } = filters;
 
-      let queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
+      const queryParams = {
+        page,
+        limit,
         sortBy,
-      });
+      };
 
-      if (keywords) queryParams.append("search", keywords);
-      if (organizationType) queryParams.append("organizationType", organizationType);
-      if (location) queryParams.append("location", location);
-      if (experienceRange) queryParams.append("experience", experienceRange);
-      if (companySize) queryParams.append("companySize", companySize);
-      if (availability) queryParams.append("availability", availability);
+      if (keywords) queryParams.search = keywords;
+      if (organizationType) queryParams.organizationType = organizationType;
+      if (location) queryParams.location = location;
+      if (experienceRange) queryParams.experience = experienceRange;
+      if (companySize) queryParams.companySize = companySize;
+      if (availability) queryParams.availability = availability;
 
-      // Handle array parameters
-      themes.forEach(theme => queryParams.append("themes", theme));
-      designations.forEach(designation => queryParams.append("designation", designation));
-      industries.forEach(industry => queryParams.append("industry", industry));
-      skills.forEach(skill => queryParams.append("skills", skill));
-      certifications.forEach(cert => queryParams.append("certifications", cert));
-      languages.forEach(lang => queryParams.append("languages", lang));
+      if (themes.length > 0) queryParams.themes = themes;
+      if (designations.length > 0) queryParams.designation = designations;
+      if (industries.length > 0) queryParams.industry = industries;
+      if (skills.length > 0) queryParams.skills = skills;
+      if (certifications.length > 0) queryParams.certifications = certifications;
+      if (languages.length > 0) queryParams.languages = languages;
 
-      const endpoint = `/directory/advanced-search?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(
-        endpoint,
-      );
+      const response = await apiClient.get(DIRECTORY.SEARCH, { params: queryParams });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        pagination: backendResponse.pagination,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Advanced search error:", error);
+      console.error('[Directory] Advanced search error:', error);
       return {
         success: false,
         message: error.message,
@@ -217,17 +205,16 @@ export class DirectoryService {
 
   static async getProfileDetails(profileId) {
     try {
-      const response = await ExternalApiService.get(
-        `/directory/profile/${profileId}`,
-      );
+      const response = await apiClient.get(DIRECTORY.BY_ID(profileId));
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Get profile details error:", error);
+      console.error('[Directory] Get profile details error:', error);
       return {
         success: false,
         message: error.message,
@@ -239,23 +226,18 @@ export class DirectoryService {
     try {
       const { limit = 10, criteria = "themes" } = params;
 
-      let queryParams = new URLSearchParams({
-        limit: limit.toString(),
-        criteria,
+      const response = await apiClient.get(`/directory/profile/${profileId}/similar`, {
+        params: { limit, criteria }
       });
-
-      const endpoint = `/directory/profile/${profileId}/similar?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(
-        endpoint,
-      );
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Get similar profiles error:", error);
+      console.error('[Directory] Get similar profiles error:', error);
       return {
         success: false,
         message: error.message,
@@ -265,17 +247,16 @@ export class DirectoryService {
 
   static async getDirectoryStats() {
     try {
-      const response = await ExternalApiService.get(
-        "/directory/stats",
-      );
+      const response = await apiClient.get("/directory/stats");
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Get directory stats error:", error);
+      console.error('[Directory] Get directory stats error:', error);
       return {
         success: false,
         message: error.message,
@@ -287,23 +268,18 @@ export class DirectoryService {
     try {
       const { limit = 10, category = "all" } = params;
 
-      let queryParams = new URLSearchParams({
-        limit: limit.toString(),
-        category,
+      const response = await apiClient.get("/directory/featured", {
+        params: { limit, category }
       });
-
-      const endpoint = `/directory/featured?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(
-        endpoint,
-      );
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Get featured profiles error:", error);
+      console.error('[Directory] Get featured profiles error:', error);
       return {
         success: false,
         message: error.message,
@@ -311,22 +287,20 @@ export class DirectoryService {
     }
   }
 
-
-  // Admin: Manage featured profiles
   static async setFeaturedProfile(profileId, featured = true) {
     try {
-      const response = await ExternalApiService.post(
-        `/admin/directory/featured/${profileId}`,
-        { featured },
-      );
+      const response = await apiClient.post(`/admin/directory/featured/${profileId}`, {
+        featured
+      });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Set featured profile error:", error);
+      console.error('[Directory] Set featured profile error:', error);
       return {
         success: false,
         message: error.message,
@@ -334,29 +308,22 @@ export class DirectoryService {
     }
   }
 
-
-  // Admin: Get directory analytics
   static async getDirectoryAnalytics(params = {}) {
     try {
       const { timeframe = "30d", groupBy = "day" } = params;
 
-      let queryParams = new URLSearchParams({
-        timeframe,
-        groupBy,
+      const response = await apiClient.get("/admin/directory/analytics", {
+        params: { timeframe, groupBy }
       });
-
-      const endpoint = `/admin/directory/analytics?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(
-        endpoint,
-      );
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error("Get directory analytics error:", error);
+      console.error('[Directory] Get directory analytics error:', error);
       return {
         success: false,
         message: error.message,
@@ -364,8 +331,6 @@ export class DirectoryService {
     }
   }
 
-
-  // Static helper methods for UI
   static getSearchTypes() {
     return [
       { value: "all", label: "All Results" },
@@ -441,5 +406,4 @@ export class DirectoryService {
       { value: "nonprofit-directors", label: "Nonprofit Directors" },
     ];
   }
-
 }

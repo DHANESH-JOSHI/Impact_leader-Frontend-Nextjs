@@ -186,9 +186,6 @@ export default function SupportPage() {
           totalPages: paginationData.totalPages || Math.ceil((paginationData.total || transformedTickets.length) / prev.limit),
         }));
 
-        if (transformedTickets.length === 0) {
-          toast("No tickets found", { icon: 'ℹ️' });
-        }
       } else {
         setTickets([]);
         toast.error(result.message || "Failed to load tickets");

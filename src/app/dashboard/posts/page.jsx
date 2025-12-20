@@ -140,9 +140,6 @@ export default function PostsPage() {
           totalPages: paginationData.totalPages || Math.ceil((paginationData.totalPosts || paginationData.total || transformedPosts.length) / prev.limit)
         }));
 
-        if (transformedPosts.length === 0) {
-          toast("No posts found", { icon: 'ℹ️' });
-        }
       } else {
         setPosts([]);
         toast.error(result.message || "Failed to load posts");

@@ -278,7 +278,7 @@ export class SystemMonitoringService {
 
   static async getSystemMonitoringFromAPI() {
     try {
-      console.log('🔧 SystemMonitoring: Making API call (token will be automatically injected by ExternalApiService)');
+      console.log('🔧 SystemMonitoring: Making API call (token will be automatically injected by apiClient)');
 
       const response = await apiClient.get(MONITORING.SYSTEM.HEALTH || '/admin/monitoring/system');
       const backendResponse = response.data || {};
@@ -368,7 +368,7 @@ export class SystemMonitoringService {
   // Test method to verify token and API connectivity
   static async testAPIConnection() {
     try {
-      console.log('🔧 Testing API Connection (ExternalApiService will handle authentication automatically)...');
+      console.log('🔧 Testing API Connection (apiClient will handle authentication automatically)...');
 
       // Test a simple endpoint first
       const response = await apiClient.get(AUTH.ME);

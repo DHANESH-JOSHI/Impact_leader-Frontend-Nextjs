@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/apiClient';
-import { POSTS } from '@/constants/apiEndpoints';
+import { POSTS, ADMIN } from '@/constants/apiEndpoints';
 
 export class PostsService {
 
@@ -251,15 +251,16 @@ export class PostsService {
 
   static async getPost(postId) {
     try {
-      const response = await ExternalApiService.get(`/posts/${postId}`);
+      const response = await apiClient.get(POSTS.BY_ID(postId));
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Get post error:', error);
+      console.error('[Posts] Get post error:', error);
       return {
         success: false,
         message: error.message
@@ -269,15 +270,16 @@ export class PostsService {
 
   static async updatePost(postId, postData) {
     try {
-      const response = await ExternalApiService.put(`/posts/${postId}`, postData);
+      const response = await apiClient.put(POSTS.BY_ID(postId), postData);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Update post error:', error);
+      console.error('[Posts] Update post error:', error);
       return {
         success: false,
         message: error.message
@@ -287,15 +289,16 @@ export class PostsService {
 
   static async deletePost(postId) {
     try {
-      const response = await ExternalApiService.delete(`/posts/${postId}`);
+      const response = await apiClient.delete(POSTS.BY_ID(postId));
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Delete post error:', error);
+      console.error('[Posts] Delete post error:', error);
       return {
         success: false,
         message: error.message
@@ -307,23 +310,19 @@ export class PostsService {
     try {
       const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc' } = params;
 
-      let queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-        sortBy,
-        sortOrder
+      const response = await apiClient.get(POSTS.COMMENTS(postId), {
+        params: { page, limit, sortBy, sortOrder }
       });
-
-      const endpoint = `/posts/${postId}/comments?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        pagination: backendResponse.pagination,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Get post comments error:', error);
+      console.error('[Posts] Get post comments error:', error);
       return {
         success: false,
         message: error.message
@@ -333,17 +332,18 @@ export class PostsService {
 
   static async updateComment(postId, commentId, content) {
     try {
-      const response = await ExternalApiService.put(`/posts/${postId}/comments/${commentId}`, {
+      const response = await apiClient.put(POSTS.COMMENT_BY_ID(postId, commentId), {
         content
       });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Update comment error:', error);
+      console.error('[Posts] Update comment error:', error);
       return {
         success: false,
         message: error.message
@@ -353,15 +353,16 @@ export class PostsService {
 
   static async deleteComment(postId, commentId) {
     try {
-      const response = await ExternalApiService.delete(`/posts/${postId}/comments/${commentId}`);
+      const response = await apiClient.delete(POSTS.COMMENT_BY_ID(postId, commentId));
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Delete comment error:', error);
+      console.error('[Posts] Delete comment error:', error);
       return {
         success: false,
         message: error.message
@@ -369,19 +370,18 @@ export class PostsService {
     }
   }
 
-
-  // Like/Unlike comment
   static async toggleCommentLike(postId, commentId) {
     try {
-      const response = await ExternalApiService.post(`/posts/${postId}/comments/${commentId}/like`, {});
+      const response = await apiClient.post(POSTS.COMMENT_LIKE(postId, commentId), {});
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Toggle comment like error:', error);
+      console.error('[Posts] Toggle comment like error:', error);
       return {
         success: false,
         message: error.message
@@ -389,19 +389,18 @@ export class PostsService {
     }
   }
 
-
-  // Share post
   static async sharePost(postId, shareData = {}) {
     try {
-      const response = await ExternalApiService.post(`/posts/${postId}/share`, shareData);
+      const response = await apiClient.post(POSTS.SHARE(postId), shareData);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Share post error:', error);
+      console.error('[Posts] Share post error:', error);
       return {
         success: false,
         message: error.message
@@ -409,19 +408,18 @@ export class PostsService {
     }
   }
 
-
-  // Save/Bookmark post
   static async savePost(postId) {
     try {
-      const response = await ExternalApiService.post(`/posts/${postId}/save`, {});
+      const response = await apiClient.post(POSTS.SAVE(postId), {});
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Save post error:', error);
+      console.error('[Posts] Save post error:', error);
       return {
         success: false,
         message: error.message
@@ -429,19 +427,18 @@ export class PostsService {
     }
   }
 
-
-  // Unsave/Remove bookmark
   static async unsavePost(postId) {
     try {
-      const response = await ExternalApiService.delete(`/posts/${postId}/save`);
+      const response = await apiClient.delete(POSTS.SAVE(postId));
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Unsave post error:', error);
+      console.error('[Posts] Unsave post error:', error);
       return {
         success: false,
         message: error.message
@@ -453,21 +450,19 @@ export class PostsService {
     try {
       const { page = 1, limit = 10 } = params;
 
-      let queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString()
+      const response = await apiClient.get(POSTS.SAVED, {
+        params: { page, limit }
       });
-
-      const endpoint = `/posts/saved?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        pagination: backendResponse.pagination,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Get saved posts error:', error);
+      console.error('[Posts] Get saved posts error:', error);
       return {
         success: false,
         message: error.message
@@ -475,22 +470,21 @@ export class PostsService {
     }
   }
 
-
-  // Report post
   static async reportPost(postId, reason, description = '') {
     try {
-      const response = await ExternalApiService.post(`/posts/${postId}/report`, {
+      const response = await apiClient.post(POSTS.REPORT(postId), {
         reason,
         description
       });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Report post error:', error);
+      console.error('[Posts] Report post error:', error);
       return {
         success: false,
         message: error.message
@@ -498,28 +492,23 @@ export class PostsService {
     }
   }
 
-
-  // Admin: Get reported posts
   static async getReportedPosts(params = {}) {
     try {
       const { page = 1, limit = 10, status = 'pending' } = params;
 
-      let queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-        status
+      const response = await apiClient.get(ADMIN.POSTS.REPORTED, {
+        params: { page, limit, status }
       });
-
-      const endpoint = `/admin/posts/reported?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        pagination: backendResponse.pagination,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Get reported posts error:', error);
+      console.error('[Posts] Get reported posts error:', error);
       return {
         success: false,
         message: error.message
@@ -527,21 +516,20 @@ export class PostsService {
     }
   }
 
-
-  // Admin: Handle reported post
   static async handleReportedPost(reportId, action, reason = '') {
     try {
-      const response = await ExternalApiService.post(`/admin/posts/reports/${reportId}/${action}`, {
+      const response = await apiClient.post(`/admin/posts/reports/${reportId}/${action}`, {
         reason
       });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Handle reported post error:', error);
+      console.error('[Posts] Handle reported post error:', error);
       return {
         success: false,
         message: error.message
@@ -549,27 +537,22 @@ export class PostsService {
     }
   }
 
-
-  // Admin: Get post analytics
   static async getPostAnalytics(params = {}) {
     try {
       const { timeframe = '30d', groupBy = 'day' } = params;
 
-      let queryParams = new URLSearchParams({
-        timeframe,
-        groupBy
+      const response = await apiClient.get(ADMIN.POSTS.ANALYTICS, {
+        params: { timeframe, groupBy }
       });
-
-      const endpoint = `/admin/posts/analytics?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Get post analytics error:', error);
+      console.error('[Posts] Get post analytics error:', error);
       return {
         success: false,
         message: error.message
@@ -577,23 +560,22 @@ export class PostsService {
     }
   }
 
-
-  // Admin: Bulk actions on posts
   static async bulkActionPosts(action, postIds, data = {}) {
     try {
-      const response = await ExternalApiService.post('/admin/posts/bulk-action', {
+      const response = await apiClient.post(ADMIN.POSTS.BULK_ACTION, {
         action,
         postIds,
         ...data
       });
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Bulk action posts error:', error);
+      console.error('[Posts] Bulk action posts error:', error);
       return {
         success: false,
         message: error.message
@@ -605,21 +587,18 @@ export class PostsService {
     try {
       const { limit = 10, timeframe = '24h' } = params;
 
-      let queryParams = new URLSearchParams({
-        limit: limit.toString(),
-        timeframe
+      const response = await apiClient.get(POSTS.TRENDING, {
+        params: { limit, timeframe }
       });
-
-      const endpoint = `/posts/trending?${queryParams.toString()}`;
-      const response = await ExternalApiService.get(endpoint);
+      const backendResponse = response.data || {};
 
       return {
         success: response.success,
-        data: response.data,
-        message: response.message
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message
       };
     } catch (error) {
-      console.error('Get trending posts error:', error);
+      console.error('[Posts] Get trending posts error:', error);
       return {
         success: false,
         message: error.message
