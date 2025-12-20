@@ -1,97 +1,139 @@
 import { useState } from 'react';
+import { StoriesService } from '@/services/storiesService';
+import { DashboardService } from '@/services/dashboardService';
 
 export const useApi = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const callApi = async (url, options = {}) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(url, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
-        ...options,
-      });
-
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.message || 'API call failed');
-      }
-
-      setLoading(false);
-      return data;
-    } catch (err) {
-      setError(err.message);
-      setLoading(false);
-      throw err;
-    }
+  return {
+    loading,
+    error,
+    setLoading,
+    setError
   };
+};
 
-  // Specific API methods
-  const get = (url, params = {}) => {
-    const urlWithParams = new URL(url, window.location.origin);
-    Object.keys(params).forEach(key => 
-      params[key] && urlWithParams.searchParams.append(key, params[key])
-    );
-    
-    return callApi(urlWithParams.toString(), { method: 'GET' });
-  };
-
-  const post = (url, data) => {
-    return callApi(url, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  };
-
-  const put = (url, data) => {
-    return callApi(url, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  };
-
-  const del = (url) => {
-    return callApi(url, { method: 'DELETE' });
-  };
+export const useStoriesApi = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   return {
     loading,
     error,
-    get,
-    post,
-    put,
-    delete: del,
-    callApi
-  };
-};
-
-// Specific hooks for different entities
-export const useStoriesApi = () => {
-  const api = useApi();
-
-  return {
-    ...api,
-    getAllStories: (filters) => api.get('/api/stories', filters),
-    getStory: (id) => api.get(`/api/stories/${id}`),
-    createStory: (data) => api.post('/api/stories', data),
-    updateStory: (id, data) => api.put(`/api/stories/${id}`, data),
-    deleteStory: (id) => api.delete(`/api/stories/${id}`),
+    getAllStories: async (filters) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await StoriesService.getAllStories(filters);
+        setLoading(false);
+        return { success: result.success, data: result.data, total: result.total };
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+        throw err;
+      }
+    },
+    getStory: async (id) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await StoriesService.getStoryById(id);
+        setLoading(false);
+        return { success: result.success, data: result.data };
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+        throw err;
+      }
+    },
+    createStory: async (data) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await StoriesService.createStory(data);
+        setLoading(false);
+        return { success: result.success, data: result.data };
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+        throw err;
+      }
+    },
+    updateStory: async (id, data) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await StoriesService.updateStory(id, data);
+        setLoading(false);
+        return { success: result.success, data: result.data };
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+        throw err;
+      }
+    },
+    deleteStory: async (id) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await StoriesService.deleteStory(id);
+        setLoading(false);
+        return { success: result.success };
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+        throw err;
+      }
+    },
   };
 };
 
 export const useDashboardApi = () => {
-  const api = useApi();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   return {
-    ...api,
-    getStats: () => api.get('/api/dashboard/stats'),
-    getChartData: () => api.get('/api/dashboard/chart'),
-    getActivities: () => api.get('/api/dashboard/activities'),
+    loading,
+    error,
+    getStats: async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await DashboardService.getStats();
+        setLoading(false);
+        return { success: result.success, data: result.data };
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+        throw err;
+      }
+    },
+    getChartData: async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await DashboardService.getChartData();
+        setLoading(false);
+        return { success: result.success, data: result.data };
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+        throw err;
+      }
+    },
+    getActivities: async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await DashboardService.getRecentActivities();
+        setLoading(false);
+        return { success: result.success, data: result.data };
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+        throw err;
+      }
+    },
   };
 };

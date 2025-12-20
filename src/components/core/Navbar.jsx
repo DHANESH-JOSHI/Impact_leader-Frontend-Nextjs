@@ -233,17 +233,14 @@ export default function Navbar({ sidebarCollapsed, setSidebarCollapsed }) {
                   <button
                     onClick={async () => {
                       try {
-                        // Call Impact Leaders logout API
-                        await fetch('/api/auth/impact-leaders/logout', { method: 'POST' });
+                        const { AuthService } = await import('@/services/authService');
+                        await AuthService.logout();
 
-                        // Clear local storage
                         localStorage.removeItem('impactLeadersAuth');
 
-                        // Clear cookies
                         document.cookie = 'impactLeadersToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
                         document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 
-                        // Redirect to login
                         window.location.href = '/?message=logged_out';
                       } catch (error) {
                         console.error('Logout error:', error);

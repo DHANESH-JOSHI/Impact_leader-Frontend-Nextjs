@@ -275,13 +275,13 @@ export default function APIMonitoring() {
   // Fetch API analytics
   const fetchAPIAnalytics = async () => {
     try {
-      const response = await fetch('/api/monitoring/system');
-      const data = await response.json();
+      const { SystemMonitoringService } = await import('@/services/systemMonitoringService');
+      const result = await SystemMonitoringService.getAPIAnalytics();
 
-      if (data.success) {
-        setApiData(data.data);
+      if (result.success) {
+        setApiData(result.data);
       } else {
-        setError(data.message);
+        setError(result.message);
       }
     } catch (err) {
       setError('Failed to fetch API analytics');
@@ -292,11 +292,11 @@ export default function APIMonitoring() {
   // Fetch real-time data
   const fetchRealtimeData = async () => {
     try {
-      const response = await fetch('/api/monitoring/api-metrics');
-      const data = await response.json();
+      const { SystemMonitoringService } = await import('@/services/systemMonitoringService');
+      const result = SystemMonitoringService.getAPIMetrics();
 
-      if (data.success) {
-        setRealtimeData(data.data);
+      if (result.success) {
+        setRealtimeData(result.data);
       }
     } catch (err) {
       console.error('Realtime data error:', err);

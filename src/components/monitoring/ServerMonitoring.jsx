@@ -262,13 +262,13 @@ export default function ServerMonitoring() {
   // Fetch initial system metrics
   const fetchSystemMetrics = async () => {
     try {
-      const response = await fetch('/api/monitoring/system');
-      const data = await response.json();
+      const { SystemMonitoringService } = await import('@/services/systemMonitoringService');
+      const result = await SystemMonitoringService.getAPIAnalytics();
 
-      if (data.success) {
-        setSystemMetrics(data.data);
+      if (result.success) {
+        setSystemMetrics(result.data);
       } else {
-        setError(data.message);
+        setError(result.message);
       }
     } catch (err) {
       setError('Failed to fetch system metrics');
@@ -279,16 +279,17 @@ export default function ServerMonitoring() {
   // Fetch real-time metrics
   const fetchRealTimeMetrics = async () => {
     try {
-      const response = await fetch('/api/monitoring/realtime');
-      const data = await response.json();
+      const { SystemMonitoringService } = await import('@/services/systemMonitoringService');
+      const result = await SystemMonitoringService.getRealTimeMetrics();
 
-      if (data.success) {
-        setRealTimeMetrics(data.data);
+      if (result.success) {
+        setRealTimeMetrics(result.data);
 
-        // Update history arrays
-        setCpuHistory(prev => [...prev.slice(-19), data.data.cpu.usage]);
-        setMemoryHistory(prev => [...prev.slice(-19), data.data.memory.usage]);
-        setApiHitsHistory(prev => [...prev.slice(-19), data.data.api.hitsPerSecond]);
+        if (result.data.api) {
+          setCpuHistory(prev => [...prev.slice(-19), result.data.cpu?.usage || 0]);
+          setMemoryHistory(prev => [...prev.slice(-19), result.data.memory?.usage || 0]);
+          setApiHitsHistory(prev => [...prev.slice(-19), result.data.api.hitsPerSecond || 0]);
+        }
       }
     } catch (err) {
       console.error('Real-time metrics error:', err);
@@ -298,11 +299,11 @@ export default function ServerMonitoring() {
   // Fetch API metrics
   const fetchAPIMetrics = async () => {
     try {
-      const response = await fetch('/api/monitoring/api-metrics');
-      const data = await response.json();
+      const { SystemMonitoringService } = await import('@/services/systemMonitoringService');
+      const result = SystemMonitoringService.getAPIMetrics();
 
-      if (data.success) {
-        setApiMetrics(data.data);
+      if (result.success) {
+        setApiMetrics(result.data);
       }
     } catch (err) {
       console.error('API metrics error:', err);

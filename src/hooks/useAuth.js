@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { setAuthCookie, removeAuthCookie, isAuthenticated } from '@/lib/auth';
+import { AuthService } from '@/services/authService';
 
 export const useAuth = () => {
   const [user, setUser] = useState(null);
@@ -10,7 +11,6 @@ export const useAuth = () => {
   useEffect(() => {
     const checkAuth = async () => {
       if (isAuthenticated()) {
-        // You could fetch user details here if needed
         setUser({ authenticated: true });
       } else {
         setUser(null);
@@ -23,22 +23,14 @@ export const useAuth = () => {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const result = await AuthService.login(email, password);
 
-      const data = await response.json();
-
-      if (data.success) {
-        setUser(data.user);
+      if (result.success) {
+        setUser(result.user);
         router.push('/dashboard');
         return { success: true };
       } else {
-        return { success: false, message: data.message };
+        return { success: false, message: result.message };
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -48,16 +40,12 @@ export const useAuth = () => {
 
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-      });
-
+      await AuthService.logout();
       removeAuthCookie();
       setUser(null);
       router.push('/');
     } catch (error) {
       console.error('Logout error:', error);
-      // Still remove local auth state even if API call fails
       removeAuthCookie();
       setUser(null);
       router.push('/');

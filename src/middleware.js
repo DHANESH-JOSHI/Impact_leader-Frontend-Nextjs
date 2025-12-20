@@ -45,11 +45,10 @@ async function verifyImpactLeadersToken(token) {
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for static files and API routes (except protected ones)
+  // Skip middleware for static files
   if (
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/favicon') ||
-    pathname.startsWith('/api/auth')
+    pathname.startsWith('/favicon')
   ) {
     return NextResponse.next();
   }

@@ -370,13 +370,13 @@ export default function Sidebar({ collapsed, setCollapsed }) {
         <motion.button
           onClick={async () => {
             try {
-              await fetch("/api/auth/logout", { method: "POST" });
+              const { AuthService } = await import('@/services/authService');
+              await AuthService.logout();
               document.cookie =
                 "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
               window.location.href = "/";
             } catch (error) {
               console.error("Logout error:", error);
-              // Still redirect even if API fails
               document.cookie =
                 "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
               window.location.href = "/";
