@@ -25,6 +25,7 @@ import {
   Headphones,
   Users,
   Calendar,
+  Building2,
 } from "lucide-react";
 
 // main menu items ka data - dashboard, stories, posts etc.
@@ -38,6 +39,11 @@ const menuItems = [
     title: "Users",
     icon: Users,
     href: "/dashboard/users",
+  },
+  {
+    title: "Directory",
+    icon: Building2,
+    href: "/dashboard/directory",
   },
   {
     title: "Stories",

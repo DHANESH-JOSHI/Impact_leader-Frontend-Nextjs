@@ -406,4 +406,95 @@ export class DirectoryService {
       { value: "nonprofit-directors", label: "Nonprofit Directors" },
     ];
   }
+
+  static async createDirectoryEntry(formData) {
+    try {
+      const response = await apiClient.upload(DIRECTORY.BASE, formData);
+      const backendResponse = response.data || {};
+
+      return {
+        success: response.success,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
+      };
+    } catch (error) {
+      console.error('[Directory] Create entry error:', error);
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+  static async updateDirectoryEntry(entryId, formData) {
+    try {
+      // Use the request method directly from apiClient instance
+      const response = await apiClient.request(DIRECTORY.BY_ID(entryId), {
+        method: 'PUT',
+        data: formData,
+        isFormData: true,
+      });
+      const backendResponse = response.data || {};
+
+      return {
+        success: response.success,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
+      };
+    } catch (error) {
+      console.error('[Directory] Update entry error:', error);
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+  static async deleteDirectoryEntry(entryId) {
+    try {
+      const response = await apiClient.delete(DIRECTORY.BY_ID(entryId));
+      const backendResponse = response.data || {};
+
+      return {
+        success: response.success,
+        message: backendResponse.message || response.message,
+      };
+    } catch (error) {
+      console.error('[Directory] Delete entry error:', error);
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+  static async getDirectoryEntry(entryId) {
+    try {
+      const response = await apiClient.get(DIRECTORY.BY_ID(entryId));
+      const backendResponse = response.data || {};
+
+      return {
+        success: response.success,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
+      };
+    } catch (error) {
+      console.error('[Directory] Get entry error:', error);
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+  static getOrganizationTypes() {
+    return [
+      { value: "startup", label: "Startup" },
+      { value: "corporate", label: "Corporate" },
+      { value: "nonprofit", label: "Nonprofit" },
+      { value: "government", label: "Government" },
+      { value: "freelance", label: "Freelance" },
+      { value: "other", label: "Other" },
+    ];
+  }
 }
