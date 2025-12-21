@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/apiClient';
-import { ADMIN } from '@/constants/apiEndpoints';
+import { ADMIN, USERS } from '@/constants/apiEndpoints';
 
 export class UsersService {
   static async getAllUsers(params = {}) {

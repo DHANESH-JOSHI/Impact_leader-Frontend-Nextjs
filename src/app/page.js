@@ -26,6 +26,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { authStorage } from "@/lib/storage";
+import { AuthService } from "@/services/authService";
 
 // Brand colors
 const PRIMARY = "#2490CE";
@@ -190,44 +191,24 @@ export default function AdminLoginPage() {
         return;
       }
 
-      // Call Next.js API route (standard structure)
-      // Use proxied URL in browser
-      const apiUrl = typeof window !== 'undefined' ? '/api/v1' : `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000'}/api/v1`;
-      const response = await fetch(`${apiUrl}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      // Use AuthService which handles API proxying correctly through /api/proxy
+      const result = await AuthService.login(email, password);
 
-      const data = await response.json();
+      if (result.success) {
+        console.log("✅ Login: Success response received:", result);
 
-      if (data.success) {
-        console.log("✅ Login: Success response received:", data);
-
-        // Extract auth data from nested response structure
-        const authData = data.data || data;
-
-        // Save tokens using centralized authStorage utility
-        authStorage.saveTokens({
-          accessToken: authData.accessToken || authData.token,
-          refreshToken: authData.refreshToken,
-          user: authData.user,
-        });
-
-        console.log("💾 Login: Tokens saved to storage");
-
-        // Also set a cookie for server-side middleware
-        const token = authData.accessToken || authData.token;
-        const cookieValue = `authToken=${token}; path=/; max-age=${
-          24 * 60 * 60
-        }; SameSite=Lax`;
-        document.cookie = cookieValue;
-        console.log(
-          "🍪 Login: Cookie set:",
-          cookieValue.substring(0, 50) + "..."
-        );
+        // AuthService already saves tokens, but set cookie for server-side middleware
+        const token = result.token || result.accessToken;
+        if (token) {
+          const cookieValue = `authToken=${token}; path=/; max-age=${
+            24 * 60 * 60
+          }; SameSite=Lax`;
+          document.cookie = cookieValue;
+          console.log(
+            "🍪 Login: Cookie set:",
+            cookieValue.substring(0, 50) + "..."
+          );
+        }
 
         // Verify token was stored correctly
         setTimeout(() => {
@@ -239,14 +220,14 @@ export default function AdminLoginPage() {
         }, 100);
 
         showToast(
-          `Welcome ${authData.user.firstName || "Admin"}! Redirecting…`,
+          `Welcome ${result.user?.firstName || "Admin"}! Redirecting…`,
           "success"
         );
         setTimeout(() => router.push("/dashboard"), 900);
       } else {
-        console.log("❌ Login: Failed response:", data);
-        showToast(data.message || "Login failed", "error");
-        setError(data.message || "Invalid credentials");
+        console.log("❌ Login: Failed response:", result);
+        showToast(result.message || "Login failed", "error");
+        setError(result.message || "Invalid credentials");
       }
     } catch (err) {
       showToast("Login failed. Please try again.", "error");

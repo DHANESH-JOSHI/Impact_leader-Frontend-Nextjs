@@ -8,13 +8,12 @@ import { authStorage } from './storage';
 // Use Next.js API proxy route in browser
 // Use full URL on server-side
 const getBaseURL = () => {
-  // In browser, use Next.js API proxy route
   if (typeof window !== 'undefined') {
     return '/api/proxy';
   }
   
   // On server-side, use full URL
-  const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+  const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const cleanBaseURL = backendUrl.replace(/\/$/, '');
   return cleanBaseURL + '/api/v1';
 };
