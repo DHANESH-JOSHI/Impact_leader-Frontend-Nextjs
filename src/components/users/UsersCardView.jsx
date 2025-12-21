@@ -115,100 +115,104 @@ export default function UsersCardView({
       {users.map((user) => (
         <motion.div
           key={user.id}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+          className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group flex flex-col min-h-[320px]"
           variants={cardVariants}
           whileHover="hover"
         >
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <div
-                className="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold"
-                style={{ backgroundColor: "#2691ce" }}
-              >
-                {user.firstName?.[0]?.toUpperCase() || user.name?.[0]?.toUpperCase() || "U"}
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg" style={{ color: "#040606" }}>
-                  {user.firstName && user.lastName
-                    ? `${user.firstName} ${user.lastName}`
-                    : user.name || user.email || "Unknown User"}
-                </h3>
-                <p className="text-sm" style={{ color: "#646464" }}>
-                  {user.email || "No email"}
-                </p>
+          <div className="p-4 flex-1 flex flex-col">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0"
+                  style={{ backgroundColor: "#2691ce" }}
+                >
+                  {user.firstName?.[0]?.toUpperCase() || user.name?.[0]?.toUpperCase() || "U"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-lg line-clamp-1" style={{ color: "#040606" }}>
+                    {user.firstName && user.lastName
+                      ? `${user.firstName} ${user.lastName}`
+                      : user.name || user.email || "Unknown User"}
+                  </h3>
+                  <p className="text-sm truncate" style={{ color: "#646464" }}>
+                    {user.email || "No email"}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="space-y-2 mb-4">
-            {user.companyName && (
+            <div className="space-y-2 mb-4">
+              {user.companyName && (
+                <div className="flex items-center space-x-2 text-sm">
+                  <Building className="h-4 w-4 flex-shrink-0" style={{ color: "#646464" }} />
+                  <span className="truncate" style={{ color: "#646464" }}>{user.companyName}</span>
+                </div>
+              )}
+              {user.designation && (
+                <div className="flex items-center space-x-2 text-sm">
+                  <User className="h-4 w-4 flex-shrink-0" style={{ color: "#646464" }} />
+                  <span className="truncate" style={{ color: "#646464" }}>{user.designation}</span>
+                </div>
+              )}
+              {user.organizationType && (
+                <div className="flex items-center space-x-2 text-sm">
+                  <Building className="h-4 w-4 flex-shrink-0" style={{ color: "#646464" }} />
+                  <span className="truncate capitalize" style={{ color: "#646464" }}>
+                    {user.organizationType}
+                  </span>
+                </div>
+              )}
               <div className="flex items-center space-x-2 text-sm">
-                <Building className="h-4 w-4" style={{ color: "#646464" }} />
-                <span style={{ color: "#646464" }}>{user.companyName}</span>
-              </div>
-            )}
-            {user.designation && (
-              <div className="flex items-center space-x-2 text-sm">
-                <User className="h-4 w-4" style={{ color: "#646464" }} />
-                <span style={{ color: "#646464" }}>{user.designation}</span>
-              </div>
-            )}
-            {user.organizationType && (
-              <div className="flex items-center space-x-2 text-sm">
-                <Building className="h-4 w-4" style={{ color: "#646464" }} />
-                <span style={{ color: "#646464" }} className="capitalize">
-                  {user.organizationType}
+                <Calendar className="h-4 w-4 flex-shrink-0" style={{ color: "#646464" }} />
+                <span className="truncate" style={{ color: "#646464" }}>
+                  Joined {formatDate(user.createdAt)}
                 </span>
               </div>
-            )}
-            <div className="flex items-center space-x-2 text-sm">
-              <Calendar className="h-4 w-4" style={{ color: "#646464" }} />
-              <span style={{ color: "#646464" }}>
-                Joined {formatDate(user.createdAt)}
+            </div>
+
+            <div className="flex flex-wrap gap-2 mt-auto">
+              <span
+                className="px-2 py-1 rounded-md text-xs font-medium"
+                style={getStatusBadgeStyle(user.isActive !== false)}
+              >
+                {user.isActive !== false ? "Active" : "Inactive"}
               </span>
+              {user.role && (
+                <span
+                  className="px-2 py-1 rounded-md text-xs font-medium"
+                  style={getRoleBadgeStyle(user.role)}
+                >
+                  {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                </span>
+              )}
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2 mb-4">
-            <span
-              className="px-2 py-1 rounded-md text-xs font-medium"
-              style={getStatusBadgeStyle(user.isActive !== false)}
-            >
-              {user.isActive !== false ? "Active" : "Inactive"}
-            </span>
-            {user.role && (
-              <span
-                className="px-2 py-1 rounded-md text-xs font-medium"
-                style={getRoleBadgeStyle(user.role)}
+          <div className="p-3 bg-white border-t border-gray-100">
+            <div className="flex items-center justify-end space-x-2">
+              <motion.button
+                onClick={() => onViewUser(user)}
+                className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
+                variants={buttonVariants}
+                whileHover="hover"
+                whileTap="tap"
               >
-                {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-center justify-end space-x-2 pt-4 border-t border-gray-200">
-            <motion.button
-              onClick={() => onViewUser(user)}
-              className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-              style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
-              variants={buttonVariants}
-              whileHover="hover"
-              whileTap="tap"
-            >
-              <Eye className="h-4 w-4" />
-              <span>View</span>
-            </motion.button>
-            <motion.button
-              onClick={() => onDeleteUser(user)}
-              className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-              style={{ backgroundColor: "#fef2f2", color: "#ef4444" }}
-              variants={buttonVariants}
-              whileHover="hover"
-              whileTap="tap"
-            >
-              <Trash2 className="h-4 w-4" />
-              <span>Delete</span>
-            </motion.button>
+                <Eye className="h-4 w-4" />
+                <span>View</span>
+              </motion.button>
+              <motion.button
+                onClick={() => onDeleteUser(user)}
+                className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ backgroundColor: "#fef2f2", color: "#ef4444" }}
+                variants={buttonVariants}
+                whileHover="hover"
+                whileTap="tap"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>Delete</span>
+              </motion.button>
+            </div>
           </div>
         </motion.div>
       ))}

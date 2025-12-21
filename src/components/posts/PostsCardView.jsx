@@ -113,14 +113,14 @@ export default function PostsCardView({
       {posts.map((post) => (
         <motion.div
           key={post.id}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group"
+          className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group flex flex-col min-h-[320px]"
           variants={cardVariants}
           whileHover="hover"
         >
           {/* Card Header */}
-          <div className="p-4 border-b border-gray-100">
+          <div className="p-4 flex-1 flex flex-col">
             <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <h3
                   className="font-semibold text-lg leading-tight mb-2 line-clamp-2 cursor-pointer"
                   style={{ color: "#040606" }}
@@ -143,7 +143,7 @@ export default function PostsCardView({
                 )}
               </div>
               <div
-                className="px-2 py-1 text-xs font-medium rounded-full"
+                className="px-2 py-1 text-xs font-medium rounded-full flex-shrink-0 ml-2"
                 style={getStatusBadgeStyle(post.status)}
               >
                 {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
@@ -151,33 +151,33 @@ export default function PostsCardView({
             </div>
 
             <p
-              className="text-sm leading-relaxed mb-4"
+              className="text-sm leading-relaxed mb-4 line-clamp-2"
               style={{ color: "#646464" }}
             >
               {truncateText(post.excerpt)}
             </p>
 
             {/* Post Meta */}
-            <div className="space-y-2">
+            <div className="space-y-2 mb-3">
               <div
                 className="flex items-center space-x-2 text-xs"
                 style={{ color: "#646464" }}
               >
-                <User className="h-3 w-3" />
-                <span>{post.author}</span>
+                <User className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">{post.author}</span>
               </div>
               <div
                 className="flex items-center space-x-2 text-xs"
                 style={{ color: "#646464" }}
               >
-                <Calendar className="h-3 w-3" />
-                <span>{formatDate(post.publishDate)}</span>
+                <Calendar className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">{formatDate(post.publishDate)}</span>
               </div>
               <div
                 className="flex items-center space-x-2 text-xs"
                 style={{ color: "#646464" }}
               >
-                <Tag className="h-3 w-3" />
+                <Tag className="h-3 w-3 flex-shrink-0" />
                 <span
                   className="px-2 py-1 rounded text-xs"
                   style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
@@ -186,30 +186,30 @@ export default function PostsCardView({
                 </span>
               </div>
             </div>
-          </div>
 
-          {/* Card Stats */}
-          <div
-            className="px-4 py-3 border-b border-gray-100"
-            style={{ backgroundColor: "#f8fafc" }}
-          >
+            {/* Card Stats */}
             <div
-              className="flex items-center justify-between text-xs"
-              style={{ color: "#646464" }}
+              className="px-3 py-2 rounded mt-auto"
+              style={{ backgroundColor: "#f8fafc" }}
             >
-              <div className="flex items-center space-x-1">
-                <Eye className="h-3 w-3" />
-                <span>{post.views.toLocaleString()}</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <Heart className="h-3 w-3" />
-                <span>{post.likes}</span>
+              <div
+                className="flex items-center justify-between text-xs"
+                style={{ color: "#646464" }}
+              >
+                <div className="flex items-center space-x-1">
+                  <Eye className="h-3 w-3" />
+                  <span>{post.views.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <Heart className="h-3 w-3" />
+                  <span>{post.likes}</span>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="p-3 bg-white">
+          <div className="p-3 bg-white border-t border-gray-100">
             <div className="flex items-center justify-between space-x-2">
               <motion.button
                 onClick={() => onViewPost(post)}

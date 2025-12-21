@@ -114,136 +114,140 @@ export default function DirectoryCardView({
       {entries.map((entry) => (
         <motion.div
           key={entry.id}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+          className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group flex flex-col min-h-[320px]"
           variants={cardVariants}
           whileHover="hover"
         >
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center space-x-3 flex-1">
-              {entry.logo ? (
-                <img
-                  src={entry.logo}
-                  alt={entry.title}
-                  className="w-12 h-12 rounded-lg object-cover"
-                />
-              ) : (
-                <div
-                  className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-semibold"
-                  style={{ backgroundColor: "#2691ce" }}
-                >
-                  <Building2 className="h-6 w-6" />
+          <div className="p-4 flex-1 flex flex-col">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                {entry.logo ? (
+                  <img
+                    src={entry.logo}
+                    alt={entry.title}
+                    className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                  />
+                ) : (
+                  <div
+                    className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-semibold flex-shrink-0"
+                    style={{ backgroundColor: "#2691ce" }}
+                  >
+                    <Building2 className="h-6 w-6" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-lg line-clamp-1" style={{ color: "#040606" }}>
+                    {entry.title || "Untitled Entry"}
+                  </h3>
+                  {entry.category && (
+                    <p className="text-sm truncate" style={{ color: "#646464" }}>
+                      {entry.category}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {entry.description && (
+              <p className="text-sm mb-4 line-clamp-2" style={{ color: "#646464" }}>
+                {entry.description}
+              </p>
+            )}
+
+            <div className="space-y-2 mb-4">
+              {entry.location && (entry.location.city || entry.location.country) && (
+                <div className="flex items-center space-x-2 text-sm">
+                  <MapPin className="h-4 w-4 flex-shrink-0" style={{ color: "#646464" }} />
+                  <span className="truncate" style={{ color: "#646464" }}>
+                    {[entry.location.city, entry.location.state, entry.location.country]
+                      .filter(Boolean)
+                      .join(", ")}
+                  </span>
                 </div>
               )}
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-lg truncate" style={{ color: "#040606" }}>
-                  {entry.title || "Untitled Entry"}
-                </h3>
-                {entry.category && (
-                  <p className="text-sm truncate" style={{ color: "#646464" }}>
-                    {entry.category}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {entry.description && (
-            <p className="text-sm mb-4 line-clamp-2" style={{ color: "#646464" }}>
-              {entry.description}
-            </p>
-          )}
-
-          <div className="space-y-2 mb-4">
-            {entry.location && (entry.location.city || entry.location.country) && (
+              {entry.website && (
+                <div className="flex items-center space-x-2 text-sm">
+                  <Globe className="h-4 w-4 flex-shrink-0" style={{ color: "#646464" }} />
+                  <a
+                    href={entry.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="truncate hover:underline"
+                    style={{ color: "#2691ce" }}
+                  >
+                    {entry.website}
+                  </a>
+                </div>
+              )}
+              {entry.organizationType && (
+                <div className="flex items-center space-x-2 text-sm">
+                  <Building2 className="h-4 w-4 flex-shrink-0" style={{ color: "#646464" }} />
+                  <span className="truncate capitalize" style={{ color: "#646464" }}>
+                    {entry.organizationType}
+                  </span>
+                </div>
+              )}
               <div className="flex items-center space-x-2 text-sm">
-                <MapPin className="h-4 w-4 flex-shrink-0" style={{ color: "#646464" }} />
+                <Calendar className="h-4 w-4 flex-shrink-0" style={{ color: "#646464" }} />
                 <span className="truncate" style={{ color: "#646464" }}>
-                  {[entry.location.city, entry.location.state, entry.location.country]
-                    .filter(Boolean)
-                    .join(", ")}
+                  Created {formatDate(entry.createdAt)}
                 </span>
               </div>
-            )}
-            {entry.website && (
-              <div className="flex items-center space-x-2 text-sm">
-                <Globe className="h-4 w-4" style={{ color: "#646464" }} />
-                <a
-                  href={entry.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="truncate hover:underline"
-                  style={{ color: "#2691ce" }}
+            </div>
+
+            <div className="flex flex-wrap gap-2 mt-auto">
+              {(entry.isESG || entry.isCSR) && (
+                <span
+                  className="px-2 py-1 rounded-md text-xs font-medium"
+                  style={getESGCSRBadgeStyle(entry.isESG, entry.isCSR)}
                 >
-                  {entry.website}
-                </a>
-              </div>
-            )}
-            {entry.organizationType && (
-              <div className="flex items-center space-x-2 text-sm">
-                <Building2 className="h-4 w-4" style={{ color: "#646464" }} />
-                <span className="capitalize" style={{ color: "#646464" }}>
+                  {entry.isESG ? "ESG" : "CSR"}
+                </span>
+              )}
+              {entry.organizationType && (
+                <span
+                  className="px-2 py-1 rounded-md text-xs font-medium capitalize"
+                  style={getOrganizationTypeBadgeStyle(entry.organizationType)}
+                >
                   {entry.organizationType}
                 </span>
-              </div>
-            )}
-            <div className="flex items-center space-x-2 text-sm">
-              <Calendar className="h-4 w-4" style={{ color: "#646464" }} />
-              <span style={{ color: "#646464" }}>
-                Created {formatDate(entry.createdAt)}
-              </span>
+              )}
+              {entry.themes && entry.themes.length > 0 && (
+                <div className="flex items-center space-x-1">
+                  <Tag className="h-3 w-3" style={{ color: "#646464" }} />
+                  <span className="text-xs" style={{ color: "#646464" }}>
+                    {entry.themes.length} theme{entry.themes.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2 mb-4">
-            {(entry.isESG || entry.isCSR) && (
-              <span
-                className="px-2 py-1 rounded-md text-xs font-medium"
-                style={getESGCSRBadgeStyle(entry.isESG, entry.isCSR)}
+          <div className="p-3 bg-white border-t border-gray-100">
+            <div className="flex items-center justify-end space-x-2">
+              <motion.button
+                onClick={() => onViewEntry(entry)}
+                className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
+                variants={buttonVariants}
+                whileHover="hover"
+                whileTap="tap"
               >
-                {entry.isESG ? "ESG" : "CSR"}
-              </span>
-            )}
-            {entry.organizationType && (
-              <span
-                className="px-2 py-1 rounded-md text-xs font-medium capitalize"
-                style={getOrganizationTypeBadgeStyle(entry.organizationType)}
+                <Eye className="h-4 w-4" />
+                <span>View</span>
+              </motion.button>
+              <motion.button
+                onClick={() => onDeleteEntry(entry)}
+                className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ backgroundColor: "#fef2f2", color: "#ef4444" }}
+                variants={buttonVariants}
+                whileHover="hover"
+                whileTap="tap"
               >
-                {entry.organizationType}
-              </span>
-            )}
-            {entry.themes && entry.themes.length > 0 && (
-              <div className="flex items-center space-x-1">
-                <Tag className="h-3 w-3" style={{ color: "#646464" }} />
-                <span className="text-xs" style={{ color: "#646464" }}>
-                  {entry.themes.length} theme{entry.themes.length !== 1 ? "s" : ""}
-                </span>
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center justify-end space-x-2 pt-4 border-t border-gray-200">
-            <motion.button
-              onClick={() => onViewEntry(entry)}
-              className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-              style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
-              variants={buttonVariants}
-              whileHover="hover"
-              whileTap="tap"
-            >
-              <Eye className="h-4 w-4" />
-              <span>View</span>
-            </motion.button>
-            <motion.button
-              onClick={() => onDeleteEntry(entry)}
-              className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-              style={{ backgroundColor: "#fef2f2", color: "#ef4444" }}
-              variants={buttonVariants}
-              whileHover="hover"
-              whileTap="tap"
-            >
-              <Trash2 className="h-4 w-4" />
-              <span>Delete</span>
-            </motion.button>
+                <Trash2 className="h-4 w-4" />
+                <span>Delete</span>
+              </motion.button>
+            </div>
           </div>
         </motion.div>
       ))}

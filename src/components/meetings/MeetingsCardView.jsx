@@ -118,15 +118,15 @@ export default function MeetingsCardView({
       {meetings.map((meeting) => (
         <motion.div
           key={meeting.id}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group"
+          className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group flex flex-col min-h-[320px]"
           variants={cardVariants}
           whileHover="hover"
         >
-          <div className="p-4 border-b border-gray-100">
+          <div className="p-4 flex-1 flex flex-col">
             <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <h3
-                  className="font-semibold text-lg leading-tight mb-2 cursor-pointer"
+                  className="font-semibold text-lg leading-tight mb-2 line-clamp-2 cursor-pointer"
                   style={{ color: "#040606" }}
                   onClick={() => onViewMeeting(meeting)}
                 >
@@ -139,7 +139,7 @@ export default function MeetingsCardView({
                 )}
               </div>
               <div
-                className="px-2 py-1 text-xs font-medium rounded-full"
+                className="px-2 py-1 text-xs font-medium rounded-full flex-shrink-0 ml-2"
                 style={getStatusBadgeStyle(meeting.status)}
               >
                 {meeting.status.charAt(0).toUpperCase() + meeting.status.slice(1).replace("-", " ")}
@@ -147,7 +147,7 @@ export default function MeetingsCardView({
             </div>
 
             {meeting.meetingType && (
-              <div className="mb-2">
+              <div className="mb-3">
                 <span
                   className="px-2 py-1 text-xs rounded flex items-center space-x-1"
                   style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
@@ -158,27 +158,27 @@ export default function MeetingsCardView({
               </div>
             )}
 
-            <div className="space-y-2">
+            <div className="space-y-2 mt-auto">
               <div
                 className="flex items-center space-x-2 text-xs"
                 style={{ color: "#646464" }}
               >
-                <Calendar className="h-3 w-3" />
-                <span>{formatDate(meeting.startTime)}</span>
+                <Calendar className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">{formatDate(meeting.startTime)}</span>
               </div>
               <div
                 className="flex items-center space-x-2 text-xs"
                 style={{ color: "#646464" }}
               >
-                <Clock className="h-3 w-3" />
-                <span>{formatTime(meeting.startTime)} - {formatTime(meeting.endTime)}</span>
+                <Clock className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">{formatTime(meeting.startTime)} - {formatTime(meeting.endTime)}</span>
               </div>
               {meeting.attendeeCount > 0 && (
                 <div
                   className="flex items-center space-x-2 text-xs"
                   style={{ color: "#646464" }}
                 >
-                  <Users className="h-3 w-3" />
+                  <Users className="h-3 w-3 flex-shrink-0" />
                   <span>{meeting.attendeeCount} attendees</span>
                 </div>
               )}
@@ -187,13 +187,13 @@ export default function MeetingsCardView({
                   className="flex items-center space-x-2 text-xs"
                   style={{ color: "#646464" }}
                 >
-                  <span>Organizer: {meeting.organizer}</span>
+                  <span className="truncate">Organizer: {meeting.organizer}</span>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="p-3 bg-white">
+          <div className="p-3 bg-white border-t border-gray-100">
             <div className="flex items-center justify-between space-x-2">
               <motion.button
                 onClick={() => onViewMeeting(meeting)}

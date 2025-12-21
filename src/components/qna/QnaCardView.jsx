@@ -118,14 +118,14 @@ export default function QnaCardView({
       {qnaData.map((qna) => (
         <motion.div
           key={qna.id}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group"
+          className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group flex flex-col min-h-[320px]"
           variants={cardVariants}
           whileHover="hover"
         >
           {/* Card Header */}
-          <div className="p-4 border-b border-gray-100">
+          <div className="p-4 flex-1 flex flex-col">
             <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <h3
                   className="font-semibold text-lg leading-tight mb-2 line-clamp-2 cursor-pointer"
                   style={{ color: "#040606" }}
@@ -154,7 +154,7 @@ export default function QnaCardView({
                       </span>
                     </div>
                     <p
-                      className="text-sm leading-relaxed"
+                      className="text-sm leading-relaxed line-clamp-2"
                       style={{ color: "#646464" }}
                     >
                       {truncateText(qna.answer, 80)}
@@ -168,7 +168,7 @@ export default function QnaCardView({
                         Pending Answer
                       </span>
                     </div>
-                    <p className="text-sm" style={{ color: "#646464" }}>
+                    <p className="text-sm line-clamp-1" style={{ color: "#646464" }}>
                       This question is waiting for an answer
                     </p>
                   </div>
@@ -194,26 +194,26 @@ export default function QnaCardView({
             </div>
 
             {/* Meta Information */}
-            <div className="space-y-2">
+            <div className="space-y-2 mb-3">
               <div
                 className="flex items-center space-x-2 text-xs"
                 style={{ color: "#646464" }}
               >
-                <User className="h-3 w-3" />
-                <span>{qna.author}</span>
+                <User className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">{qna.author}</span>
               </div>
               <div
                 className="flex items-center space-x-2 text-xs"
                 style={{ color: "#646464" }}
               >
-                <Calendar className="h-3 w-3" />
-                <span>{formatDate(qna.createdAt)}</span>
+                <Calendar className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">{formatDate(qna.createdAt)}</span>
               </div>
               <div
                 className="flex items-center space-x-2 text-xs"
                 style={{ color: "#646464" }}
               >
-                <Tag className="h-3 w-3" />
+                <Tag className="h-3 w-3 flex-shrink-0" />
                 <span
                   className="px-2 py-1 rounded text-xs"
                   style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
@@ -222,34 +222,59 @@ export default function QnaCardView({
                 </span>
               </div>
             </div>
-          </div>
 
-          {/* Card Stats */}
-          <div
-            className="px-4 py-3 border-b border-gray-100"
-            style={{ backgroundColor: "#f8fafc" }}
-          >
+            {/* Card Stats */}
             <div
-              className="grid grid-cols-3 gap-4 text-xs"
-              style={{ color: "#646464" }}
+              className="px-3 py-2 rounded mt-auto"
+              style={{ backgroundColor: "#f8fafc" }}
             >
-              <div className="flex items-center space-x-1">
-                <Eye className="h-3 w-3" />
-                <span>{qna.views.toLocaleString()}</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <Heart className="h-3 w-3" />
-                <span>{qna.likes}</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <ThumbsUp className="h-3 w-3" />
-                <span>{qna.helpful}</span>
+              <div
+                className="grid grid-cols-3 gap-4 text-xs"
+                style={{ color: "#646464" }}
+              >
+                <div className="flex items-center space-x-1">
+                  <Eye className="h-3 w-3" />
+                  <span>{qna.views.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <Heart className="h-3 w-3" />
+                  <span>{qna.likes}</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <ThumbsUp className="h-3 w-3" />
+                  <span>{qna.helpful}</span>
+                </div>
               </div>
             </div>
           </div>
 
+          {/* Tags */}
+          {qna.tags && qna.tags.length > 0 && (
+            <div className="px-4 py-3 border-t border-gray-100">
+              <div className="flex flex-wrap gap-1">
+                {qna.tags.slice(0, 3).map((tag, index) => (
+                  <motion.span
+                    key={index}
+                    className="px-2 py-1 text-xs rounded-full text-white"
+                    style={{ backgroundColor: "#2691ce" }}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    #{tag}
+                  </motion.span>
+                ))}
+                {qna.tags.length > 3 && (
+                  <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
+                    +{qna.tags.length - 3}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Action Buttons */}
-          <div className="p-3 bg-white">
+          <div className="p-3 bg-white border-t border-gray-100">
             <div className="flex items-center justify-between space-x-2">
               <motion.button
                 onClick={() => onViewQna(qna)}
@@ -292,31 +317,6 @@ export default function QnaCardView({
               </motion.button>
             </div>
           </div>
-
-          {/* Tags */}
-          {qna.tags && qna.tags.length > 0 && (
-            <div className="px-4 pb-4">
-              <div className="flex flex-wrap gap-1">
-                {qna.tags.slice(0, 3).map((tag, index) => (
-                  <motion.span
-                    key={index}
-                    className="px-2 py-1 text-xs rounded-full text-white"
-                    style={{ backgroundColor: "#2691ce" }}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    #{tag}
-                  </motion.span>
-                ))}
-                {qna.tags.length > 3 && (
-                  <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                    +{qna.tags.length - 3}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
         </motion.div>
       ))}
     </motion.div>

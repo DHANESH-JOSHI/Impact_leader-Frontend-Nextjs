@@ -143,7 +143,7 @@ export default function ResourcesCardView({
       {resources.map((resource) => (
         <motion.div
           key={resource.id}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group"
+          className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group flex flex-col min-h-[480px]"
           variants={cardVariants}
           whileHover="hover"
         >
@@ -224,7 +224,7 @@ export default function ResourcesCardView({
           </div>
 
           {/* Card Content */}
-          <div className="p-4">
+          <div className="p-4 flex-1 flex flex-col min-h-[200px]">
             <h3
               className="font-semibold text-lg leading-tight mb-2 line-clamp-2 cursor-pointer"
               style={{ color: "#040606" }}
@@ -234,7 +234,7 @@ export default function ResourcesCardView({
             </h3>
 
             <p
-              className="text-sm leading-relaxed mb-3"
+              className="text-sm leading-relaxed mb-3 line-clamp-2"
               style={{ color: "#646464" }}
             >
               {resource.description.length > 100
@@ -243,34 +243,34 @@ export default function ResourcesCardView({
             </p>
 
             {/* Resource Meta */}
-            <div className="space-y-2 mb-4">
+            <div className="space-y-2 mb-3">
               <div
                 className="flex items-center space-x-2 text-xs"
                 style={{ color: "#646464" }}
               >
-                <User className="h-3 w-3" />
-                <span>{resource.author}</span>
+                <User className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">{resource.author}</span>
               </div>
               <div
                 className="flex items-center space-x-2 text-xs"
                 style={{ color: "#646464" }}
               >
-                <Calendar className="h-3 w-3" />
-                <span>{formatDate(resource.createdAt)}</span>
+                <Calendar className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">{formatDate(resource.createdAt)}</span>
               </div>
               <div
                 className="flex items-center space-x-2 text-xs"
                 style={{ color: "#646464" }}
               >
-                <FileText className="h-3 w-3" />
-                <span>{formatFileSize(resource.fileSize)}</span>
+                <FileText className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">{formatFileSize(resource.fileSize)}</span>
               </div>
             </div>
 
             {/* Stats */}
             <div
-              className="flex items-center justify-between text-xs mb-4"
-              style={{ color: "#646464" }}
+              className="flex items-center justify-between text-xs mb-4 px-3 py-2 rounded mt-auto"
+              style={{ backgroundColor: "#f8fafc", color: "#646464" }}
             >
               <div className="flex items-center space-x-1">
                 <Eye className="h-3 w-3" />
@@ -310,7 +310,7 @@ export default function ResourcesCardView({
             )}
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-between space-x-2">
+            <div className="flex items-center justify-between space-x-2 pt-3 border-t border-gray-100 mt-auto">
               <motion.button
                 onClick={() => onViewResource(resource)}
                 className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"

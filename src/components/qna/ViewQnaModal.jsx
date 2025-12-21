@@ -504,28 +504,34 @@ export default function ViewQnaModal({ isOpen, onClose, qna, onEdit }) {
 
                           {/* Badges Row */}
                           <div className="flex items-center space-x-2 mb-4">
-                            <span
-                              className="px-3 py-1 text-sm font-medium rounded-full"
-                              style={getStatusBadgeStyle(qna.status)}
-                            >
-                              {qna.status.charAt(0).toUpperCase() +
-                                qna.status.slice(1)}
-                            </span>
-                            <span
-                              className="px-3 py-1 text-sm font-medium rounded-full"
-                              style={getPriorityStyle(qna.priority)}
-                            >
-                              {qna.priority.charAt(0).toUpperCase() +
-                                qna.priority.slice(1)}{" "}
-                              Priority
-                            </span>
-                            <span
-                              className="px-3 py-1 text-sm font-medium rounded-full"
-                              style={getDifficultyStyle(qna.difficulty)}
-                            >
-                              {qna.difficulty.charAt(0).toUpperCase() +
-                                qna.difficulty.slice(1)}
-                            </span>
+                            {qna.status && (
+                              <span
+                                className="px-3 py-1 text-sm font-medium rounded-full"
+                                style={getStatusBadgeStyle(qna.status)}
+                              >
+                                {qna.status.charAt(0).toUpperCase() +
+                                  qna.status.slice(1)}
+                              </span>
+                            )}
+                            {qna.priority && (
+                              <span
+                                className="px-3 py-1 text-sm font-medium rounded-full"
+                                style={getPriorityStyle(qna.priority)}
+                              >
+                                {qna.priority.charAt(0).toUpperCase() +
+                                  qna.priority.slice(1)}{" "}
+                                Priority
+                              </span>
+                            )}
+                            {qna.difficulty && (
+                              <span
+                                className="px-3 py-1 text-sm font-medium rounded-full"
+                                style={getDifficultyStyle(qna.difficulty)}
+                              >
+                                {qna.difficulty.charAt(0).toUpperCase() +
+                                  qna.difficulty.slice(1)}
+                              </span>
+                            )}
                           </div>
 
                           {/* Question Metadata */}

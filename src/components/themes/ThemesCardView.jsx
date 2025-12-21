@@ -90,88 +90,92 @@ export default function ThemesCardView({
       {themes.map((theme) => (
         <motion.div
           key={theme.id}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+          className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group flex flex-col min-h-[320px]"
           variants={cardVariants}
           whileHover="hover"
         >
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center space-x-3 flex-1">
-              <div
-                className="w-12 h-12 rounded-lg flex items-center justify-center"
-                style={{ backgroundColor: "#eff6ff" }}
-              >
-                <Palette className="h-6 w-6" style={{ color: "#2691ce" }} />
+          <div className="p-4 flex-1 flex flex-col">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                <div
+                  className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: "#eff6ff" }}
+                >
+                  <Palette className="h-6 w-6" style={{ color: "#2691ce" }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-lg line-clamp-1" style={{ color: "#040606" }}>
+                    {theme.name || "Untitled Theme"}
+                  </h3>
+                  {theme.category && (
+                    <p className="text-sm truncate" style={{ color: "#646464" }}>
+                      {theme.category}
+                    </p>
+                  )}
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-lg truncate" style={{ color: "#040606" }}>
-                  {theme.name || "Untitled Theme"}
-                </h3>
-                {theme.category && (
-                  <p className="text-sm truncate" style={{ color: "#646464" }}>
-                    {theme.category}
-                  </p>
+            </div>
+
+            {theme.description && (
+              <p className="text-sm mb-4 line-clamp-2" style={{ color: "#646464" }}>
+                {theme.description}
+              </p>
+            )}
+
+            <div className="space-y-2 mb-4">
+              <div className="flex items-center space-x-2 text-sm">
+                <Calendar className="h-4 w-4 flex-shrink-0" style={{ color: "#646464" }} />
+                <span className="truncate" style={{ color: "#646464" }}>
+                  Created {formatDate(theme.createdAt)}
+                </span>
+              </div>
+            </div>
+
+            {theme.tags && theme.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-auto">
+                {theme.tags.slice(0, 3).map((tag, index) => (
+                  <span
+                    key={index}
+                    className="px-2 py-1 text-xs rounded-md"
+                    style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+                {theme.tags.length > 3 && (
+                  <span className="px-2 py-1 text-xs" style={{ color: "#646464" }}>
+                    +{theme.tags.length - 3} more
+                  </span>
                 )}
               </div>
-            </div>
+            )}
           </div>
 
-          {theme.description && (
-            <p className="text-sm mb-4 line-clamp-2" style={{ color: "#646464" }}>
-              {theme.description}
-            </p>
-          )}
-
-          <div className="space-y-2 mb-4">
-            <div className="flex items-center space-x-2 text-sm">
-              <Calendar className="h-4 w-4" style={{ color: "#646464" }} />
-              <span style={{ color: "#646464" }}>
-                Created {formatDate(theme.createdAt)}
-              </span>
+          <div className="p-3 bg-white border-t border-gray-100">
+            <div className="flex items-center justify-end space-x-2">
+              <motion.button
+                onClick={() => onViewTheme(theme)}
+                className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
+                variants={buttonVariants}
+                whileHover="hover"
+                whileTap="tap"
+              >
+                <Eye className="h-4 w-4" />
+                <span>View</span>
+              </motion.button>
+              <motion.button
+                onClick={() => onDeleteTheme(theme)}
+                className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ backgroundColor: "#fef2f2", color: "#ef4444" }}
+                variants={buttonVariants}
+                whileHover="hover"
+                whileTap="tap"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>Delete</span>
+              </motion.button>
             </div>
-          </div>
-
-          {theme.tags && theme.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {theme.tags.slice(0, 3).map((tag, index) => (
-                <span
-                  key={index}
-                  className="px-2 py-1 text-xs rounded-md"
-                  style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
-                >
-                  {tag}
-                </span>
-              ))}
-              {theme.tags.length > 3 && (
-                <span className="px-2 py-1 text-xs" style={{ color: "#646464" }}>
-                  +{theme.tags.length - 3} more
-                </span>
-              )}
-            </div>
-          )}
-
-          <div className="flex items-center justify-end space-x-2 pt-4 border-t border-gray-200">
-            <motion.button
-              onClick={() => onViewTheme(theme)}
-              className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-              style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
-              variants={buttonVariants}
-              whileHover="hover"
-              whileTap="tap"
-            >
-              <Eye className="h-4 w-4" />
-              <span>View</span>
-            </motion.button>
-            <motion.button
-              onClick={() => onDeleteTheme(theme)}
-              className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-              style={{ backgroundColor: "#fef2f2", color: "#ef4444" }}
-              variants={buttonVariants}
-              whileHover="hover"
-              whileTap="tap"
-            >
-              <Trash2 className="h-4 w-4" />
-              <span>Delete</span>
-            </motion.button>
           </div>
         </motion.div>
       ))}
