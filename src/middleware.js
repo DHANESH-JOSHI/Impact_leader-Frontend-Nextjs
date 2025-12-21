@@ -1,102 +1,113 @@
 import { NextResponse } from 'next/server';
 
-// Helper function to verify Impact Leaders token
+/**
+ * Verify Impact Leaders authentication token
+ * @param {string} token - JWT token to verify
+ * @returns {Promise<{valid: boolean, isAdmin: boolean, user: object|null}>}
+ */
 async function verifyImpactLeadersToken(token) {
+  if (!token) {
+    return { valid: false, isAdmin: false, user: null };
+  }
+
+  let timeoutId;
   try {
-    console.log('🔍 Middleware: Verifying token...', token.substring(0, 20) + '...');
-    
-    // Since we can't verify external JWT without the secret, 
-    // we'll make a simple request to check if token is valid
-    // Use proxied URL in middleware (server-side)
     const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
-    const response = await fetch(`${backendUrl}/api/v1/auth/me`, {
+    const apiUrl = `${backendUrl}/api/v1/auth/me`;
+    
+    // Create AbortController for timeout (Edge Runtime compatible)
+    const controller = new AbortController();
+    timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    const response = await fetch(apiUrl, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
-      }
+      },
+      signal: controller.signal
     });
     
-    console.log('🌐 Middleware: API response status:', response.status);
+    clearTimeout(timeoutId);
     
-    if (response.ok) {
-      const userData = await response.json();
-      console.log('👤 Middleware: User data received:', JSON.stringify(userData, null, 2));
-      
-      // Check if user has admin privileges
-      const user = userData.data || userData.user || userData;
-      console.log('🔍 Middleware: Extracted user:', JSON.stringify(user, null, 2));
-      
-      const isAdmin = user.role === 'admin' || 
-                     user.role === 'super-admin' || 
-                     user.isAdmin === true ||
-                     (user.permissions && user.permissions.includes('admin_access'));
-      
-      console.log('🔒 Middleware: Admin check result:', isAdmin, 'Role:', user.role);
-      
-      return { valid: true, isAdmin, user };
+    if (!response.ok) {
+      return { valid: false, isAdmin: false, user: null };
     }
     
-    console.log('❌ Middleware: API response not ok');
-    return { valid: false, isAdmin: false, user: null };
+    const userData = await response.json();
+    const user = userData.data || userData.user || userData;
+    
+    // Check if user has admin privileges
+    const isAdmin = 
+      user.role === 'admin' || 
+      user.role === 'super-admin' || 
+      user.isAdmin === true ||
+      (user.permissions && Array.isArray(user.permissions) && user.permissions.includes('admin_access'));
+    
+    return { valid: true, isAdmin, user };
   } catch (error) {
-    console.error('❌ Middleware: Token verification error:', error);
+    // Clear timeout if still pending
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    
+    // Silently fail in production, log in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[Middleware] Token verification error:', error.message);
+    }
     return { valid: false, isAdmin: false, user: null };
   }
 }
 
+/**
+ * Next.js middleware to protect routes
+ * @param {Request} request - Incoming request
+ * @returns {NextResponse} Response with redirect or next
+ */
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for static files
+  // Skip middleware for static files, API routes, and public assets
   if (
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/favicon')
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/favicon') ||
+    pathname.startsWith('/_vercel') ||
+    pathname.match(/\.(ico|png|jpg|jpeg|svg|gif|webp|woff|woff2|ttf|eot)$/)
   ) {
     return NextResponse.next();
   }
 
-  // Temporarily disable middleware for debugging - remove this later
-  console.log('🔧 Middleware: Temporarily disabled for debugging');
-  return NextResponse.next();
-
-  // Allow access to login page
+  // Handle login page
   if (pathname === '/') {
-    const token = request.cookies.get('impactLeadersToken');
+    const token = request.cookies.get('impactLeadersToken')?.value;
 
     // If authenticated and trying to access login page, redirect to dashboard
     if (token) {
-      const { valid, isAdmin } = await verifyImpactLeadersToken(token.value);
+      const { valid, isAdmin } = await verifyImpactLeadersToken(token);
       if (valid && isAdmin) {
         return NextResponse.redirect(new URL('/dashboard', request.url));
-      } else {
-        // Invalid token or not admin, clear cookie and allow login
-        const response = NextResponse.next();
-        response.cookies.delete('impactLeadersToken');
-        return response;
       }
+      // Invalid token, clear cookie and allow login
+      const response = NextResponse.next();
+      response.cookies.delete('impactLeadersToken');
+      return response;
     }
+    
     return NextResponse.next();
   }
 
   // Protect all dashboard routes - only for admin users
   if (pathname.startsWith('/dashboard')) {
-    console.log('🛡️ Middleware: Protecting dashboard route:', pathname);
-
-    const token = request.cookies.get('impactLeadersToken');
-    console.log('🍪 Middleware: Token from cookie:', token ? 'Present' : 'Missing');
+    const token = request.cookies.get('impactLeadersToken')?.value;
 
     if (!token) {
-      console.log('❌ Middleware: No token, redirecting to login_required');
       return NextResponse.redirect(new URL('/?error=login_required', request.url));
     }
 
-    const { valid, isAdmin, user } = await verifyImpactLeadersToken(token.value);
-
-    console.log('📝 Middleware: Verification result - Valid:', valid, 'IsAdmin:', isAdmin);
+    const { valid, isAdmin, user } = await verifyImpactLeadersToken(token);
 
     if (!valid) {
       // Clear invalid token and redirect to login
-      console.log('❌ Middleware: Invalid token, redirecting to session_expired');
       const response = NextResponse.redirect(new URL('/?error=session_expired', request.url));
       response.cookies.delete('impactLeadersToken');
       return response;
@@ -104,20 +115,27 @@ export async function middleware(request) {
 
     if (!isAdmin) {
       // User is valid but not admin
-      console.log('❌ Middleware: Valid user but not admin, redirecting to access_denied');
-      console.log('👤 Middleware: User role was:', user?.role);
-      const response = NextResponse.redirect(new URL('/?error=access_denied', request.url));
-      return response;
+      return NextResponse.redirect(new URL('/?error=access_denied', request.url));
     }
 
     // Valid admin user, allow access
-    console.log('✅ Middleware: Valid admin user, allowing access');
     return NextResponse.next();
   }
 
+  // Allow all other routes
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)']
+  matcher: [
+    /*
+     * Match all request paths except:
+     * - api routes
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public files (images, fonts, etc.)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|eot)).*)',
+  ],
 };
