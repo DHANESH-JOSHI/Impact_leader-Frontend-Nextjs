@@ -26,6 +26,8 @@ import {
   Users,
   Calendar,
   Building2,
+  Palette,
+  MessageSquare,
 } from "lucide-react";
 
 // main menu items ka data - dashboard, stories, posts etc.
@@ -79,6 +81,21 @@ const menuItems = [
     title: "Support",
     icon: Headphones,
     href: "/dashboard/support",
+  },
+  {
+    title: "Themes",
+    icon: Palette,
+    href: "/dashboard/themes",
+  },
+  {
+    title: "Notifications",
+    icon: Bell,
+    href: "/dashboard/notifications",
+  },
+  {
+    title: "Messages",
+    icon: MessageSquare,
+    href: "/dashboard/messages",
   },
 ];
 

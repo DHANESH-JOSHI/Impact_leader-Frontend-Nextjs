@@ -215,6 +215,13 @@ export const API_ENDPOINTS = {
     PREFERENCES: '/notifications/preferences',
   },
 
+  // ==================== THEMES ====================
+  THEMES: {
+    BASE: '/themes',
+    BY_ID: (id) => `/themes/${id}`,
+    BULK_CREATE: '/themes/bulk',
+  },
+
   // ==================== ADMIN ====================
   ADMIN: {
     // Dashboard
@@ -373,4 +380,4 @@ export const buildURL = (endpoint, params = {}) => {
 };
 
 // Export individual categories for easier imports
-export const { AUTH, USERS, POSTS, STORIES, RESOURCES, QNA, MEETINGS, SUPPORT, MESSAGES, CONNECTIONS, DIRECTORY, NOTIFICATIONS, ADMIN, MONITORING, HEALTH } = API_ENDPOINTS;
+export const { AUTH, USERS, POSTS, STORIES, RESOURCES, QNA, MEETINGS, SUPPORT, MESSAGES, CONNECTIONS, DIRECTORY, NOTIFICATIONS, THEMES, ADMIN, MONITORING, HEALTH } = API_ENDPOINTS;
