@@ -27,10 +27,12 @@ export default function DashboardLayout({ children }) {
           }
         }
         // No valid token, redirect to login
-        router.push("/?error=login_required");
+        setIsLoading(false);
+        router.replace("/?error=login_required");
       } catch (error) {
         console.error("Auth check error:", error);
-        router.push("/?error=login_required");
+        setIsLoading(false);
+        router.replace("/?error=login_required");
       }
     };
 

@@ -126,6 +126,27 @@ export default function AdminLoginPage() {
   useEffect(() => {
     setShowAnimation(true);
 
+    // Check if user is already authenticated - redirect to dashboard
+    const checkAuth = () => {
+      try {
+        const authData = localStorage.getItem("impactLeadersAuth");
+        if (authData) {
+          const parsed = JSON.parse(authData);
+          const token = parsed?.value?.accessToken || parsed?.accessToken;
+          if (token) {
+            // User is already authenticated, redirect to dashboard
+            router.replace("/dashboard");
+            return;
+          }
+        }
+      } catch (error) {
+        // Ignore errors, allow login page to show
+        console.error("Auth check error:", error);
+      }
+    };
+
+    checkAuth();
+
     // Check for URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const error = urlParams.get("error");
@@ -161,7 +182,7 @@ export default function AdminLoginPage() {
     if (error || message) {
       window.history.replaceState({}, "", "/");
     }
-  }, []);
+  }, [router, showToast]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
