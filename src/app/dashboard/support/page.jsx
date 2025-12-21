@@ -3,9 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  CheckCircle,
-  AlertCircle,
-  X,
   Headphones,
 } from "lucide-react";
 import SupportHeader from "@/components/support/SupportHeader";
@@ -15,93 +12,6 @@ import ViewTicketModal from "@/components/support/ViewTicketModal";
 import DeleteConfirmModal from "@/components/support/DeleteConfirmModal";
 import { SupportService } from "@/services/supportService";
 import toast from "react-hot-toast";
-
-// Toast Component
-const Toast = ({ message, type, onClose, isVisible }) => {
-  useEffect(() => {
-    if (isVisible) {
-      const timer = setTimeout(() => {
-        onClose();
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [isVisible, onClose]);
-
-  if (!isVisible) return null;
-
-  const getToastStyles = () => {
-    switch (type) {
-      case "success":
-        return "bg-green-600 border-green-700 shadow-lg";
-      case "error":
-        return "bg-red-600 border-red-700 shadow-lg";
-      default:
-        return "bg-gray-600 border-gray-700 shadow-lg";
-    }
-  };
-
-  const getIcon = () => {
-    switch (type) {
-      case "success":
-        return <CheckCircle className="h-5 w-5 text-white" />;
-      case "error":
-        return <AlertCircle className="h-5 w-5 text-white" />;
-      default:
-        return <AlertCircle className="h-5 w-5 text-white" />;
-    }
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -50 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -50 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-      className="fixed top-4 right-4 z-50"
-    >
-      <div
-        className={`${getToastStyles()} border rounded-lg p-4 min-w-[320px] max-w-[420px]`}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            {getIcon()}
-            <p className="text-white text-sm font-medium">{message}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-white/80 hover:text-white transition-colors ml-2"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
-// Custom hook for toast management - only success and error types
-const useToast = () => {
-  const [toasts, setToasts] = useState([]);
-
-  const showToast = (message, type = "error") => {
-    // Only allow 'success' or 'error' types
-    const validType = type === "success" ? "success" : "error";
-    const id = Date.now() + Math.random();
-    const newToast = { id, message, type: validType, isVisible: true };
-
-    setToasts((prev) => [...prev, newToast]);
-
-    setTimeout(() => {
-      hideToast(id);
-    }, 4000);
-  };
-
-  const hideToast = (id) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
-  };
-
-  return { toasts, showToast, hideToast };
-};
 
 // Animation variants
 const pageVariants = {
@@ -118,7 +28,6 @@ const pageVariants = {
 };
 
 export default function SupportPage() {
-  const { toasts, showToast, hideToast } = useToast();
 
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -307,18 +216,6 @@ export default function SupportPage() {
       initial="hidden"
       animate="visible"
     >
-      {/* Toast notifications */}
-      <AnimatePresence>
-        {toasts.map((toast) => (
-          <Toast
-            key={toast.id}
-            message={toast.message}
-            type={toast.type}
-            isVisible={toast.isVisible}
-            onClose={() => hideToast(toast.id)}
-          />
-        ))}
-      </AnimatePresence>
 
       {/* Page Header */}
       <SupportHeader

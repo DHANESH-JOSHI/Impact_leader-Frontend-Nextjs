@@ -6,14 +6,11 @@ import {
   Lock,
   Eye,
   EyeOff,
-  AlertCircle,
   ArrowRight,
   Store,
   ShoppingBag,
   TrendingUp,
   Globe,
-  CheckCircle,
-  X,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -27,94 +24,14 @@ import {
 } from "@/components/ui/card";
 import { authStorage } from "@/lib/storage";
 import { AuthService } from "@/services/authService";
+import toast from "react-hot-toast";
 
 // Brand colors
 const PRIMARY = "#2490CE";
 const ACCENT = "#A5C93D";
 
-// ---------- Toast (JS version, no TS annotations)
-const Toast = ({ message, type = "info", onClose, isVisible }) => {
-  useEffect(() => {
-    if (isVisible) {
-      const t = setTimeout(onClose, 4000);
-      return () => clearTimeout(t);
-    }
-  }, [isVisible, onClose]);
-
-  if (!isVisible) return null;
-
-  const bg =
-    type === "success"
-      ? ACCENT
-      : type === "error"
-      ? "#ef4444"
-      : type === "warning"
-      ? "#eab308"
-      : PRIMARY;
-
-  const border =
-    type === "success"
-      ? ACCENT
-      : type === "error"
-      ? "#dc2626"
-      : type === "warning"
-      ? "#ca8a04"
-      : PRIMARY;
-
-  const Icon = type === "success" ? CheckCircle : AlertCircle;
-
-  return (
-    <div className="fixed top-4 right-4 z-50 animate-slide-in-right will-change-transform">
-      <div
-        role="status"
-        aria-live="polite"
-        className="rounded-xl shadow-xl p-4 min-w-[300px] max-w-[420px] backdrop-blur-md"
-        style={{
-          backgroundColor: bg,
-          border: `1px solid ${border}`,
-          color: "#fff",
-        }}
-      >
-        <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-3">
-            <Icon className="h-5 w-5 text-white" />
-            <p className="text-white text-sm font-medium leading-5">
-              {message}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close notification"
-            className="ml-4 text-white/90 hover:text-white transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ---------- Toast hook
-const useToast = () => {
-  const [toasts, setToasts] = useState([]);
-
-  const showToast = (message, type = "info") => {
-    const id = Date.now();
-    setToasts((prev) => [...prev, { id, message, type, isVisible: true }]);
-  };
-
-  const hideToast = (id) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  };
-
-  return { toasts, showToast, hideToast };
-};
-
 export default function AdminLoginPage() {
   const router = useRouter();
-  const { toasts, showToast, hideToast } = useToast();
 
   const [showAnimation, setShowAnimation] = useState(false);
   const [email, setEmail] = useState("");
@@ -155,26 +72,26 @@ export default function AdminLoginPage() {
     if (error) {
       switch (error) {
         case "login_required":
-          showToast("Please login to access the dashboard", "error");
+          toast.error("Please login to access the dashboard");
           break;
         case "session_expired":
-          showToast("Your session has expired. Please login again.", "error");
+          toast.error("Your session has expired. Please login again.");
           break;
         case "access_denied":
-          showToast("Access denied. Admin privileges required.", "error");
+          toast.error("Access denied. Admin privileges required.");
           break;
         default:
-          showToast("Please login to continue", "error");
+          toast.error("Please login to continue");
       }
     }
 
     if (message) {
       switch (message) {
         case "logged_out":
-          showToast("Successfully logged out", "success");
+          toast.success("Successfully logged out");
           break;
         default:
-          showToast(message, "info");
+          toast(message);
       }
     }
 
@@ -182,7 +99,7 @@ export default function AdminLoginPage() {
     if (error || message) {
       window.history.replaceState({}, "", "/");
     }
-  }, [router, showToast]);
+  }, [router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -191,23 +108,23 @@ export default function AdminLoginPage() {
 
     try {
       if (!email) {
-        showToast("Email is required", "error");
+        toast.error("Email is required");
         setLoading(false);
         return;
       }
       if (!password) {
-        showToast("Password is required", "error");
+        toast.error("Password is required");
         setLoading(false);
         return;
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
-        showToast("Please enter a valid email address", "error");
+        toast.error("Please enter a valid email address");
         setLoading(false);
         return;
       }
       if (password.length < 6) {
-        showToast("Password must be at least 6 characters", "error");
+        toast.error("Password must be at least 6 characters");
         setLoading(false);
         return;
       }
@@ -240,18 +157,15 @@ export default function AdminLoginPage() {
           );
         }, 100);
 
-        showToast(
-          `Welcome ${result.user?.firstName || "Admin"}! Redirecting…`,
-          "success"
-        );
+        toast.success(`Welcome ${result.user?.firstName || "Admin"}! Redirecting…`);
         setTimeout(() => router.push("/dashboard"), 900);
       } else {
         console.log("❌ Login: Failed response:", result);
-        showToast(result.message || "Login failed", "error");
+        toast.error(result.message || "Login failed");
         setError(result.message || "Invalid credentials");
       }
     } catch (err) {
-      showToast("Login failed. Please try again.", "error");
+      toast.error("Login failed. Please try again.");
       setError("Network error. Please check your connection.");
     } finally {
       setLoading(false);
@@ -338,16 +252,6 @@ export default function AdminLoginPage() {
         }
       `}</style>
 
-      {/* Toasts */}
-      {toasts.map((t) => (
-        <Toast
-          key={t.id}
-          message={t.message}
-          type={t.type}
-          isVisible={t.isVisible}
-          onClose={() => hideToast(t.id)}
-        />
-      ))}
 
       {/* Background Layer: brand gradient */}
       <div
