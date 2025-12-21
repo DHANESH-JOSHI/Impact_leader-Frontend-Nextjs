@@ -1,12 +1,41 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Sidebar from "@/components/core/Sidebar";
 import { Menu } from "lucide-react";
 
 export default function DashboardLayout({ children }) {
+  const router = useRouter();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Check authentication
+    const checkAuth = () => {
+      try {
+        const authData = localStorage.getItem("impactLeadersAuth");
+        if (authData) {
+          const parsed = JSON.parse(authData);
+          const token = parsed?.value?.accessToken || parsed?.accessToken;
+          if (token) {
+            setIsAuthenticated(true);
+            setIsLoading(false);
+            return;
+          }
+        }
+        // No valid token, redirect to login
+        router.push("/?error=login_required");
+      } catch (error) {
+        console.error("Auth check error:", error);
+        router.push("/?error=login_required");
+      }
+    };
+
+    checkAuth();
+  }, [router]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -22,6 +51,23 @@ export default function DashboardLayout({ children }) {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  // Show loading state while checking auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: "#2691ce" }}></div>
+          <p style={{ color: "#646464" }}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render dashboard if not authenticated (redirect will happen)
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
