@@ -9,7 +9,7 @@ import SupportHeader from "@/components/support/SupportHeader";
 import SupportTableView from "@/components/support/SupportTableView";
 import AddTicketModal from "@/components/support/AddTicketModal";
 import ViewTicketModal from "@/components/support/ViewTicketModal";
-import DeleteConfirmModal from "@/components/support/DeleteConfirmModal";
+import DeleteConfirmModal from "@/components/core/DeleteConfirmModal";
 import { SupportService } from "@/services/supportService";
 import toast from "react-hot-toast";
 
@@ -286,8 +286,10 @@ export default function SupportPage() {
           setSelectedTicket(null);
         }}
         onConfirm={handleConfirmDelete}
-        ticket={selectedTicket}
-        isDeleting={isDeleting}
+        title="Delete Support Ticket"
+        message="Are you sure you want to delete this support ticket? This action cannot be undone."
+        itemName={selectedTicket ? `Ticket #${selectedTicket.ticketId} - ${selectedTicket.subject}` : undefined}
+        isLoading={isDeleting}
       />
     </motion.div>
   );

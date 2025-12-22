@@ -8,7 +8,7 @@ import ConnectionsCardView from "@/components/connections/ConnectionsCardView";
 import ConnectionsTableView from "@/components/connections/ConnectionsTableView";
 import AddConnectionModal from "@/components/connections/AddConnectionModal";
 import ViewConnectionModal from "@/components/connections/ViewConnectionModal";
-import DeleteConfirmModal from "@/components/connections/DeleteConfirmModal";
+import DeleteConfirmModal from "@/components/core/DeleteConfirmModal";
 import { ConnectionsService } from "@/services/connectionsService";
 
 const pageVariants = {
@@ -56,6 +56,7 @@ export default function ConnectionsPage() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedConnection, setSelectedConnection] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const statuses = useMemo(() => [
     { value: "all", label: "All Status" },
@@ -219,7 +220,7 @@ export default function ConnectionsPage() {
 
   const handleDeleteConnection = async (connectionId) => {
     try {
-      setLoading(true);
+      setDeleteLoading(true);
       const result = await ConnectionsService.removeConnection(connectionId);
 
       if (result.success) {
@@ -234,7 +235,7 @@ export default function ConnectionsPage() {
       console.error("Failed to remove connection:", error);
       toast.error(error.message || "Failed to remove connection");
     } finally {
-      setLoading(false);
+      setDeleteLoading(false);
     }
   };
 
@@ -383,7 +384,10 @@ export default function ConnectionsPage() {
             handleDeleteConnection(selectedConnection.id);
           }
         }}
-        connectionName={selectedConnection?.name}
+        title="Delete Connection"
+        message="Are you sure you want to delete this connection? This action cannot be undone."
+        itemName={selectedConnection?.name || (selectedConnection?.recipient ? `${selectedConnection.recipient.firstName} ${selectedConnection.recipient.lastName}` : undefined)}
+        isLoading={deleteLoading}
       />
     </motion.div>
   );

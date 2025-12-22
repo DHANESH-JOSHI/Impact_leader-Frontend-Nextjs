@@ -8,7 +8,7 @@ import ThemesCardView from "@/components/themes/ThemesCardView";
 import ThemesTableView from "@/components/themes/ThemesTableView";
 import AddThemeModal from "@/components/themes/AddThemeModal";
 import ViewThemeModal from "@/components/themes/ViewThemeModal";
-import DeleteConfirmModal from "@/components/themes/DeleteConfirmModal";
+import DeleteConfirmModal from "@/components/core/DeleteConfirmModal";
 import { ThemesService } from "@/services/themesService";
 
 const pageVariants = {
@@ -306,8 +306,10 @@ export default function ThemesPage() {
             handleDeleteTheme(selectedTheme.id);
           }
         }}
-        theme={selectedTheme}
-        loading={deleteLoading}
+        title="Delete Theme"
+        message="Are you sure you want to delete this theme? This action cannot be undone."
+        itemName={selectedTheme?.name}
+        isLoading={deleteLoading}
       />
     </motion.div>
   );

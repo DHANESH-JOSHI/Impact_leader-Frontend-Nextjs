@@ -8,7 +8,7 @@ import UsersCardView from "@/components/users/UsersCardView";
 import UsersTableView from "@/components/users/UsersTableView";
 import AddUserModal from "@/components/impact-leaders/users/AddUserModal";
 import ViewUserModal from "@/components/impact-leaders/users/ViewUserModal";
-import DeleteConfirmModal from "@/components/users/DeleteConfirmModal";
+import DeleteConfirmModal from "@/components/core/DeleteConfirmModal";
 import { UsersService } from "@/services/usersService";
 
 const pageVariants = {
@@ -327,8 +327,10 @@ export default function UsersPage() {
             handleDeleteUser(selectedUser.id);
           }
         }}
-        user={selectedUser}
-        loading={deleteLoading}
+        title="Delete User"
+        message="Are you sure you want to delete this user? This action cannot be undone."
+        itemName={selectedUser ? `${selectedUser.firstName} ${selectedUser.lastName}` : undefined}
+        isLoading={deleteLoading}
       />
     </motion.div>
   );

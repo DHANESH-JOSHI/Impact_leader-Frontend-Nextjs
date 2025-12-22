@@ -6,26 +6,30 @@ export class ResourcesService {
     try {
       const { 
         page = 1, 
-        limit = 10, 
+        limit = 20, 
         search, 
         category, 
         type, 
         themes, 
-        status,
-        sortBy = 'createdAt',
-        sortOrder = 'desc'
+        tags,
+        isESG,
+        isCSR,
+        isPublic,
+        sort = 'newest'
       } = params;
       
       const queryParams = {
         page,
         limit,
-        sortBy,
-        sortOrder,
+        sort,
         ...(search && { search }),
         ...(category && { category }),
         ...(type && { type }),
-        ...(themes && { themes }),
-        ...(status && { status }),
+        ...(themes && { themes: Array.isArray(themes) ? themes.join(',') : themes }),
+        ...(tags && { tags: Array.isArray(tags) ? tags.join(',') : tags }),
+        ...(isESG !== undefined && { isESG }),
+        ...(isCSR !== undefined && { isCSR }),
+        ...(isPublic !== undefined && { isPublic }),
       };
 
       const response = await apiClient.get(RESOURCES.BASE, { params: queryParams });
@@ -349,7 +353,9 @@ static async uploadDocumentResource(resourceData, file) {
       { value: 'document', label: 'Document', extensions: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'] },
       { value: 'video', label: 'Video', extensions: ['mp4', 'avi', 'mov', 'wmv', 'flv'] },
       { value: 'audio', label: 'Audio', extensions: ['mp3', 'wav', 'aac', 'ogg'] },
-      { value: 'image', label: 'Image', extensions: ['jpg', 'jpeg', 'png', 'svg', 'gif'] }
+      { value: 'image', label: 'Image', extensions: ['jpg', 'jpeg', 'png', 'svg', 'gif'] },
+      { value: 'link', label: 'Link', extensions: [] },
+      { value: 'other', label: 'Other', extensions: [] }
     ];
   }
 
@@ -383,11 +389,10 @@ static async uploadDocumentResource(resourceData, file) {
 
   static getSortOptions() {
     return [
-      { value: 'createdAt', label: 'Date Created' },
-      { value: 'downloads', label: 'Download Count' },
-      { value: 'views', label: 'View Count' },
-      { value: 'title', label: 'Title (A-Z)' },
-      { value: 'size', label: 'File Size' }
+      { value: 'newest', label: 'Newest First' },
+      { value: 'oldest', label: 'Oldest First' },
+      { value: 'downloads', label: 'Most Downloaded' },
+      { value: 'name', label: 'Name (A-Z)' }
     ];
   }
 

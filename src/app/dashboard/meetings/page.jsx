@@ -8,7 +8,7 @@ import MeetingsCardView from "@/components/meetings/MeetingsCardView";
 import MeetingsTableView from "@/components/meetings/MeetingsTableView";
 import AddMeetingModal from "@/components/meetings/AddMeetingModal";
 import ViewMeetingModal from "@/components/meetings/ViewMeetingModal";
-import DeleteConfirmModal from "@/components/meetings/DeleteConfirmModal";
+import DeleteConfirmModal from "@/components/core/DeleteConfirmModal";
 import { MeetingsService } from "@/services/meetingsService";
 
 const pageVariants = {
@@ -57,6 +57,7 @@ export default function MeetingsPage() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedMeeting, setSelectedMeeting] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const statuses = useMemo(() => [
     { value: "all", label: "All Status" },
@@ -213,7 +214,7 @@ export default function MeetingsPage() {
 
   const handleDeleteMeeting = async (meetingId) => {
     try {
-      setLoading(true);
+      setDeleteLoading(true);
       toast.error("Delete functionality needs to be implemented in the service");
       setIsDeleteModalOpen(false);
       setSelectedMeeting(null);
@@ -221,7 +222,7 @@ export default function MeetingsPage() {
       console.error("Failed to delete meeting:", error);
       toast.error(error.message || "Failed to delete meeting");
     } finally {
-      setLoading(false);
+      setDeleteLoading(false);
     }
   };
 
@@ -379,7 +380,10 @@ export default function MeetingsPage() {
             handleDeleteMeeting(selectedMeeting.id);
           }
         }}
-        meetingTitle={selectedMeeting?.title}
+        title="Delete Meeting"
+        message="Are you sure you want to delete this meeting? This action cannot be undone."
+        itemName={selectedMeeting?.title}
+        isLoading={deleteLoading}
       />
     </motion.div>
   );

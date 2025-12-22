@@ -285,11 +285,13 @@ export default function ResourcesCardView({
                 <span>{resource.downloads}</span>
               </div>
             </div>
+          </div>
 
-            {/* Tags */}
-            {resource.tags && resource.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1 mb-4">
-                {resource.tags.slice(0, 2).map((tag, index) => (
+          {/* Tags */}
+          {resource.tags && resource.tags.length > 0 && (
+            <div className="px-4 py-3 border-t border-gray-100">
+              <div className="flex flex-wrap gap-1">
+                {resource.tags.slice(0, 3).map((tag, index) => (
                   <motion.span
                     key={index}
                     className="px-2 py-1 text-xs rounded-full text-white"
@@ -301,16 +303,18 @@ export default function ResourcesCardView({
                     #{tag}
                   </motion.span>
                 ))}
-                {resource.tags.length > 2 && (
+                {resource.tags.length > 3 && (
                   <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                    +{resource.tags.length - 2}
+                    +{resource.tags.length - 3}
                   </span>
                 )}
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Action Buttons */}
-            <div className="flex items-center justify-between space-x-2 pt-3 border-t border-gray-100 mt-auto">
+          {/* Action Buttons */}
+          <div className="p-3 bg-white border-t border-gray-100">
+            <div className="flex items-center justify-between space-x-2">
               <motion.button
                 onClick={() => onViewResource(resource)}
                 className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"

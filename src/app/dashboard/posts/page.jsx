@@ -8,7 +8,7 @@ import PostsCardView from "@/components/posts/PostsCardView";
 import PostsTableView from "@/components/posts/PostsTableView";
 import AddPostModal from "@/components/posts/AddPostModal";
 import ViewPostModal from "@/components/posts/ViewPostModal";
-import DeleteConfirmModal from "@/components/posts/DeleteConfirmModal";
+import DeleteConfirmModal from "@/components/core/DeleteConfirmModal";
 import { PostsService } from "@/services/postsService";
 
 
@@ -403,7 +403,10 @@ export default function PostsPage() {
             setSelectedPost(null);
           }}
           onConfirm={confirmDelete}
-          postTitle={selectedPost?.title}
+          title="Delete Post"
+          message="Are you sure you want to delete this post? This action cannot be undone."
+          itemName={selectedPost?.title}
+          isLoading={false}
         />
       </div>
     </motion.div>

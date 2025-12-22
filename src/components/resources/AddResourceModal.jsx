@@ -11,7 +11,6 @@ import {
   Video,
   Volume2,
   Image,
-  User,
   Tag,
 } from "lucide-react";
 
@@ -56,16 +55,19 @@ export default function AddResourceModal({
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    type: "video",
+    type: "document",
     fileUrl: "",
     fileName: "",
     fileSize: 0,
     duration: 0,
     category: categories[0] || "",
     tags: "",
+    themes: "",
     author: "",
-    status: "draft",
-    thumbnail: "",
+    isPublic: true,
+    isESG: false,
+    isCSR: true, // Default to CSR
+    url: "",
     featured: false,
   });
 
@@ -79,32 +81,38 @@ export default function AddResourceModal({
       setFormData({
         title: initialResource.title || "",
         description: initialResource.description || "",
-        type: initialResource.type || "video",
+        type: initialResource.type || "document",
         fileUrl: initialResource.fileUrl || "",
         fileName: initialResource.fileName || "",
         fileSize: initialResource.fileSize || 0,
         duration: initialResource.duration || 0,
         category: initialResource.category || categories[0] || "",
         tags: Array.isArray(initialResource.tags) ? initialResource.tags.join(", ") : (initialResource.tags || ""),
+        themes: Array.isArray(initialResource.themes) ? initialResource.themes.join(", ") : (initialResource.themes || ""),
         author: initialResource.author || "",
-        status: initialResource.status || "draft",
-        thumbnail: initialResource.thumbnail || "",
+        isPublic: initialResource.isPublic !== undefined ? initialResource.isPublic : true,
+        isESG: initialResource.isESG || false,
+        isCSR: initialResource.isCSR !== undefined ? initialResource.isCSR : true,
+        url: initialResource.url || "",
         featured: initialResource.featured || false,
       });
     } else {
       setFormData({
         title: "",
         description: "",
-        type: "video",
+        type: "document",
         fileUrl: "",
         fileName: "",
         fileSize: 0,
         duration: 0,
         category: categories[0] || "",
         tags: "",
+        themes: "",
         author: "",
-        status: "draft",
-        thumbnail: "",
+        isPublic: true,
+        isESG: false,
+        isCSR: true,
+        url: "",
         featured: false,
       });
     }
@@ -181,15 +189,21 @@ export default function AddResourceModal({
       newErrors.description = "Description is required";
     }
 
-    if (!formData.author.trim()) {
-      newErrors.author = "Author name is required";
-    }
-
     if (!formData.category) {
       newErrors.category = "Category is required";
     }
 
-    if (!selectedFile && !formData.fileUrl) {
+    // Validate ESG/CSR - exactly one must be true
+    if (formData.isESG === formData.isCSR) {
+      newErrors.esgcsr = "Please select either ESG or CSR (exactly one must be selected)";
+    }
+
+    // For link type, URL is required. For other types, file or URL is required
+    if (formData.type === "link") {
+      if (!formData.url?.trim()) {
+        newErrors.url = "URL is required for link type resources";
+      }
+    } else if (!selectedFile && !formData.fileUrl && !formData.url) {
       newErrors.file = "Please upload a file or provide a URL";
     }
 
@@ -217,8 +231,14 @@ export default function AddResourceModal({
           .split(",")
           .map((tag) => tag.trim())
           .filter((tag) => tag),
-        isPublic: formData.status === "published",
-        featured: formData.featured,
+        themes: formData.themes
+          .split(",")
+          .map((theme) => theme.trim())
+          .filter((theme) => theme),
+        isPublic: formData.isPublic,
+        isESG: formData.isESG,
+        isCSR: formData.isCSR,
+        ...(formData.url && { url: formData.url }),
         ...(selectedFile && { file: selectedFile }),
         ...(formData.fileUrl && { fileUrl: formData.fileUrl }),
       };
@@ -236,16 +256,19 @@ export default function AddResourceModal({
       setFormData({
         title: "",
         description: "",
-        type: "video",
+        type: "document",
         fileUrl: "",
         fileName: "",
         fileSize: 0,
         duration: 0,
         category: categories[0] || "",
         tags: "",
+        themes: "",
         author: "",
-        status: "draft",
-        thumbnail: "",
+        isPublic: true,
+        isESG: false,
+        isCSR: true,
+        url: "",
         featured: false,
       });
       setSelectedFile(null);
@@ -265,16 +288,19 @@ export default function AddResourceModal({
       setFormData({
         title: "",
         description: "",
-        type: "video",
+        type: "document",
         fileUrl: "",
         fileName: "",
         fileSize: 0,
         duration: 0,
         category: categories[0] || "",
         tags: "",
+        themes: "",
         author: "",
-        status: "draft",
-        thumbnail: "",
+        isPublic: true,
+        isESG: false,
+        isCSR: true,
+        url: "",
         featured: false,
       });
       setSelectedFile(null);
@@ -496,39 +522,6 @@ export default function AddResourceModal({
                     )}
                   </motion.div>
 
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 }}
-                  >
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
-                    >
-                      <User className="inline h-4 w-4 mr-1" />
-                      Author *
-                    </label>
-                    <input
-                      type="text"
-                      name="author"
-                      value={formData.author}
-                      onChange={handleInputChange}
-                      placeholder="Enter author name..."
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${errors.author ? "border-red-500" : "border-gray-300"
-                        }`}
-                      style={{ focusRingColor: "#2691ce" }}
-                      disabled={isSubmitting}
-                    />
-                    {errors.author && (
-                      <motion.p
-                        className="text-red-500 text-sm mt-1"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                      >
-                        {errors.author}
-                      </motion.p>
-                    )}
-                  </motion.div>
                 </div>
 
                 {/* Description */}
@@ -612,28 +605,166 @@ export default function AddResourceModal({
                       className="block text-sm font-medium mb-2"
                       style={{ color: "#040606" }}
                     >
-                      Status
+                      Resource Type *
+                    </label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name="esgcsr"
+                          checked={formData.isESG}
+                          onChange={() => setFormData(prev => ({ ...prev, isESG: true, isCSR: false }))}
+                          className="mr-2"
+                          disabled={isSubmitting}
+                        />
+                        <span style={{ color: "#040606" }}>ESG</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name="esgcsr"
+                          checked={formData.isCSR}
+                          onChange={() => setFormData(prev => ({ ...prev, isESG: false, isCSR: true }))}
+                          className="mr-2"
+                          disabled={isSubmitting}
+                        />
+                        <span style={{ color: "#040606" }}>CSR</span>
+                      </label>
+                    </div>
+                    {errors.esgcsr && (
+                      <motion.p
+                        className="text-red-500 text-sm mt-1"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        {errors.esgcsr}
+                      </motion.p>
+                    )}
+                  </motion.div>
+                </div>
+
+                {/* Resource Type and Public/Private */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.65 }}
+                  >
+                    <label
+                      className="block text-sm font-medium mb-2"
+                      style={{ color: "#040606" }}
+                    >
+                      Type *
                     </label>
                     <select
-                      name="status"
-                      value={formData.status}
+                      name="type"
+                      value={formData.type}
                       onChange={handleInputChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
                       style={{ focusRingColor: "#2691ce" }}
                       disabled={isSubmitting}
                     >
-                      <option value="draft">Draft</option>
-                      <option value="published">Published</option>
-                      <option value="archived">Archived</option>
+                      <option value="document">Document</option>
+                      <option value="video">Video</option>
+                      <option value="audio">Audio</option>
+                      <option value="image">Image</option>
+                      <option value="link">Link</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.7 }}
+                  >
+                    <label
+                      className="block text-sm font-medium mb-2"
+                      style={{ color: "#040606" }}
+                    >
+                      Visibility
+                    </label>
+                    <select
+                      name="isPublic"
+                      value={formData.isPublic ? "true" : "false"}
+                      onChange={(e) => setFormData(prev => ({ ...prev, isPublic: e.target.value === "true" }))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
+                      style={{ focusRingColor: "#2691ce" }}
+                      disabled={isSubmitting}
+                    >
+                      <option value="true">Public</option>
+                      <option value="false">Private</option>
                     </select>
                   </motion.div>
                 </div>
+
+                {/* URL (for link type) */}
+                {formData.type === "link" && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.75 }}
+                  >
+                    <label
+                      className="block text-sm font-medium mb-2"
+                      style={{ color: "#040606" }}
+                    >
+                      URL *
+                    </label>
+                    <input
+                      type="url"
+                      name="url"
+                      value={formData.url}
+                      onChange={handleInputChange}
+                      placeholder="https://example.com"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${errors.url ? "border-red-500" : "border-gray-300"}`}
+                      style={{ focusRingColor: "#2691ce" }}
+                      disabled={isSubmitting}
+                    />
+                    {errors.url && (
+                      <motion.p
+                        className="text-red-500 text-sm mt-1"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        {errors.url}
+                      </motion.p>
+                    )}
+                  </motion.div>
+                )}
+
+                {/* Themes */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.8 }}
+                >
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: "#040606" }}
+                  >
+                    Themes (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    name="themes"
+                    value={formData.themes}
+                    onChange={handleInputChange}
+                    placeholder="Enter themes separated by commas (e.g., sustainability, education, healthcare)"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
+                    style={{ focusRingColor: "#2691ce" }}
+                    disabled={isSubmitting}
+                  />
+                  <p className="text-xs mt-1" style={{ color: "#646464" }}>
+                    Separate multiple themes with commas
+                  </p>
+                </motion.div>
 
                 {/* Tags */}
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.7 }}
+                  transition={{ delay: 0.85 }}
                 >
                   <label
                     className="block text-sm font-medium mb-2"
@@ -729,3 +860,4 @@ export default function AddResourceModal({
     </AnimatePresence>
   );
 }
+

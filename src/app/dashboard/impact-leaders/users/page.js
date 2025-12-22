@@ -29,7 +29,7 @@ import { UsersService } from '@/services/usersService';
 // Import modals
 import AddUserModal from '@/components/impact-leaders/users/AddUserModal';
 import ViewUserModal from '@/components/impact-leaders/users/ViewUserModal';
-import DeleteConfirmModal from '@/components/impact-leaders/users/DeleteConfirmModal';
+import DeleteConfirmModal from '@/components/core/DeleteConfirmModal';
 
 export default function UsersManagement() {
   const [users, setUsers] = useState([]);
@@ -515,7 +515,10 @@ export default function UsersManagement() {
           isOpen={showDeleteModal}
           onClose={() => setShowDeleteModal(false)}
           onConfirm={handleUserDeleted}
-          user={selectedUser}
+          title="Delete User"
+          message="Are you sure you want to delete this user? This action cannot be undone."
+          itemName={selectedUser ? `${selectedUser.firstName} ${selectedUser.lastName}` : undefined}
+          isLoading={false}
         />
       )}
     </div>

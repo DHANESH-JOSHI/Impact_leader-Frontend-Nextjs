@@ -8,7 +8,7 @@ import ResourcesCardView from "@/components/resources/ResourcesCardView";
 import ResourcesTableView from "@/components/resources/ResourcesTableView";
 import AddResourceModal from "@/components/resources/AddResourceModal";
 import ViewResourceModal from "@/components/resources/ViewResourceModal";
-import DeleteConfirmModal from "@/components/resources/DeleteConfirmModal";
+import DeleteConfirmModal from "@/components/core/DeleteConfirmModal";
 import { ResourcesService } from "@/services/resourcesService";
 
 const toISODate = (d) => {
@@ -55,10 +55,10 @@ export default function ResourcesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterType, setFilterType] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterESGCSR, setFilterESGCSR] = useState("all"); // all, esg, csr
+  const [filterPublic, setFilterPublic] = useState("all"); // all, public, private
 
-  const [sortBy, setSortBy] = useState("createdAt");
-  const [sortOrder, setSortOrder] = useState("desc");
+  const [sort, setSort] = useState("newest");
 
   const [pagination, setPagination] = useState({
     page: 1,
@@ -107,9 +107,9 @@ const modalCategories = useMemo(() => {
     pagination.limit,
     filterCategory,
     filterType,
-    filterStatus,
-    sortBy,
-    sortOrder,
+    filterESGCSR,
+    filterPublic,
+    sort,
     searchQuery,
   ]);
 
@@ -122,9 +122,10 @@ const modalCategories = useMemo(() => {
         search: searchQuery || undefined,
         category: filterCategory !== "all" ? filterCategory : undefined,
         type: filterType !== "all" ? filterType : undefined,
-        status: filterStatus !== "all" ? filterStatus : undefined,
-        sortBy,
-        sortOrder,
+        isESG: filterESGCSR === "esg" ? true : filterESGCSR === "csr" ? false : undefined,
+        isCSR: filterESGCSR === "csr" ? true : filterESGCSR === "esg" ? false : undefined,
+        isPublic: filterPublic === "public" ? true : filterPublic === "private" ? false : undefined,
+        sort,
         ...extra,
       });
 
@@ -228,33 +229,26 @@ const modalCategories = useMemo(() => {
         filterCategory === "all" ||
         r.category.toLowerCase() === filterCategory.toLowerCase();
       const matchesType = filterType === "all" || r.type === filterType;
-      const matchesStatus = filterStatus === "all" || r.status === filterStatus;
-      return matchesSearch && matchesCategory && matchesType && matchesStatus;
+      return matchesSearch && matchesCategory && matchesType;
     });
-  }, [resources, searchQuery, filterCategory, filterType, filterStatus]);
+  }, [resources, searchQuery, filterCategory, filterType]);
 
   const sortedResources = useMemo(() => {
     const list = [...filteredResources];
     list.sort((a, b) => {
-      let aVal = a[sortBy];
-      let bVal = b[sortBy];
-      if (sortBy === "createdAt" || sortBy === "updatedAt") {
-        aVal = new Date(aVal || 0).getTime();
-        bVal = new Date(bVal || 0).getTime();
-      } else if (typeof aVal === "string") {
-        aVal = aVal.toLowerCase();
-        bVal = bVal.toLowerCase();
+      if (sort === "newest") {
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+      } else if (sort === "oldest") {
+        return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+      } else if (sort === "downloads") {
+        return (b.downloads || 0) - (a.downloads || 0);
+      } else if (sort === "name") {
+        return (a.title || "").toLowerCase().localeCompare((b.title || "").toLowerCase());
       }
-      return sortOrder === "asc"
-        ? aVal > bVal
-          ? 1
-          : -1
-        : aVal < bVal
-        ? 1
-        : -1;
+      return 0;
     });
     return list;
-  }, [filteredResources, sortBy, sortOrder]);
+  }, [filteredResources, sort]);
 
   /* Handlers */
   const handleAddResource = async (payload) => {
@@ -266,10 +260,12 @@ const modalCategories = useMemo(() => {
         description: payload.description?.trim() || "No description",
         category: payload.category?.trim() || "General",
         type: payload.type || "document",
-        tags: payload.tags || [],
-        themes: payload.themes || [],
-        isPublic: payload.isPublic || false,
-        featured: payload.featured || false,
+        tags: Array.isArray(payload.tags) ? payload.tags : (payload.tags ? payload.tags.split(',').map(t => t.trim()).filter(Boolean) : []),
+        themes: Array.isArray(payload.themes) ? payload.themes : (payload.themes ? payload.themes.split(',').map(t => t.trim()).filter(Boolean) : []),
+        isPublic: payload.isPublic !== undefined ? payload.isPublic : true,
+        isESG: payload.isESG !== undefined ? payload.isESG : false,
+        isCSR: payload.isCSR !== undefined ? payload.isCSR : true, // Default to CSR if not specified
+        ...(payload.url && { url: payload.url }),
       };
   
       let res;
@@ -284,7 +280,7 @@ const modalCategories = useMemo(() => {
         await loadResources();
         toast.success(`"${cleanPayload.title}" uploaded successfully`);
       } else {
-        toast.error(`Upload failed: ${res?.message}`);
+        toast.error(`Upload failed: ${res?.message || 'Unknown error'}`);
       }
     } catch (e) {
       toast.error("Upload failed. Please try again.");
@@ -368,16 +364,21 @@ const modalCategories = useMemo(() => {
     setFilterType(type);
   };
 
-  const handleStatusFilter = (status) => {
+  const handleESGCSRFilter = (value) => {
     setPagination((p) => ({ ...p, page: 1 }));
-    setFilterStatus(status);
+    setFilterESGCSR(value);
+  };
+
+  const handlePublicFilter = (value) => {
+    setPagination((p) => ({ ...p, page: 1 }));
+    setFilterPublic(value);
   };
 
   const handleResourceDownload = (resource) => {
     // Download handled in component
   };
 
-  const types = ["all", "video", "audio", "document"];
+  const types = ["all", "document", "video", "audio", "image", "link", "other"];
 
   return (
     <motion.div
@@ -398,12 +399,12 @@ const modalCategories = useMemo(() => {
             setFilterCategory={handleCategoryFilter}
             filterType={filterType}
             setFilterType={handleTypeFilter}
-            filterStatus={filterStatus}
-            setFilterStatus={handleStatusFilter}
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            sortOrder={sortOrder}
-            setSortOrder={setSortOrder}
+            filterESGCSR={filterESGCSR}
+            setFilterESGCSR={handleESGCSRFilter}
+            filterPublic={filterPublic}
+            setFilterPublic={handlePublicFilter}
+            sort={sort}
+            setSort={setSort}
             categories={categories}
             types={types}
             onAddResource={() => {
@@ -482,7 +483,10 @@ const modalCategories = useMemo(() => {
             setSelectedResource(null);
           }}
           onConfirm={confirmDelete}
-          resourceTitle={selectedResource?.title}
+          title="Delete Resource"
+          message="Are you sure you want to delete this resource? This action cannot be undone."
+          itemName={selectedResource?.title}
+          isLoading={false}
         />
       </div>
     </motion.div>

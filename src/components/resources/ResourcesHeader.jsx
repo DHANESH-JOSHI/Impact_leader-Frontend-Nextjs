@@ -8,8 +8,6 @@ import {
   Filter,
   Grid3X3,
   List,
-  SortAsc,
-  SortDesc,
   FolderOpen,
 } from "lucide-react";
 
@@ -49,12 +47,12 @@ export default function ResourcesHeader({
   setFilterCategory,
   filterType,
   setFilterType,
-  filterStatus,
-  setFilterStatus,
-  sortBy,
-  setSortBy,
-  sortOrder,
-  setSortOrder,
+  filterESGCSR,
+  setFilterESGCSR,
+  filterPublic,
+  setFilterPublic,
+  sort,
+  setSort,
   categories,
   types,
   onAddResource,
@@ -165,18 +163,35 @@ export default function ResourcesHeader({
           />
         </div>
 
-        {/* Status Filter */}
+        {/* ESG/CSR Filter */}
         <div className="relative">
           <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
+            value={filterESGCSR}
+            onChange={(e) => setFilterESGCSR(e.target.value)}
             className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[120px]"
             style={{ focusRingColor: "#2691ce" }}
           >
-            <option value="all">All Status</option>
-            <option value="published">Published</option>
-            <option value="draft">Draft</option>
-            <option value="archived">Archived</option>
+            <option value="all">All Types</option>
+            <option value="esg">ESG</option>
+            <option value="csr">CSR</option>
+          </select>
+          <Filter
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
+            style={{ color: "#646464" }}
+          />
+        </div>
+
+        {/* Public/Private Filter */}
+        <div className="relative">
+          <select
+            value={filterPublic}
+            onChange={(e) => setFilterPublic(e.target.value)}
+            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[120px]"
+            style={{ focusRingColor: "#2691ce" }}
+          >
+            <option value="all">All Visibility</option>
+            <option value="public">Public</option>
+            <option value="private">Private</option>
           </select>
           <Filter
             className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
@@ -185,35 +200,22 @@ export default function ResourcesHeader({
         </div>
 
         {/* Sort Options */}
-        <div className="flex items-center space-x-2">
+        <div className="relative">
           <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all"
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[140px]"
             style={{ focusRingColor: "#2691ce" }}
           >
-            <option value="createdAt">Date</option>
-            <option value="title">Title</option>
-            <option value="author">Author</option>
-            <option value="views">Views</option>
-            <option value="likes">Likes</option>
-            <option value="downloads">Downloads</option>
-            <option value="fileSize">File Size</option>
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="downloads">Most Downloaded</option>
+            <option value="name">Name (A-Z)</option>
           </select>
-
-          <motion.button
-            onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-            className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            variants={buttonVariants}
-            whileHover="hover"
-            whileTap="tap"
-          >
-            {sortOrder === "asc" ? (
-              <SortAsc className="h-4 w-4" style={{ color: "#646464" }} />
-            ) : (
-              <SortDesc className="h-4 w-4" style={{ color: "#646464" }} />
-            )}
-          </motion.button>
+          <Filter
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
+            style={{ color: "#646464" }}
+          />
         </div>
       </motion.div>
 

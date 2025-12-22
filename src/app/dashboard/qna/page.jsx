@@ -8,7 +8,7 @@ import QnaCardView from "@/components/qna/QnaCardView";
 import QnaTableView from "@/components/qna/QnaTableView";
 import AddQuestionModal from "@/components/qna/AddQuestionModal";
 import ViewQnaModal from "@/components/qna/ViewQnaModal";
-import DeleteConfirmModal from "@/components/qna/DeleteConfirmModal";
+import DeleteConfirmModal from "@/components/core/DeleteConfirmModal";
 import { QnAService } from "@/services/qnaService";
 
 const pageVariants = {
@@ -386,7 +386,6 @@ export default function QnaPage() {
           onEdit={handleEditQna}
         />
 
-        {/* delete confirm krne ka modal */}
         <DeleteConfirmModal
           isOpen={isDeleteModalOpen}
           onClose={() => {
@@ -394,7 +393,10 @@ export default function QnaPage() {
             setSelectedQna(null);
           }}
           onConfirm={confirmDelete}
-          questionTitle={selectedQna?.question}
+          title="Delete Question"
+          message="Are you sure you want to delete this question? This action cannot be undone."
+          itemName={selectedQna?.question}
+          isLoading={false}
         />
       </div>
     </motion.div>

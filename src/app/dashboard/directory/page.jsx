@@ -8,7 +8,7 @@ import DirectoryCardView from "@/components/directory/DirectoryCardView";
 import DirectoryTableView from "@/components/directory/DirectoryTableView";
 import AddDirectoryModal from "@/components/directory/AddDirectoryModal";
 import ViewDirectoryModal from "@/components/directory/ViewDirectoryModal";
-import DeleteConfirmModal from "@/components/directory/DeleteConfirmModal";
+import DeleteConfirmModal from "@/components/core/DeleteConfirmModal";
 import { DirectoryService } from "@/services/directoryService";
 
 const pageVariants = {
@@ -368,8 +368,10 @@ export default function DirectoryPage() {
             handleDeleteEntry(selectedEntry.id);
           }
         }}
-        entry={selectedEntry}
-        loading={deleteLoading}
+        title="Delete Directory Entry"
+        message="Are you sure you want to delete this directory entry? This action cannot be undone."
+        itemName={selectedEntry?.title}
+        isLoading={deleteLoading}
       />
     </motion.div>
   );
