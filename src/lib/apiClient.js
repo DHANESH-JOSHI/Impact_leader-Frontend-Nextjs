@@ -175,6 +175,38 @@ class ApiClient {
           data: responseData,
         });
 
+        // Handle 401/403 errors - user might be inactive, unauthorized, or pending approval
+        if ([401, 403].includes(response.status)) {
+          const errorMessage = responseData?.message || responseData?.error || '';
+          const isInactive = errorMessage.toLowerCase().includes('inactive') || 
+                           errorMessage.toLowerCase().includes('deactivated') ||
+                           errorMessage.toLowerCase().includes('account disabled');
+          const isPendingApproval = errorMessage.toLowerCase().includes('pending') ||
+                                  errorMessage.toLowerCase().includes('approval') ||
+                                  responseData?.isPendingApproval === true;
+          
+          // Only auto-redirect for inactive accounts, not pending approval
+          // Pending approval should show error message on login page
+          if (isInactive && !isPendingApproval && typeof window !== 'undefined') {
+            // Clear auth tokens for inactive users
+            try {
+              const { authStorage } = require('./storage');
+              authStorage.clearTokens();
+              document.cookie = "authToken=; path=/; max-age=0; SameSite=Lax";
+              
+              // Redirect to appropriate login page
+              const currentPath = window.location.pathname;
+              if (currentPath.startsWith('/user')) {
+                window.location.href = '/user/login?error=account_inactive';
+              } else {
+                window.location.href = '/?error=account_inactive';
+              }
+            } catch (storageError) {
+              console.error('[API] Failed to clear tokens:', storageError);
+            }
+          }
+        }
+
         // Retry logic for specific status codes
         if (
           retries > 0 &&

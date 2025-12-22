@@ -13,14 +13,39 @@ export default function DashboardLayout({ children }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check authentication
+    // Check authentication and role
     const checkAuth = () => {
       try {
         const authData = localStorage.getItem("impactLeadersAuth");
         if (authData) {
           const parsed = JSON.parse(authData);
           const token = parsed?.value?.accessToken || parsed?.accessToken;
+          const user = parsed?.value?.user || parsed?.user;
+          
           if (token) {
+            const userRole = user?.role || user?.userRole;
+            
+            // Check if user is active
+            if (user?.isActive === false) {
+              // User is inactive, clear session and redirect to login
+              localStorage.removeItem("impactLeadersAuth");
+              if (typeof document !== 'undefined') {
+                document.cookie = "authToken=; path=/; max-age=0; SameSite=Lax";
+              }
+              setIsLoading(false);
+              router.replace("/?error=account_inactive");
+              return;
+            }
+            
+            // Admin dashboard - only allow admins
+            if (userRole !== 'admin') {
+              // Regular user, redirect to user dashboard
+              setIsLoading(false);
+              router.replace("/user/dashboard");
+              return;
+            }
+            
+            // Admin user, allow access
             setIsAuthenticated(true);
             setIsLoading(false);
             return;

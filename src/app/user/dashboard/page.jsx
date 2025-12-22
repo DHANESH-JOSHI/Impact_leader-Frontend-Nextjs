@@ -24,14 +24,36 @@ export default function UserDashboard() {
       return;
     }
     
-    // Redirect to login if not authenticated
+    // Check authentication and role
     try {
       const isAuth = authStorage.isAuthenticated();
       if (!isAuth) {
         router.replace("/user/login");
-      } else {
-        setCheckingAuth(false);
+        return;
       }
+
+      // Check if user is admin - redirect to admin dashboard
+      const user = authStorage.getCurrentUser();
+      const userRole = user?.role || user?.userRole;
+      
+      if (userRole === 'admin') {
+        router.replace("/dashboard");
+        return;
+      }
+
+      // Check if user is active
+      if (user?.isActive === false) {
+        // User is inactive, clear session and redirect to login
+        authStorage.clearTokens();
+        if (typeof document !== 'undefined') {
+          document.cookie = "authToken=; path=/; max-age=0; SameSite=Lax";
+        }
+        router.replace("/user/login?error=account_inactive");
+        return;
+      }
+
+      // Regular user, allow access
+      setCheckingAuth(false);
     } catch (error) {
       console.error("Auth check error:", error);
       router.replace("/user/login");

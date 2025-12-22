@@ -11,6 +11,8 @@ import {
   ShoppingBag,
   TrendingUp,
   Globe,
+  AlertCircle,
+  ExternalLink,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -43,16 +45,41 @@ export default function AdminLoginPage() {
   useEffect(() => {
     setShowAnimation(true);
 
-    // Check if user is already authenticated - redirect to dashboard
+    // Check if user is already authenticated - redirect based on role
     const checkAuth = () => {
       try {
         const authData = localStorage.getItem("impactLeadersAuth");
         if (authData) {
           const parsed = JSON.parse(authData);
           const token = parsed?.value?.accessToken || parsed?.accessToken;
+          const user = parsed?.value?.user || parsed?.user;
+          
           if (token) {
-            // User is already authenticated, redirect to dashboard
-            router.replace("/dashboard");
+            const userRole = user?.role || user?.userRole;
+            
+            // Check if user is inactive
+            if (user?.isActive === false) {
+              // Clear inactive session
+              localStorage.removeItem("impactLeadersAuth");
+              if (typeof document !== 'undefined') {
+                document.cookie = "authToken=; path=/; max-age=0; SameSite=Lax";
+              }
+              // Check URL params for error message
+              const urlParams = new URLSearchParams(window.location.search);
+              if (urlParams.get('error') !== 'account_inactive') {
+                router.replace("/?error=account_inactive");
+              }
+              return;
+            }
+            
+            // If admin, redirect to admin dashboard
+            if (userRole === 'admin') {
+              router.replace("/dashboard");
+              return;
+            }
+            
+            // If regular user, redirect to user dashboard
+            router.replace("/user/dashboard");
             return;
           }
         }
@@ -79,6 +106,9 @@ export default function AdminLoginPage() {
           break;
         case "access_denied":
           toast.error("Access denied. Admin privileges required.");
+          break;
+        case "account_inactive":
+          toast.error("Your account has been deactivated. Please contact support.");
           break;
         default:
           toast.error("Please login to continue");
@@ -135,6 +165,31 @@ export default function AdminLoginPage() {
       if (result.success) {
         console.log("✅ Login: Success response received:", result);
 
+        // Check if user is active
+        if (result.user?.isActive === false) {
+          toast.error("Your account has been deactivated. Please contact support.");
+          setError("Your account has been deactivated. Please contact support.");
+          setLoading(false);
+          return;
+        }
+
+        // Check if user is approved (for non-admin users)
+        const userRole = result.user?.role || result.user?.userRole;
+        if (userRole !== 'admin' && result.user?.isApproved === false) {
+          toast.error("Your account is pending admin approval. Please wait for approval notification.");
+          setError("Your account is pending admin approval. Please wait for approval notification.");
+          setLoading(false);
+          return;
+        }
+
+        // Check user role - admin login page should only allow admins
+        if (userRole !== 'admin') {
+          toast.error("Please use the user login page");
+          setError("Please use the user login page");
+          setLoading(false);
+          return;
+        }
+
         // AuthService already saves tokens, but set cookie for server-side middleware
         const token = result.token || result.accessToken;
         if (token) {
@@ -161,8 +216,17 @@ export default function AdminLoginPage() {
         setTimeout(() => router.push("/dashboard"), 900);
       } else {
         console.log("❌ Login: Failed response:", result);
-        toast.error(result.message || "Login failed");
-        setError(result.message || "Invalid credentials");
+        const errorMessage = result.message || "Login failed";
+        toast.error(errorMessage);
+        
+        // Handle specific error cases
+        if (errorMessage.toLowerCase().includes('pending') || errorMessage.toLowerCase().includes('approval')) {
+          setError("Your account is pending admin approval. Please wait for approval notification.");
+        } else if (errorMessage.toLowerCase().includes('deactivated') || errorMessage.toLowerCase().includes('inactive')) {
+          setError("Your account has been deactivated. Please contact support.");
+        } else {
+          setError(errorMessage);
+        }
       }
     } catch (err) {
       toast.error("Login failed. Please try again.");
@@ -317,6 +381,17 @@ export default function AdminLoginPage() {
                   Admin Portal for Impact Leader
                 </CardDescription>
               </div>
+            </div>
+            
+            {/* Link to user login */}
+            <div className="text-center mt-4">
+              <a
+                href="/user/login"
+                className="inline-flex items-center space-x-2 text-sm transition-colors hover:underline text-white/90 hover:text-white"
+              >
+                <span>Are you a regular user?</span>
+                <ExternalLink className="h-4 w-4" />
+              </a>
             </div>
           </div>
 

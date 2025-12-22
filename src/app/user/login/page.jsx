@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Mail, Lock, LogIn } from "lucide-react";
+import { Mail, Lock, LogIn, ExternalLink } from "lucide-react";
 import toast from "react-hot-toast";
 import { AuthService } from "@/services/authService";
 import { authStorage } from "@/lib/storage";
@@ -23,15 +23,52 @@ export default function UserLoginPage() {
     // Only check auth on client side
     if (typeof window === 'undefined') return;
     
-    // Redirect if already authenticated
+    // Check if already authenticated
     try {
       if (authStorage.isAuthenticated()) {
-        router.replace("/user/dashboard");
+        const user = authStorage.getCurrentUser();
+        const userRole = user?.role || user?.userRole;
+        
+        // Check if user is inactive
+        if (user?.isActive === false) {
+          // Clear inactive session
+          authStorage.clearTokens();
+          if (typeof document !== 'undefined') {
+            document.cookie = "authToken=; path=/; max-age=0; SameSite=Lax";
+          }
+          // Check URL params for error message
+          const urlParams = new URLSearchParams(window.location.search);
+          if (urlParams.get('error') !== 'account_inactive') {
+            router.replace("/user/login?error=account_inactive");
+          }
+          return;
+        }
+        
+        // If admin is logged in, redirect to admin dashboard
+        if (userRole === 'admin') {
+          router.replace("/dashboard");
+          return;
+        }
+        
+        // If regular user is logged in, redirect to user dashboard
+        if (userRole !== 'admin') {
+          router.replace("/user/dashboard");
+          return;
+        }
       }
     } catch (error) {
       console.error("Auth check error:", error);
     }
-  }, []);
+
+    // Check for error messages in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get("error");
+    if (error === 'account_inactive') {
+      toast.error("Your account has been deactivated. Please contact support.");
+      // Clean URL
+      window.history.replaceState({}, "", "/user/login");
+    }
+  }, [router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -64,6 +101,31 @@ export default function UserLoginPage() {
       const result = await AuthService.login(email, password);
 
       if (result.success) {
+        // Check if user is active
+        if (result.user?.isActive === false) {
+          toast.error("Your account has been deactivated. Please contact support.");
+          setError("Your account has been deactivated. Please contact support.");
+          setLoading(false);
+          return;
+        }
+
+        // Check if user is approved (for non-admin users)
+        const userRole = result.user?.role || result.user?.userRole;
+        if (userRole !== 'admin' && result.user?.isApproved === false) {
+          toast.error("Your account is pending admin approval. Please wait for approval notification.");
+          setError("Your account is pending admin approval. Please wait for approval notification.");
+          setLoading(false);
+          return;
+        }
+
+        // Check if user is admin - redirect to admin dashboard if admin
+        if (userRole === 'admin') {
+          toast.error("Please use the admin login page");
+          setError("Please use the admin login page");
+          setLoading(false);
+          return;
+        }
+
         const token = result.token || result.accessToken;
         if (token && typeof document !== 'undefined') {
           try {
@@ -86,8 +148,17 @@ export default function UserLoginPage() {
           }
         }, 900);
       } else {
-        toast.error(result.message || "Login failed");
-        setError(result.message || "Invalid credentials");
+        const errorMessage = result.message || "Login failed";
+        toast.error(errorMessage);
+        
+        // Handle specific error cases
+        if (errorMessage.toLowerCase().includes('pending') || errorMessage.toLowerCase().includes('approval')) {
+          setError("Your account is pending admin approval. Please wait for approval notification.");
+        } else if (errorMessage.toLowerCase().includes('deactivated') || errorMessage.toLowerCase().includes('inactive')) {
+          setError("Your account has been deactivated. Please contact support.");
+        } else {
+          setError(errorMessage);
+        }
       }
     } catch (err) {
       toast.error("Login failed. Please try again.");
@@ -141,6 +212,18 @@ export default function UserLoginPage() {
             <p className="text-sm" style={{ color: SECONDARY }}>
               Sign in to your account
             </p>
+            
+            {/* Link to admin login */}
+            <div className="mt-4">
+              <a
+                href="/"
+                className="inline-flex items-center space-x-2 text-sm transition-colors hover:underline"
+                style={{ color: PRIMARY }}
+              >
+                <span>Are you an admin?</span>
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            </div>
           </div>
 
           {/* Error Message */}
