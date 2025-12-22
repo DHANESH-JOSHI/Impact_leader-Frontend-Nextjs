@@ -59,18 +59,32 @@ export class StoriesService {
     try {
       const formData = new FormData();
 
+      // Add story metadata
       Object.keys(storyData).forEach((key) => {
-        if (Array.isArray(storyData[key])) {
-          storyData[key].forEach((value) => {
-            formData.append(key, value);
-          });
-        } else {
-          formData.append(key, storyData[key]);
+        const value = storyData[key];
+        
+        // Handle arrays - send as JSON string
+        if (Array.isArray(value)) {
+          if (value.length > 0) {
+            formData.append(key, JSON.stringify(value));
+          }
+        } 
+        // Handle booleans - convert to string
+        else if (typeof value === 'boolean') {
+          formData.append(key, value.toString());
+        }
+        // Handle numbers - convert to string for FormData
+        else if (typeof value === 'number') {
+          formData.append(key, value.toString());
+        }
+        // Handle other values
+        else if (value !== undefined && value !== null) {
+          formData.append(key, value);
         }
       });
 
       formData.append("type", "image");
-      if (imageFile) {
+      if (imageFile && imageFile instanceof File) {
         formData.append("media", imageFile);
       }
 
@@ -94,18 +108,32 @@ export class StoriesService {
     try {
       const formData = new FormData();
 
+      // Add story metadata
       Object.keys(storyData).forEach((key) => {
-        if (Array.isArray(storyData[key])) {
-          storyData[key].forEach((value) => {
-            formData.append(key, value);
-          });
-        } else {
-          formData.append(key, storyData[key]);
+        const value = storyData[key];
+        
+        // Handle arrays - send as JSON string
+        if (Array.isArray(value)) {
+          if (value.length > 0) {
+            formData.append(key, JSON.stringify(value));
+          }
+        } 
+        // Handle booleans - convert to string
+        else if (typeof value === 'boolean') {
+          formData.append(key, value.toString());
+        }
+        // Handle numbers - convert to string for FormData
+        else if (typeof value === 'number') {
+          formData.append(key, value.toString());
+        }
+        // Handle other values
+        else if (value !== undefined && value !== null) {
+          formData.append(key, value);
         }
       });
 
       formData.append("type", "video");
-      if (videoFile) {
+      if (videoFile && videoFile instanceof File) {
         formData.append("media", videoFile);
       }
 
@@ -181,15 +209,62 @@ export class StoriesService {
     }
   }
 
-  static async updateStory(storyId, updateData) {
+  static async updateStory(storyId, updateData, mediaFile = null) {
     try {
-      const response = await apiClient.put(STORIES.BY_ID(storyId), updateData);
+      // Check if there's a media file to upload
+      if (mediaFile && mediaFile instanceof File) {
+        const formData = new FormData();
+        
+        // Add story metadata
+        Object.keys(updateData).forEach(key => {
+          const value = updateData[key];
+          
+          // Handle arrays - send as JSON string
+          if (Array.isArray(value)) {
+            if (value.length > 0) {
+              formData.append(key, JSON.stringify(value));
+            }
+          } 
+          // Handle booleans - convert to string
+          else if (typeof value === 'boolean') {
+            formData.append(key, value.toString());
+          }
+          // Handle other values
+          else if (value !== undefined && value !== null) {
+            formData.append(key, value);
+          }
+        });
+        
+        // Add media file
+        formData.append('media', mediaFile);
+        
+        console.log('[Stories] Updating story with media:', {
+          storyId,
+          fileName: mediaFile.name,
+          fileSize: mediaFile.size
+        });
+        
+        const response = await apiClient.request(STORIES.BY_ID(storyId), {
+          method: 'PUT',
+          data: formData,
+          isFormData: true
+        });
 
-      return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
-      };
+        return {
+          success: response.success,
+          data: response.data,
+          message: response.message,
+        };
+      } else {
+        // No file - use regular JSON update
+        const response = await apiClient.put(STORIES.BY_ID(storyId), updateData);
+
+        return {
+          success: response.success,
+          data: response.data,
+          message: response.message,
+        };
+      }
     } catch (error) {
       console.error('[Stories] Update story error:', error);
       return {

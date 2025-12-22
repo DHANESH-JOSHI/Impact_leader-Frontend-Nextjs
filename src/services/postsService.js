@@ -58,18 +58,36 @@ export class PostsService {
     try {
       const formData = new FormData();
 
+      // Add post metadata
       Object.keys(postData).forEach(key => {
-        if (Array.isArray(postData[key])) {
-          postData[key].forEach(value => {
-            formData.append(key, value);
-          });
-        } else {
-          formData.append(key, postData[key]);
+        const value = postData[key];
+        
+        // Handle arrays - send as JSON string (backend can parse it)
+        if (Array.isArray(value)) {
+          if (value.length > 0) {
+            formData.append(key, JSON.stringify(value));
+          }
+        } 
+        // Handle booleans - convert to string
+        else if (typeof value === 'boolean') {
+          formData.append(key, value.toString());
+        }
+        // Handle other values
+        else if (value !== undefined && value !== null) {
+          formData.append(key, value);
         }
       });
 
+      // Add images (backend expects 'media' field for multiple files)
       images.forEach(image => {
-        formData.append('images', image);
+        if (image instanceof File) {
+          formData.append('media', image);
+        }
+      });
+
+      console.log('[Posts] Uploading post with images:', {
+        imageCount: images.length,
+        formDataKeys: Array.from(formData.keys())
       });
 
       const response = await apiClient.upload(POSTS.UPLOAD, formData);
@@ -268,16 +286,69 @@ export class PostsService {
     }
   }
 
-  static async updatePost(postId, postData) {
+  static async updatePost(postId, postData, mediaFiles = []) {
     try {
-      const response = await apiClient.put(POSTS.BY_ID(postId), postData);
-      const backendResponse = response.data || {};
+      // Check if there are media files to upload
+      const hasFiles = mediaFiles && mediaFiles.length > 0 && mediaFiles.every(f => f instanceof File);
+      
+      if (hasFiles) {
+        // Use FormData for file uploads
+        const formData = new FormData();
+        
+        // Add post metadata
+        Object.keys(postData).forEach(key => {
+          const value = postData[key];
+          
+          // Handle arrays - send as JSON string
+          if (Array.isArray(value)) {
+            if (value.length > 0) {
+              formData.append(key, JSON.stringify(value));
+            }
+          } 
+          // Handle booleans - convert to string
+          else if (typeof value === 'boolean') {
+            formData.append(key, value.toString());
+          }
+          // Handle other values
+          else if (value !== undefined && value !== null) {
+            formData.append(key, value);
+          }
+        });
+        
+        // Add media files
+        mediaFiles.forEach(file => {
+          if (file instanceof File) {
+            formData.append('media', file);
+          }
+        });
+        
+        console.log('[Posts] Updating post with media:', {
+          postId,
+          fileCount: mediaFiles.length
+        });
+        
+        const response = await apiClient.request(POSTS.BY_ID(postId), {
+          method: 'PUT',
+          data: formData,
+          isFormData: true
+        });
 
-      return {
-        success: response.success,
-        data: backendResponse.data || backendResponse,
-        message: backendResponse.message || response.message
-      };
+        return {
+          success: response.success,
+          data: response.data || response.data?.data || response.data,
+          message: response.message || response.data?.message
+        };
+      } else {
+        // No files - use regular JSON update
+        const response = await apiClient.put(POSTS.BY_ID(postId), postData);
+        const backendResponse = response.data || {};
+
+        return {
+          success: response.success,
+          data: backendResponse.data || backendResponse,
+          message: backendResponse.message || response.message
+        };
+      }
     } catch (error) {
       console.error('[Posts] Update post error:', error);
       return {

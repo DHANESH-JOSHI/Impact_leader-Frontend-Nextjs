@@ -73,18 +73,20 @@ export default function AddResourceModal({
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedFile, setSelectedFile] = useState(null);
 
   useEffect(() => {
     if (initialResource) {
+      // Get file URL from file.path (backend structure) or fileUrl (legacy/frontend)
+      const fileUrl = initialResource.file?.path || initialResource.fileUrl || "";
+      
       setFormData({
         title: initialResource.title || "",
         description: initialResource.description || "",
         type: initialResource.type || "document",
-        fileUrl: initialResource.fileUrl || "",
-        fileName: initialResource.fileName || "",
-        fileSize: initialResource.fileSize || 0,
+        fileUrl: fileUrl,
+        fileName: initialResource.file?.originalName || initialResource.fileName || "",
+        fileSize: initialResource.file?.size || initialResource.fileSize || 0,
         duration: initialResource.duration || 0,
         category: initialResource.category || categories[0] || "",
         tags: Array.isArray(initialResource.tags) ? initialResource.tags.join(", ") : (initialResource.tags || ""),
@@ -135,7 +137,7 @@ export default function AddResourceModal({
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Check file type
+      // Check file type and set resource type accordingly
       const fileType = file.type;
       let resourceType = "document";
 
@@ -143,6 +145,8 @@ export default function AddResourceModal({
         resourceType = "video";
       } else if (fileType.startsWith("audio/")) {
         resourceType = "audio";
+      } else if (fileType.startsWith("image/")) {
+        resourceType = "image";
       }
 
       setSelectedFile(file);
@@ -151,30 +155,10 @@ export default function AddResourceModal({
         fileName: file.name,
         fileSize: file.size,
         type: resourceType,
+        // Create preview URL for display (not actual upload)
+        fileUrl: URL.createObjectURL(file),
       }));
-
-      // Simulate file upload progress
-      simulateUpload(file);
     }
-  };
-
-  const simulateUpload = (file) => {
-    setUploadProgress(0);
-    const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          // Create object URL for preview
-          const url = URL.createObjectURL(file);
-          setFormData((prevData) => ({
-            ...prevData,
-            fileUrl: url,
-          }));
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 200);
   };
 
   // Validate form
@@ -239,8 +223,9 @@ export default function AddResourceModal({
         isESG: formData.isESG,
         isCSR: formData.isCSR,
         ...(formData.url && { url: formData.url }),
+        // Only include file if a new file is selected (for upload)
+        // Don't send fileUrl - backend keeps existing file if no new file is uploaded
         ...(selectedFile && { file: selectedFile }),
-        ...(formData.fileUrl && { fileUrl: formData.fileUrl }),
       };
 
       if (initialResource) {
@@ -272,7 +257,10 @@ export default function AddResourceModal({
         featured: false,
       });
       setSelectedFile(null);
-      setUploadProgress(0);
+      // Revoke object URL to free memory
+      if (formData.fileUrl && formData.fileUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(formData.fileUrl);
+      }
       setErrors({});
 
     } catch (error) {
@@ -304,7 +292,10 @@ export default function AddResourceModal({
         featured: false,
       });
       setSelectedFile(null);
-      setUploadProgress(0);
+      // Revoke object URL to free memory
+      if (formData.fileUrl && formData.fileUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(formData.fileUrl);
+      }
       setErrors({});
       onClose();
     }
@@ -419,27 +410,6 @@ export default function AddResourceModal({
                     </label>
                   </div>
 
-                  {/* Upload Progress */}
-                  {uploadProgress > 0 && uploadProgress < 100 && (
-                    <div className="mt-4">
-                      <div className="flex justify-between text-sm mb-1">
-                        <span style={{ color: "#646464" }}>Uploading...</span>
-                        <span style={{ color: "#646464" }}>
-                          {uploadProgress}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="h-2 rounded-full transition-all duration-300"
-                          style={{
-                            backgroundColor: "#2691ce",
-                            width: `${uploadProgress}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
                   {/* File Info */}
                   {selectedFile && (
                     <motion.div
@@ -456,7 +426,10 @@ export default function AddResourceModal({
                           {formData.type === "audio" && (
                             <Volume2 className="h-5 w-5" />
                           )}
-                          {formData.type === "document" && (
+                          {formData.type === "image" && (
+                            <Image className="h-5 w-5" />
+                          )}
+                          {(formData.type === "document" || !formData.type) && (
                             <File className="h-5 w-5" />
                           )}
                         </div>
@@ -469,9 +442,31 @@ export default function AddResourceModal({
                           </p>
                           <p className="text-sm" style={{ color: "#646464" }}>
                             {formatFileSize(selectedFile.size)} •{" "}
-                            {formData.type}
+                            {formData.type || "document"}
+                          </p>
+                          <p className="text-xs mt-1" style={{ color: "#646464" }}>
+                            File will be uploaded when you submit the form
                           </p>
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedFile(null);
+                            setFormData((prev) => ({
+                              ...prev,
+                              fileName: "",
+                              fileSize: 0,
+                              fileUrl: "",
+                            }));
+                            // Revoke object URL to free memory
+                            if (formData.fileUrl && formData.fileUrl.startsWith('blob:')) {
+                              URL.revokeObjectURL(formData.fileUrl);
+                            }
+                          }}
+                          className="text-red-500 hover:text-red-700 text-sm"
+                        >
+                          Remove
+                        </button>
                       </div>
                     </motion.div>
                   )}

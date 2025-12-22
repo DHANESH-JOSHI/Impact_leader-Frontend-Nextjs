@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/apiClient';
 import { RESOURCES } from '@/constants/apiEndpoints';
+import { authStorage } from '@/lib/storage';
 
 export class ResourcesService {
   static async getAllResources(params = {}) {
@@ -106,20 +107,42 @@ static async uploadDocumentResource(resourceData, file) {
     
     // Add resource metadata
     Object.keys(resourceData).forEach(key => {
-      if (Array.isArray(resourceData[key])) {
-        resourceData[key].forEach(item => {
-          formData.append(key, item);
-        });
-      } else {
-        formData.append(key, resourceData[key]);
+      // Skip file field - it will be added separately
+      if (key === 'file' || key === 'fileUrl') {
+        return;
+      }
+      
+      const value = resourceData[key];
+      
+      // Handle arrays - send as JSON string (backend can parse it)
+      if (Array.isArray(value)) {
+        if (value.length > 0) {
+          formData.append(key, JSON.stringify(value));
+        }
+      } 
+      // Handle booleans - convert to string (backend toBoolean() will handle it)
+      else if (typeof value === 'boolean') {
+        formData.append(key, value.toString());
+      }
+      // Handle other values
+      else if (value !== undefined && value !== null) {
+        formData.append(key, value);
       }
     });
     
+    // Add file if provided
     if (file) {
       formData.append('file', file);
     }
 
-      const response = await apiClient.upload(RESOURCES.BASE, formData);
+    console.log('[Resources] Uploading with FormData:', {
+      hasFile: !!file,
+      fileName: file?.name,
+      fileSize: file?.size,
+      formDataKeys: Array.from(formData.keys())
+    });
+
+    const response = await apiClient.upload(RESOURCES.BASE, formData);
 
     return {
       success: response.success,
@@ -141,12 +164,20 @@ static async uploadDocumentResource(resourceData, file) {
       const formData = new FormData();
       
       Object.keys(resourceData).forEach(key => {
-        if (Array.isArray(resourceData[key])) {
-          resourceData[key].forEach(item => {
-            formData.append(key, item);
-          });
-        } else {
-          formData.append(key, resourceData[key]);
+        if (key === 'file' || key === 'fileUrl') {
+          return;
+        }
+        
+        const value = resourceData[key];
+        
+        if (Array.isArray(value)) {
+          if (value.length > 0) {
+            formData.append(key, JSON.stringify(value));
+          }
+        } else if (typeof value === 'boolean') {
+          formData.append(key, value.toString());
+        } else if (value !== undefined && value !== null) {
+          formData.append(key, value);
         }
       });
       
@@ -175,12 +206,20 @@ static async uploadDocumentResource(resourceData, file) {
       const formData = new FormData();
       
       Object.keys(resourceData).forEach(key => {
-        if (Array.isArray(resourceData[key])) {
-          resourceData[key].forEach(item => {
-            formData.append(key, item);
-          });
-        } else {
-          formData.append(key, resourceData[key]);
+        if (key === 'file' || key === 'fileUrl') {
+          return;
+        }
+        
+        const value = resourceData[key];
+        
+        if (Array.isArray(value)) {
+          if (value.length > 0) {
+            formData.append(key, JSON.stringify(value));
+          }
+        } else if (typeof value === 'boolean') {
+          formData.append(key, value.toString());
+        } else if (value !== undefined && value !== null) {
+          formData.append(key, value);
         }
       });
       
@@ -209,12 +248,20 @@ static async uploadDocumentResource(resourceData, file) {
       const formData = new FormData();
       
       Object.keys(resourceData).forEach(key => {
-        if (Array.isArray(resourceData[key])) {
-          resourceData[key].forEach(item => {
-            formData.append(key, item);
-          });
-        } else {
-          formData.append(key, resourceData[key]);
+        if (key === 'file' || key === 'fileUrl') {
+          return;
+        }
+        
+        const value = resourceData[key];
+        
+        if (Array.isArray(value)) {
+          if (value.length > 0) {
+            formData.append(key, JSON.stringify(value));
+          }
+        } else if (typeof value === 'boolean') {
+          formData.append(key, value.toString());
+        } else if (value !== undefined && value !== null) {
+          formData.append(key, value);
         }
       });
       
@@ -257,15 +304,45 @@ static async uploadDocumentResource(resourceData, file) {
   }
 
 
-  // Download resource (generates download link)
-  static async downloadResource(resourceId) {
+  // Download resource file
+  static async downloadResource(resourceId, fileName) {
     try {
-      const response = await apiClient.get(RESOURCES.DOWNLOAD(resourceId));
+      const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+      const endpoint = `/api/v1${RESOURCES.DOWNLOAD(resourceId)}`;
+      const url = `${baseURL}${endpoint}`;
+      
+      // Get auth token using authStorage helper
+      const token = typeof window !== 'undefined' ? authStorage.getAccessToken() : null;
+      
+      // Fetch the file as blob
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Download failed' }));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      // Get the blob
+      const blob = await response.blob();
+      
+      // Create download link
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName || 'resource';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
 
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message
+        success: true,
+        message: 'Download started'
       };
     } catch (error) {
       console.error('[Resources] Download resource error:', error);
@@ -278,13 +355,71 @@ static async uploadDocumentResource(resourceData, file) {
 
   static async updateResource(resourceId, updateData) {
     try {
-      const response = await apiClient.put(RESOURCES.BY_ID(resourceId), updateData);
+      // Check if there's a file to upload
+      const hasFile = updateData.file && updateData.file instanceof File;
+      
+      if (hasFile) {
+        // Use FormData for file uploads
+        const formData = new FormData();
+        const file = updateData.file;
+        
+        // Remove file from updateData before adding other fields
+        const { file: _, fileUrl, ...dataWithoutFile } = updateData;
+        
+        // Add resource metadata
+        Object.keys(dataWithoutFile).forEach(key => {
+          if (key === 'id') return; // Skip id field
+          
+          const value = dataWithoutFile[key];
+          
+          // Handle arrays - send as JSON string
+          if (Array.isArray(value)) {
+            if (value.length > 0) {
+              formData.append(key, JSON.stringify(value));
+            }
+          } 
+          // Handle booleans - convert to string
+          else if (typeof value === 'boolean') {
+            formData.append(key, value.toString());
+          }
+          // Handle other values
+          else if (value !== undefined && value !== null) {
+            formData.append(key, value);
+          }
+        });
+        
+        // Add file
+        formData.append('file', file);
+        
+        console.log('[Resources] Updating resource with file:', {
+          resourceId,
+          fileName: file.name,
+          fileSize: file.size
+        });
+        
+        const response = await apiClient.request(RESOURCES.BY_ID(resourceId), {
+          method: 'PUT',
+          data: formData,
+          isFormData: true
+        });
+        
+        return {
+          success: response.success,
+          data: response.data,
+          message: response.message
+        };
+      } else {
+        // No file - use regular JSON update
+        const { file, fileUrl, id, ...dataWithoutFile } = updateData;
+        
+        const response = await apiClient.put(RESOURCES.BY_ID(resourceId), dataWithoutFile);
 
-      return {
-        success: response.success,
-        data: response.data,
-        message: response.message
-      };
+        return {
+          success: response.success,
+          data: response.data,
+          message: response.message
+        };
+      }
     } catch (error) {
       console.error('[Resources] Update resource error:', error);
       return {

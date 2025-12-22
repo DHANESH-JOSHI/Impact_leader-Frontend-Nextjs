@@ -641,16 +641,26 @@ export default function ViewResourceModal({
 
                       {/* Quick Actions */}
                       <div className="space-y-2">
-                        <motion.a
-                          href={resource.fileUrl}
-                          download={resource.fileName}
+                        <motion.button
+                          onClick={async () => {
+                            try {
+                              const { ResourcesService } = await import('@/services/resourcesService');
+                              const result = await ResourcesService.downloadResource(resource.id, resource.fileName || resource.title);
+                              if (!result?.success) {
+                                alert(result?.message || 'Download failed');
+                              }
+                            } catch (error) {
+                              console.error('Download error:', error);
+                              alert('Download failed. Please try again.');
+                            }
+                          }}
                           className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
                           <Download className="h-4 w-4" />
                           <span>Download</span>
-                        </motion.a>
+                        </motion.button>
 
                         <motion.button
                           className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"

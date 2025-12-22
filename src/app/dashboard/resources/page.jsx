@@ -155,19 +155,37 @@ const modalCategories = useMemo(() => {
             tags = [r.tags];
           }
 
+          // Get file URL - file.path can be S3 URL or local path
+          let fileUrl = "";
+          if (r.file?.path) {
+            // If it's already a full URL (starts with http/https), use it as is
+            // Otherwise, it's a local path and we need to prepend /uploads/
+            fileUrl = r.file.path.startsWith('http://') || r.file.path.startsWith('https://') 
+              ? r.file.path 
+              : `/uploads/${r.file.path}`;
+          } else if (r.url) {
+            // For link type resources
+            fileUrl = r.url;
+          }
+
           return {
             id: r._id || r.id,
             title: r.title || "Untitled Resource",
             description: r.description || "No description available.",
             type: r.type || "document",
-            fileUrl: r.fileUrl || r.url || (r.file?.path ? `/uploads/${r.file.path}` : ""),
-            fileName: r.fileName || r.file?.originalName || r.file?.filename || "file",
-            fileSize: r.fileSize || r.file?.size || 0,
+            fileUrl: fileUrl,
+            fileName: r.file?.originalName || r.file?.filename || "file",
+            fileSize: r.file?.size || 0,
+            url: r.url || "", // Keep url field separate for link resources
             duration: r.duration || 0,
             category: r.category || "General",
             tags: tags,
+            themes: Array.isArray(r.themes) ? r.themes : [],
             author: authorName,
             status: r.isPublic !== false && r.isActive !== false ? "published" : "draft",
+            isESG: r.isESG || false,
+            isCSR: r.isCSR || false,
+            isPublic: r.isPublic !== undefined ? r.isPublic : true,
             thumbnail:
               r.thumbnail ||
               "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&q=80",
@@ -269,9 +287,31 @@ const modalCategories = useMemo(() => {
       };
   
       let res;
-      if (payload.file) {
-        res = await ResourcesService.uploadDocumentResource(cleanPayload, payload.file);
+      if (payload.file && payload.file instanceof File) {
+        // Use appropriate upload method based on resource type
+        const fileType = cleanPayload.type || payload.file.type?.split('/')[0];
+        console.log('[Resources] Uploading file:', {
+          fileName: payload.file.name,
+          fileSize: payload.file.size,
+          fileType: payload.file.type,
+          resourceType: cleanPayload.type
+        });
+        
+        switch (fileType) {
+          case 'video':
+            res = await ResourcesService.uploadVideoResource(cleanPayload, payload.file);
+            break;
+          case 'audio':
+            res = await ResourcesService.uploadAudioResource(cleanPayload, payload.file);
+            break;
+          case 'image':
+            res = await ResourcesService.uploadImageResource(cleanPayload, payload.file);
+            break;
+          default:
+            res = await ResourcesService.uploadDocumentResource(cleanPayload, payload.file);
+        }
       } else {
+        // No file - create resource without file (for link type or URL-based resources)
         res = await ResourcesService.createResource(cleanPayload);
       }
   
@@ -301,14 +341,28 @@ const modalCategories = useMemo(() => {
   const handleSaveEditedResource = async (resourceData) => {
     try {
       if (resourceData.id) {
-        const res = await ResourcesService.updateResource(resourceData.id, resourceData);
+        const cleanPayload = {
+          title: resourceData.title?.trim() || "Untitled Resource",
+          description: resourceData.description?.trim() || "No description",
+          category: resourceData.category?.trim() || "General",
+          type: resourceData.type || "document",
+          tags: Array.isArray(resourceData.tags) ? resourceData.tags : (resourceData.tags ? resourceData.tags.split(',').map(t => t.trim()).filter(Boolean) : []),
+          themes: Array.isArray(resourceData.themes) ? resourceData.themes : (resourceData.themes ? resourceData.themes.split(',').map(t => t.trim()).filter(Boolean) : []),
+          isPublic: resourceData.isPublic !== undefined ? resourceData.isPublic : true,
+          isESG: resourceData.isESG !== undefined ? resourceData.isESG : false,
+          isCSR: resourceData.isCSR !== undefined ? resourceData.isCSR : true,
+          ...(resourceData.url && { url: resourceData.url }),
+          ...(resourceData.file && { file: resourceData.file }),
+        };
+
+        const res = await ResourcesService.updateResource(resourceData.id, cleanPayload);
         
-      if (res?.success) {
+        if (res?.success) {
           await loadResources();
           setIsEditModalOpen(false);
           setSelectedResource(null);
           toast.success("Resource updated successfully");
-      } else {
+        } else {
           toast.error(res?.message || "Failed to update resource");
         }
       }
@@ -374,8 +428,18 @@ const modalCategories = useMemo(() => {
     setFilterPublic(value);
   };
 
-  const handleResourceDownload = (resource) => {
-    // Download handled in component
+  const handleResourceDownload = async (resource) => {
+    try {
+      const result = await ResourcesService.downloadResource(resource.id, resource.fileName || resource.title);
+      if (result?.success) {
+        toast.success('Download started');
+      } else {
+        toast.error(result?.message || 'Download failed');
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Download failed. Please try again.');
+    }
   };
 
   const types = ["all", "document", "video", "audio", "image", "link", "other"];
