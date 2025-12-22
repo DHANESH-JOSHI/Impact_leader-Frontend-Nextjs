@@ -239,7 +239,12 @@ export const authStorage = {
    * Clear auth tokens
    */
   clearTokens() {
-    localStorage.remove(STORAGE_KEYS.IMPACT_LEADERS_AUTH);
+    try {
+      if (typeof window === 'undefined') return;
+      localStorage.remove(STORAGE_KEYS.IMPACT_LEADERS_AUTH);
+    } catch (error) {
+      console.error('[AuthStorage] Error clearing tokens:', error);
+    }
   },
 
   /**
@@ -263,8 +268,14 @@ export const authStorage = {
    * Check if user is authenticated
    */
   isAuthenticated() {
-    const tokens = this.getTokens();
-    return !!tokens.accessToken;
+    try {
+      if (typeof window === 'undefined') return false;
+      const tokens = this.getTokens();
+      return !!tokens?.accessToken;
+    } catch (error) {
+      console.error('[AuthStorage] Error checking authentication:', error);
+      return false;
+    }
   },
 
   /**
