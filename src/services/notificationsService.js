@@ -123,7 +123,8 @@ export class NotificationsService {
 
   static async createAnnouncement(announcementData) {
     try {
-      const response = await apiClient.post(ADMIN.SETTINGS.NOTIFICATIONS || '/admin/notifications/announcement', announcementData);
+      // Backend route: POST /api/v1/notifications/announcement
+      const response = await apiClient.post(`${NOTIFICATIONS.BASE}/announcement`, announcementData);
       const backendResponse = response.data || {};
 
       return {

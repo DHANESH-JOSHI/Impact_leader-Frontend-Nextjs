@@ -123,12 +123,17 @@ export default function PostsPage() {
               ? new Date(post.createdAt).toISOString().split('T')[0] 
               : new Date().toISOString().split('T')[0],
             tags: tags,
+            themes: Array.isArray(post.themes) ? post.themes : [],
             views: typeof post.views === 'number' ? post.views : 0,
-            likes: typeof post.upvotes === 'number' ? post.upvotes : 0,
+            likes: Array.isArray(post.upvotes) ? post.upvotes.length : (typeof post.upvotes === 'number' ? post.upvotes : 0),
+            upvotes: Array.isArray(post.upvotes) ? post.upvotes : [],
+            downvotes: Array.isArray(post.downvotes) ? post.downvotes : [],
+            score: typeof post.score === 'number' ? post.score : 0,
             featured: post.isPinned || post.featured || false,
             readTime: Math.ceil((content.length || 0) / 200),
-            image: (post.images && Array.isArray(post.images) && post.images.length > 0) 
-              ? post.images[0] 
+            media: Array.isArray(post.media) ? post.media : [],
+            image: (post.media && Array.isArray(post.media) && post.media.length > 0 && post.media[0].type === 'image') 
+              ? post.media[0].url 
               : (post.image || "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&q=80")
           };
         }) || [];
@@ -201,38 +206,36 @@ export default function PostsPage() {
       const postData = {
         title: newPost.title,
         content: newPost.content,
-        type: newPost.category || 'announcement',
-        themes: newPost.tags || [],
+        themes: Array.isArray(newPost.themes) ? newPost.themes : (newPost.tags || []),
+        tags: Array.isArray(newPost.tags) ? newPost.tags : [],
         isPublic: newPost.status === 'published',
-        isPinned: newPost.featured || false,
-        status: newPost.status,
         allowComments: true
       };
   
       let result;
   
-      if (newPost.images && newPost.images.length > 0) {
-        const formData = new FormData();
-        formData.append('postData', JSON.stringify(postData));
-        
-        newPost.images.forEach((image, index) => {
-          formData.append('images', image);
-        });
+      // Check if there are media files (images/videos)
+      const mediaFiles = newPost.images || newPost.media || [];
+      const hasMedia = mediaFiles.length > 0 && mediaFiles.every(f => f instanceof File);
   
-        result = await PostsService.createPostWithImages(formData);
+      if (hasMedia) {
+        // Use createPostWithImages which handles FormData correctly
+        result = await PostsService.createPostWithImages(postData, mediaFiles);
       } else {
+        // No media - use regular JSON post
         result = await PostsService.createPost(postData);
       }
   
       if (result.success) {
         setIsAddModalOpen(false);
-        loadPosts();
+        await loadPosts();
         toast.success(`Post "${newPost.title}" created successfully!`);
       } else {
         toast.error(`Failed to create post: ${result.message}`);
       }
     } catch (error) {
-      toast.error("Failed to create post. Please try again.");
+      console.error('Failed to create post:', error);
+      toast.error(error.message || "Failed to create post. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -250,7 +253,21 @@ export default function PostsPage() {
   const handleSaveEditedPost = async (postData) => {
     try {
       if (postData.id) {
-        const result = await PostsService.updatePost(postData.id, postData);
+        // Prepare update data matching backend structure
+        const updateData = {
+          title: postData.title,
+          content: postData.content,
+          themes: Array.isArray(postData.themes) ? postData.themes : [],
+          tags: Array.isArray(postData.tags) ? postData.tags : [],
+          isPublic: postData.status === 'published',
+          allowComments: postData.allowComments !== false
+        };
+
+        // Check if there are media files to upload
+        const mediaFiles = postData.media || postData.images || [];
+        const hasMedia = mediaFiles.length > 0 && mediaFiles.every(f => f instanceof File);
+
+        const result = await PostsService.updatePost(postData.id, updateData, hasMedia ? mediaFiles : []);
         
         if (result.success) {
           await loadPosts();
@@ -262,6 +279,7 @@ export default function PostsPage() {
         }
       }
     } catch (error) {
+      console.error('Failed to update post:', error);
       toast.error(error.message || "Failed to update post. Please try again.");
     }
   };
@@ -275,15 +293,22 @@ export default function PostsPage() {
   const confirmDelete = async () => {
     if (selectedPost) {
       try {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        setPosts((prev) => prev.filter((post) => post.id !== selectedPost.id));
-        setIsDeleteModalOpen(false);
-
-        toast.success(`Post "${selectedPost.title}" deleted successfully!`);
-        setSelectedPost(null);
+        setLoading(true);
+        const result = await PostsService.deletePost(selectedPost.id);
+        
+        if (result.success) {
+          await loadPosts();
+          setIsDeleteModalOpen(false);
+          toast.success(`Post "${selectedPost.title}" deleted successfully!`);
+          setSelectedPost(null);
+        } else {
+          toast.error(result.message || "Failed to delete post");
+        }
       } catch (error) {
-        toast.error("Failed to delete post. Please try again.");
+        console.error('Failed to delete post:', error);
+        toast.error(error.message || "Failed to delete post. Please try again.");
+      } finally {
+        setLoading(false);
       }
     }
   };

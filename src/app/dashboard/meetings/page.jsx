@@ -191,10 +191,12 @@ export default function MeetingsPage() {
   const handleUpdateMeeting = async (meetingData) => {
     try {
       setLoading(true);
-      const result = await MeetingsService.startMeetingCreation({
-        ...meetingData,
-        id: selectedMeeting?.id,
-      });
+      if (!selectedMeeting?.id) {
+        toast.error("Meeting ID is required");
+        return;
+      }
+
+      const result = await MeetingsService.updateMeeting(selectedMeeting.id, meetingData);
 
       if (result.success) {
         toast.success("Meeting updated successfully");
@@ -215,12 +217,19 @@ export default function MeetingsPage() {
   const handleDeleteMeeting = async (meetingId) => {
     try {
       setDeleteLoading(true);
-      toast.error("Delete functionality needs to be implemented in the service");
-      setIsDeleteModalOpen(false);
-      setSelectedMeeting(null);
+      const result = await MeetingsService.cancelMeeting(meetingId);
+
+      if (result.success) {
+        toast.success("Meeting cancelled successfully");
+        setIsDeleteModalOpen(false);
+        setSelectedMeeting(null);
+        await loadMeetings();
+      } else {
+        toast.error(result.message || "Failed to cancel meeting");
+      }
     } catch (error) {
-      console.error("Failed to delete meeting:", error);
-      toast.error(error.message || "Failed to delete meeting");
+      console.error("Failed to cancel meeting:", error);
+      toast.error(error.message || "Failed to cancel meeting");
     } finally {
       setDeleteLoading(false);
     }

@@ -212,17 +212,19 @@ export default function StoriesPage() {
       let result;
   
       const baseStoryData = {
-        textContent: newStoryData.textContent,
         type: newStoryData.type,
-        duration: newStoryData.duration,
-        tags: newStoryData.tags || [],
+        textContent: newStoryData.textContent || newStoryData.content || "",
+        caption: newStoryData.caption || "",
+        duration: newStoryData.duration || (24 * 60 * 60 * 1000), // Default 24 hours in milliseconds
+        tags: Array.isArray(newStoryData.tags) ? newStoryData.tags : (newStoryData.tags ? newStoryData.tags.split(',').map(t => t.trim()).filter(Boolean) : []),
         backgroundColor: newStoryData.backgroundColor || "#000000",
         textColor: newStoryData.textColor || "#FFFFFF",
         fontFamily: newStoryData.fontFamily || "Arial",
-        isActive: newStoryData.isActive || false
+        isActive: newStoryData.isActive !== false,
       };
   
-      if (newStoryData.mediaFile) {
+      // Handle file upload for image/video stories
+      if (newStoryData.mediaFile && newStoryData.mediaFile instanceof File) {
         if (newStoryData.type === "image") {
           result = await StoriesService.createImageStory(
             baseStoryData,
@@ -233,16 +235,21 @@ export default function StoriesPage() {
             baseStoryData,
             newStoryData.mediaFile
           );
+        } else {
+          // Text story with optional media
+          result = await StoriesService.createTextStory(baseStoryData);
         }
       } else {
-        if (newStoryData.type === "image") {
-          const imageStoryData = {
-            ...baseStoryData,
-            mediaUrl: newStoryData.mediaUrl || newStoryData.image
-          };
-          result = await StoriesService.createTextStory(imageStoryData);
-        } else {
+        // No file - text story or story with mediaUrl
+        if (newStoryData.type === "text") {
           result = await StoriesService.createTextStory(baseStoryData);
+        } else if (newStoryData.mediaUrl) {
+          // Story with external media URL
+          baseStoryData.mediaUrl = newStoryData.mediaUrl;
+          result = await StoriesService.createTextStory(baseStoryData);
+        } else {
+          toast.error("Media file or URL is required for image/video stories");
+          return;
         }
       }
   
@@ -255,7 +262,8 @@ export default function StoriesPage() {
         toast.error(`Failed: ${errorMsg}`);
       }
     } catch (error) {
-      toast.error("There was a problem creating the story. Please try again.");
+      console.error('Failed to create story:', error);
+      toast.error(error.message || "There was a problem creating the story. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -264,15 +272,28 @@ export default function StoriesPage() {
     try {
       setLoading(true);
       const id = selectedStory?.id;
-      const result = await StoriesService.updateStory(id, {
-        content: updatedStoryData.content,
-        title: updatedStoryData.title,
+      if (!id) {
+        toast.error("Story ID is required");
+        return;
+      }
+
+      // Prepare update data matching backend structure
+      const updateData = {
+        type: updatedStoryData.type || selectedStory?.type,
+        textContent: updatedStoryData.textContent || updatedStoryData.content,
+        caption: updatedStoryData.caption,
         backgroundColor: updatedStoryData.backgroundColor,
+        textColor: updatedStoryData.textColor,
         fontFamily: updatedStoryData.fontFamily,
         duration: updatedStoryData.duration,
-        tags: updatedStoryData.tags,
+        tags: Array.isArray(updatedStoryData.tags) ? updatedStoryData.tags : (updatedStoryData.tags ? updatedStoryData.tags.split(',').map(t => t.trim()).filter(Boolean) : []),
         isActive: updatedStoryData.status === "published",
-      });
+      };
+
+      // Check if there's a new media file to upload
+      const hasMediaFile = updatedStoryData.mediaFile && updatedStoryData.mediaFile instanceof File;
+
+      const result = await StoriesService.updateStory(id, updateData, hasMediaFile ? updatedStoryData.mediaFile : null);
 
       if (result?.success) {
         setIsEditModalOpen(false);
@@ -285,7 +306,8 @@ export default function StoriesPage() {
         );
       }
     } catch (error) {
-      toast.error("There was a problem updating the story. Please try again.");
+      console.error('Failed to update story:', error);
+      toast.error(error.message || "There was a problem updating the story. Please try again.");
     } finally {
       setLoading(false);
     }

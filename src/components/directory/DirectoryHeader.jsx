@@ -51,10 +51,8 @@ export default function DirectoryHeader({
   setFilterOrganization,
   filterESGCSR,
   setFilterESGCSR,
-  sortBy,
-  setSortBy,
-  sortOrder,
-  setSortOrder,
+  sort,
+  setSort,
   organizationTypes,
   esgCsrOptions,
   onAddEntry,
@@ -158,32 +156,21 @@ export default function DirectoryHeader({
           />
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="relative">
           <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all"
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[160px]"
             style={{ focusRingColor: "#2691ce" }}
           >
-            <option value="createdAt">Created Date</option>
-            <option value="title">Title</option>
-            <option value="category">Category</option>
-            <option value="organizationType">Organization Type</option>
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="name">Name (A-Z)</option>
           </select>
-
-          <motion.button
-            onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-            className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            variants={buttonVariants}
-            whileHover="hover"
-            whileTap="tap"
-          >
-            {sortOrder === "asc" ? (
-              <SortAsc className="h-4 w-4" style={{ color: "#646464" }} />
-            ) : (
-              <SortDesc className="h-4 w-4" style={{ color: "#646464" }} />
-            )}
-          </motion.button>
+          <SortAsc
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
+            style={{ color: "#646464" }}
+          />
         </div>
       </motion.div>
 

@@ -200,24 +200,25 @@ export default function QnaPage() {
       setLoading(true);
 
       const apiData = {
-        title: newQuestion.question,
-        content: newQuestion.answer || "",
-        tags: newQuestion.tags || [],
-        category: newQuestion.category || "General",
-        status: newQuestion.status || "open",
+        title: newQuestion.question || newQuestion.title,
+        content: newQuestion.answer || newQuestion.content || "",
+        tags: Array.isArray(newQuestion.tags) ? newQuestion.tags : (newQuestion.tags ? newQuestion.tags.split(',').map(t => t.trim()).filter(Boolean) : []),
+        themes: Array.isArray(newQuestion.themes) ? newQuestion.themes : (newQuestion.themes ? newQuestion.themes.split(',').map(t => t.trim()).filter(Boolean) : []),
+        priority: newQuestion.priority || 'medium',
       };
 
       const result = await QnAService.askQuestion(apiData);
 
       if (result.success) {
         setIsAddModalOpen(false);
-        loadQnaData();
+        await loadQnaData();
         toast.success("Question created successfully");
       } else {
         toast.error(`Failed to create question: ${result.message}`);
       }
     } catch (error) {
-      toast.error("Failed to create question");
+      console.error('Failed to create question:', error);
+      toast.error(error.message || "Failed to create question");
     } finally {
       setLoading(false);
     }
@@ -238,18 +239,28 @@ export default function QnaPage() {
   const handleSaveEditedQna = async (qnaData) => {
     try {
       if (qnaData.id) {
-        const result = await QnAService.updateQuestion(qnaData.id, qnaData);
+        // Prepare update data matching backend structure
+        const updateData = {
+          title: qnaData.title || qnaData.question,
+          content: qnaData.content || qnaData.answer || "",
+          tags: Array.isArray(qnaData.tags) ? qnaData.tags : (qnaData.tags ? qnaData.tags.split(',').map(t => t.trim()).filter(Boolean) : []),
+          themes: Array.isArray(qnaData.themes) ? qnaData.themes : (qnaData.themes ? qnaData.themes.split(',').map(t => t.trim()).filter(Boolean) : []),
+          priority: qnaData.priority || 'medium',
+        };
+
+        const result = await QnAService.updateQuestion(qnaData.id, updateData);
         
         if (result.success) {
           await loadQnaData();
           setIsEditModalOpen(false);
           setSelectedQna(null);
-      toast.success("Question updated successfully");
+          toast.success("Question updated successfully");
         } else {
           toast.error(result.message || "Failed to update question");
         }
       }
     } catch (error) {
+      console.error('Failed to update question:', error);
       toast.error(error.message || "Failed to update question");
     }
   };
@@ -265,15 +276,22 @@ export default function QnaPage() {
   const confirmDelete = async () => {
     if (selectedQna) {
       try {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        setQnaData((prev) => prev.filter((qna) => qna.id !== selectedQna.id));
-        setIsDeleteModalOpen(false);
-
-        toast.success("Question deleted successfully");
-        setSelectedQna(null);
+        setLoading(true);
+        const result = await QnAService.deleteQuestion(selectedQna.id);
+        
+        if (result.success) {
+          await loadQnaData();
+          setIsDeleteModalOpen(false);
+          toast.success("Question deleted successfully");
+          setSelectedQna(null);
+        } else {
+          toast.error(result.message || "Failed to delete question");
+        }
       } catch (error) {
-        toast.error("Failed to delete question");
+        console.error('Failed to delete question:', error);
+        toast.error(error.message || "Failed to delete question");
+      } finally {
+        setLoading(false);
       }
     }
   };

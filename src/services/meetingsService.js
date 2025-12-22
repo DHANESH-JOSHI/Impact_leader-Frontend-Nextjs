@@ -249,4 +249,42 @@ export class MeetingsService {
       { value: "America/Los_Angeles", label: "America/Los_Angeles (PST/PDT)" },
     ];
   }
+
+  static async cancelMeeting(meetingId) {
+    try {
+      const response = await apiClient.delete(MEETINGS.BY_ID(meetingId));
+      const backendResponse = response.data || {};
+
+      return {
+        success: response.success,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
+      };
+    } catch (error) {
+      console.error('[Meetings] Cancel meeting error:', error);
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+  static async updateMeeting(meetingId, meetingData) {
+    try {
+      const response = await apiClient.put(MEETINGS.BY_ID(meetingId), meetingData);
+      const backendResponse = response.data || {};
+
+      return {
+        success: response.success,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
+      };
+    } catch (error) {
+      console.error('[Meetings] Update meeting error:', error);
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
 }

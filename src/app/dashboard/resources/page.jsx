@@ -85,7 +85,7 @@ const categories = useMemo(
     );
     return uniqueCategories.length > 0 
       ? ["all", ...uniqueCategories]
-      : ["all", "General", "Web Development", "Productivity", "Study", "Cloud Computing"];
+      : ["all"];
   },
   [resources]
 );

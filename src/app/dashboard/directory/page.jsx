@@ -44,8 +44,7 @@ export default function DirectoryPage() {
   const [filterType, setFilterType] = useState("all");
   const [filterOrganization, setFilterOrganization] = useState("all");
   const [filterESGCSR, setFilterESGCSR] = useState("all");
-  const [sortBy, setSortBy] = useState("createdAt");
-  const [sortOrder, setSortOrder] = useState("desc");
+  const [sort, setSort] = useState("newest");
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 20,
@@ -72,7 +71,7 @@ export default function DirectoryPage() {
 
   useEffect(() => {
     loadEntries();
-  }, [pagination.page, pagination.limit, filterType, filterOrganization, filterESGCSR, searchQuery, sortBy, sortOrder]);
+  }, [pagination.page, pagination.limit, filterType, filterOrganization, filterESGCSR, searchQuery, sort]);
 
   const loadEntries = async () => {
     setLoading(true);
@@ -80,8 +79,7 @@ export default function DirectoryPage() {
       const params = {
         page: pagination.page,
         limit: pagination.limit,
-        sortBy,
-        sortOrder,
+        sort,
         ...(searchQuery && { search: searchQuery }),
         ...(filterOrganization !== "all" && { organizationType: filterOrganization }),
         ...(filterESGCSR === "esg" && { isESG: true }),
@@ -255,10 +253,8 @@ export default function DirectoryPage() {
           setFilterOrganization={setFilterOrganization}
           filterESGCSR={filterESGCSR}
           setFilterESGCSR={setFilterESGCSR}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-          sortOrder={sortOrder}
-          setSortOrder={setSortOrder}
+          sort={sort}
+          setSort={setSort}
           organizationTypes={organizationTypes}
           esgCsrOptions={esgCsrOptions}
           onAddEntry={() => setIsAddModalOpen(true)}

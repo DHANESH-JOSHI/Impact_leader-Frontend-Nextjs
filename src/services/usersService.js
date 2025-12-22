@@ -96,9 +96,10 @@ export class UsersService {
   static async uploadAvatar(avatarFile, userId = null) {
     try {
       const formData = new FormData();
-      formData.append("avatar", avatarFile);
+      formData.append("profileImage", avatarFile); // Backend expects 'profileImage' field
 
-      const endpoint = userId ? USERS.BY_ID(userId) + '/avatar' : USERS.BASE + '/avatar';
+      // Backend route: POST /api/v1/users/profile/image
+      const endpoint = '/users/profile/image';
       const response = await apiClient.upload(endpoint, formData);
       const backendResponse = response.data || {};
 
@@ -109,6 +110,35 @@ export class UsersService {
       };
     } catch (error) {
       console.error("Upload avatar error:", error);
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+  static async uploadProfileImages(profileImageFile, coverImageFile = null) {
+    try {
+      const formData = new FormData();
+      if (profileImageFile && profileImageFile instanceof File) {
+        formData.append("profileImage", profileImageFile);
+      }
+      if (coverImageFile && coverImageFile instanceof File) {
+        formData.append("coverImage", coverImageFile);
+      }
+
+      // Backend route: POST /api/v1/users/profile/images
+      const endpoint = '/users/profile/images';
+      const response = await apiClient.upload(endpoint, formData);
+      const backendResponse = response.data || {};
+
+      return {
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message,
+      };
+    } catch (error) {
+      console.error("Upload profile images error:", error);
       return {
         success: false,
         message: error.message,

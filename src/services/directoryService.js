@@ -14,8 +14,9 @@ export class DirectoryService {
         experience,
         designation,
         companySize,
-        sortBy = "relevance",
-        sortOrder = "desc",
+        sort = "newest",
+        sortBy,
+        sortOrder,
         type,
         startsWith,
       } = params;
@@ -23,8 +24,9 @@ export class DirectoryService {
       const queryParams = {
         page,
         limit,
-        sortBy,
-        sortOrder,
+        sort,
+        ...(sortBy && { sortBy }),
+        ...(sortOrder && { sortOrder }),
       };
 
       if (search) queryParams.search = search;

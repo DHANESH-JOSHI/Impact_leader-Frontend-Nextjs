@@ -5,15 +5,18 @@ export class PostsService {
 
   static async getAllPosts(params = {}) {
     try {
-      const { page = 1, limit = 10, search, type, theme, isPublic } = params;
+      const { page = 1, limit = 10, search, type, themes, theme, isPublic, sortBy, sortOrder } = params;
 
       const queryParams = {
         page,
         limit,
         ...(search && { search }),
         ...(type && { type }),
-        ...(theme && { theme }),
+        ...(themes && { themes: Array.isArray(themes) ? themes.join(',') : themes }),
+        ...(theme && { themes: theme }), // Support legacy 'theme' param
         ...(isPublic !== undefined && { isPublic }),
+        ...(sortBy && { sortBy }),
+        ...(sortOrder && { sortOrder }),
       };
 
       const response = await apiClient.get(POSTS.BASE, { params: queryParams });

@@ -88,7 +88,7 @@ export class StoriesService {
         formData.append("media", imageFile);
       }
 
-      const response = await apiClient.upload(STORIES.UPLOAD, formData);
+      const response = await apiClient.upload(STORIES.BASE, formData);
 
       return {
         success: response.success,
@@ -137,7 +137,7 @@ export class StoriesService {
         formData.append("media", videoFile);
       }
 
-      const response = await apiClient.upload(STORIES.UPLOAD, formData);
+      const response = await apiClient.upload(STORIES.BASE, formData);
 
       return {
         success: response.success,

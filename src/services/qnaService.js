@@ -13,19 +13,21 @@ export class QnAService {
         tags,
         themes,
         status,
-        sortBy = 'createdAt',
-        sortOrder = 'desc'
+        sort = 'newest',
+        sortBy,
+        sortOrder
       } = params;
       
       const queryParams = {
         page,
         limit,
-        sortBy,
-        sortOrder,
+        sort,
+        ...(sortBy && { sortBy }),
+        ...(sortOrder && { sortOrder }),
         ...(search && { search }),
         ...(category && { category }),
         ...(tags && { tags }),
-        ...(themes && { themes }),
+        ...(themes && { themes: Array.isArray(themes) ? themes.join(',') : themes }),
         ...(status && { status }),
       };
 
