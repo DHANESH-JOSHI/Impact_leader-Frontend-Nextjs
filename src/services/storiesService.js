@@ -1,23 +1,70 @@
 import { apiClient } from '@/lib/apiClient';
 import { STORIES } from '@/constants/apiEndpoints';
+import { STORY_TYPE_ENUM, STORY_FONT_FAMILY_ENUM, formatEnumValue } from '@/constants/backendEnums';
 
 export class StoriesService {
-  static async getStoriesFeed(params = {}) {
+  // Get all active stories
+  static async getStories(params = {}) {
     try {
-      const { page = 1, limit = 20 } = params;
+      const {
+        featured,
+        authorId,
+        tags,
+        // New query parameters
+        search,
+        type,
+        status,
+        page = 1,
+        limit = 20,
+        sortBy = 'createdAt',
+        sortOrder = 'desc'
+      } = params;
 
-      const queryParams = {
-        page,
-        limit,
-      };
+      const queryParams = {};
+      // Backward compatibility: Keep old parameters
+      if (featured !== undefined) queryParams.featured = featured;
+      if (authorId) queryParams.authorId = authorId;
+      if (tags) queryParams.tags = Array.isArray(tags) ? tags.join(',') : tags;
+      // New parameters
+      if (search) queryParams.search = search;
+      if (type) queryParams.type = type;
+      if (status) queryParams.status = status;
+      if (page) queryParams.page = page;
+      if (limit) queryParams.limit = limit;
+      if (sortBy) queryParams.sortBy = sortBy;
+      if (sortOrder) queryParams.sortOrder = sortOrder;
 
-      const response = await apiClient.get(STORIES.FEED, { params: queryParams });
+      const response = await apiClient.get(STORIES.ACTIVE, { params: queryParams });
       const backendResponse = response.data || {};
       
       return {
         success: response.success && backendResponse.success !== false,
         data: backendResponse.data || [],
-        pagination: backendResponse.pagination || {},
+        count: backendResponse.count, // Backward compatibility
+        pagination: backendResponse.pagination, // New pagination object
+        message: backendResponse.message || response.message,
+      };
+    } catch (error) {
+      console.error('[Stories] Get stories error:', error);
+      return {
+        success: false,
+        data: [],
+        count: 0,
+        pagination: null,
+        message: error.message,
+      };
+    }
+  }
+
+  // Get stories for feed (grouped by author)
+  static async getStoriesFeed(params = {}) {
+    try {
+      const response = await apiClient.get(STORIES.FEED);
+      const backendResponse = response.data || {};
+      
+      return {
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || [],
         count: backendResponse.count,
         message: backendResponse.message || response.message,
       };
@@ -26,7 +73,53 @@ export class StoriesService {
       return {
         success: false,
         data: [],
-        pagination: {},
+        message: error.message,
+      };
+    }
+  }
+
+  // Get user's own stories
+  static async getMyStories(params = {}) {
+    try {
+      const { includeExpired = false } = params;
+      const queryParams = {};
+      if (includeExpired !== undefined) queryParams.includeExpired = includeExpired;
+
+      const response = await apiClient.get(`${STORIES.BASE}/my`, { params: queryParams });
+      const backendResponse = response.data || {};
+      
+      return {
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || [],
+        count: backendResponse.count,
+        message: backendResponse.message || response.message,
+      };
+    } catch (error) {
+      console.error('[Stories] Get my stories error:', error);
+      return {
+        success: false,
+        data: [],
+        message: error.message,
+      };
+    }
+  }
+
+  // Get single story
+  static async getStory(storyId) {
+    try {
+      const response = await apiClient.get(STORIES.BY_ID(storyId));
+      const backendResponse = response.data || {};
+      
+      return {
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message,
+      };
+    } catch (error) {
+      console.error('[Stories] Get story error:', error);
+      return {
+        success: false,
+        data: null,
         message: error.message,
       };
     }
@@ -34,12 +127,24 @@ export class StoriesService {
 
   static async createTextStory(storyData) {
     try {
-      const payload = {
-        type: "text",
-        ...storyData,
-      };
+      const formData = new FormData();
+      
+      // Add story metadata
+      formData.append('type', 'text');
+      if (storyData.textContent) formData.append('textContent', storyData.textContent);
+      if (storyData.caption) formData.append('caption', storyData.caption);
+      if (storyData.duration) formData.append('duration', storyData.duration.toString());
+      if (storyData.backgroundColor) formData.append('backgroundColor', storyData.backgroundColor);
+      if (storyData.textColor) formData.append('textColor', storyData.textColor);
+      if (storyData.fontFamily) formData.append('fontFamily', storyData.fontFamily);
+      if (storyData.tags && Array.isArray(storyData.tags) && storyData.tags.length > 0) {
+        formData.append('tags', JSON.stringify(storyData.tags));
+      }
+      if (storyData.isFeatured !== undefined) {
+        formData.append('isFeatured', storyData.isFeatured.toString());
+      }
 
-      const response = await apiClient.post(STORIES.BASE, payload);
+      const response = await apiClient.upload(STORIES.BASE, formData);
 
       return {
         success: response.success,
@@ -154,18 +259,45 @@ export class StoriesService {
   }
 
 
-  // View story (increments view count)
+  // View story (increments view count) - same as getStory
   static async viewStory(storyId) {
-    try {
-      const response = await apiClient.get(STORIES.VIEW(storyId));
+    return this.getStory(storyId);
+  }
 
+  // Get story views (Admin or owner)
+  static async getStoryViews(storyId) {
+    try {
+      const response = await apiClient.get(`${STORIES.BY_ID(storyId)}/views`);
+      const backendResponse = response.data || {};
+      
       return {
-        success: response.success,
-        data: response.data,
-        message: response.message,
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message,
       };
     } catch (error) {
-      console.error('[Stories] View story error:', error);
+      console.error('[Stories] Get story views error:', error);
+      return {
+        success: false,
+        data: null,
+        message: error.message,
+      };
+    }
+  }
+
+  // Extend story expiry (Admin only)
+  static async extendStoryExpiry(storyId, hours = 24) {
+    try {
+      const response = await apiClient.put(`${STORIES.BY_ID(storyId)}/extend`, { hours });
+      const backendResponse = response.data || {};
+      
+      return {
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data,
+        message: backendResponse.message || response.message,
+      };
+    } catch (error) {
+      console.error('[Stories] Extend story expiry error:', error);
       return {
         success: false,
         message: error.message,
@@ -274,12 +406,12 @@ export class StoriesService {
     }
   }
 
+  // Use backend enum - must match exactly
   static getStoryTypes() {
-    return [
-      { value: "text", label: "Text Story" },
-      { value: "image", label: "Image Story" },
-      { value: "video", label: "Video Story" },
-    ];
+    return STORY_TYPE_ENUM.map(type => ({
+      value: type,
+      label: formatEnumValue(type) + ' Story'
+    }));
   }
 
   static getBackgroundColors() {
@@ -294,15 +426,12 @@ export class StoriesService {
     ];
   }
 
+  // Use backend enum - must match exactly
   static getFontFamilies() {
-    return [
-      { value: "Arial", label: "Arial" },
-      { value: "Helvetica", label: "Helvetica" },
-      { value: "Georgia", label: "Georgia" },
-      { value: "Times New Roman", label: "Times New Roman" },
-      { value: "Courier New", label: "Courier New" },
-      { value: "Verdana", label: "Verdana" },
-    ];
+    return STORY_FONT_FAMILY_ENUM.map(font => ({
+      value: font,
+      label: font
+    }));
   }
 
   static getStoryDurations() {

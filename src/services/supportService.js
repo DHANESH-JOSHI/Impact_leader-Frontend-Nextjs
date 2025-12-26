@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/apiClient';
 import { SUPPORT } from '@/constants/apiEndpoints';
+import { SUPPORT_CATEGORY_ENUM, SUPPORT_PRIORITY_ENUM, SUPPORT_STATUS_ENUM } from '@/constants/backendEnums';
 
 export class SupportService {
   static async getTickets(params = {}) {
@@ -277,37 +278,28 @@ export class SupportService {
     }
   }
 
+  // Use backend enums - must match exactly with SUPPORT_CATEGORY_ENUM
   static getSupportCategories() {
-    return [
-      { value: 'technical', label: 'Technical Issue' },
-      { value: 'account', label: 'Account & Billing' },
-      { value: 'feature-request', label: 'Feature Request' },
-      { value: 'bug-report', label: 'Bug Report' },
-      { value: 'general-inquiry', label: 'General Inquiry' },
-      { value: 'data-privacy', label: 'Data & Privacy' },
-      { value: 'integration', label: 'Integration Support' },
-      { value: 'training', label: 'Training & Onboarding' },
-      { value: 'other', label: 'Other' }
-    ];
+    return SUPPORT_CATEGORY_ENUM.map(category => ({
+      value: category,
+      label: category
+    }));
   }
 
+  // Use backend enums - must match exactly with SUPPORT_PRIORITY_ENUM
   static getPriorityLevels() {
-    return [
-      { value: 'low', label: 'Low', color: 'green' },
-      { value: 'medium', label: 'Medium', color: 'yellow' },
-      { value: 'high', label: 'High', color: 'orange' },
-      { value: 'urgent', label: 'Urgent', color: 'red' }
-    ];
+    return SUPPORT_PRIORITY_ENUM.map(priority => ({
+      value: priority,
+      label: priority
+    }));
   }
 
+  // Use backend enums - must match exactly with SUPPORT_STATUS_ENUM
   static getStatusOptions() {
-    return [
-      { value: 'open', label: 'Open', color: 'blue' },
-      { value: 'in-progress', label: 'In Progress', color: 'yellow' },
-      { value: 'waiting', label: 'Waiting on Customer', color: 'purple' },
-      { value: 'resolved', label: 'Resolved', color: 'green' },
-      { value: 'closed', label: 'Closed', color: 'gray' }
-    ];
+    return SUPPORT_STATUS_ENUM.map(status => ({
+      value: status,
+      label: status
+    }));
   }
 
   static getSortOptions() {

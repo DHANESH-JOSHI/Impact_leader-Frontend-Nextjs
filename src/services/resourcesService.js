@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/apiClient';
 import { RESOURCES } from '@/constants/apiEndpoints';
 import { authStorage } from '@/lib/storage';
+import { RESOURCE_TYPE_ENUM, formatEnumValue } from '@/constants/backendEnums';
 
 export class ResourcesService {
   static async getAllResources(params = {}) {
@@ -13,8 +14,6 @@ export class ResourcesService {
         type, 
         themes, 
         tags,
-        isESG,
-        isCSR,
         isPublic,
         sort = 'newest'
       } = params;
@@ -22,15 +21,14 @@ export class ResourcesService {
       const queryParams = {
         page,
         limit,
-        sort,
+        sort, // Backend now supports 'sort' parameter
         ...(search && { search }),
         ...(category && { category }),
         ...(type && { type }),
         ...(themes && { themes: Array.isArray(themes) ? themes.join(',') : themes }),
         ...(tags && { tags: Array.isArray(tags) ? tags.join(',') : tags }),
-        ...(isESG !== undefined && { isESG }),
-        ...(isCSR !== undefined && { isCSR }),
-        ...(isPublic !== undefined && { isPublic }),
+        // Convert booleans to strings for query params
+        ...(isPublic !== undefined && { isPublic: isPublic === true || isPublic === "true" ? "true" : "false" }),
       };
 
       const response = await apiClient.get(RESOURCES.BASE, { params: queryParams });
@@ -483,15 +481,12 @@ static async uploadDocumentResource(resourceData, file) {
     }
   }
 
+  // Use backend enum - must match exactly with RESOURCE_TYPE_ENUM
   static getResourceTypes() {
-    return [
-      { value: 'document', label: 'Document', extensions: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'] },
-      { value: 'video', label: 'Video', extensions: ['mp4', 'avi', 'mov', 'wmv', 'flv'] },
-      { value: 'audio', label: 'Audio', extensions: ['mp3', 'wav', 'aac', 'ogg'] },
-      { value: 'image', label: 'Image', extensions: ['jpg', 'jpeg', 'png', 'svg', 'gif'] },
-      { value: 'link', label: 'Link', extensions: [] },
-      { value: 'other', label: 'Other', extensions: [] }
-    ];
+    return RESOURCE_TYPE_ENUM.map(type => ({
+      value: type,
+      label: formatEnumValue(type)
+    }));
   }
 
   static getResourceCategoriesStatic() {

@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/apiClient';
 import { ADMIN, USERS } from '@/constants/apiEndpoints';
+import { ORGANIZATION_TYPE_ENUM, USER_ROLE_ENUM, formatEnumValue } from '@/constants/backendEnums';
 
 export class UsersService {
   static async getAllUsers(params = {}) {
@@ -310,27 +311,20 @@ export class UsersService {
     }
   }
 
+  // Use backend enum - must match exactly
   static getOrganizationTypes() {
-    return [
-      { value: "corporate", label: "Corporate" },
-      { value: "ngo", label: "NGO" },
-      { value: "government", label: "Government" },
-      { value: "academic", label: "Academic Institution" },
-      { value: "nonprofit", label: "Non-Profit" },
-      { value: "social-enterprise", label: "Social Enterprise" },
-      { value: "foundation", label: "Foundation" },
-      { value: "consulting", label: "Consulting" },
-      { value: "individual", label: "Individual" },
-    ];
+    return ORGANIZATION_TYPE_ENUM.map(type => ({
+      value: type,
+      label: formatEnumValue(type)
+    }));
   }
 
+  // Use backend enum - must match exactly
   static getUserRoles() {
-    return [
-      { value: "user", label: "User" },
-      { value: "moderator", label: "Moderator" },
-      { value: "admin", label: "Admin" },
-      { value: "super-admin", label: "Super Admin" },
-    ];
+    return USER_ROLE_ENUM.map(role => ({
+      value: role,
+      label: formatEnumValue(role)
+    }));
   }
 
   static getUserThemes() {

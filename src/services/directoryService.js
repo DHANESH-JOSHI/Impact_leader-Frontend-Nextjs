@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/apiClient';
 import { DIRECTORY, ADMIN } from '@/constants/apiEndpoints';
+import { ORGANIZATION_TYPE_ENUM, formatEnumValue } from '@/constants/backendEnums';
 
 export class DirectoryService {
   static async browseDirectory(params = {}) {
@@ -24,7 +25,6 @@ export class DirectoryService {
       const queryParams = {
         page,
         limit,
-        sort,
         ...(sortBy && { sortBy }),
         ...(sortOrder && { sortOrder }),
       };
@@ -240,6 +240,25 @@ export class DirectoryService {
       };
     } catch (error) {
       console.error('[Directory] Get similar profiles error:', error);
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+  static async getCategories() {
+    try {
+      const response = await apiClient.get(`${DIRECTORY.BASE}/categories`);
+      const backendResponse = response.data || {};
+
+      return {
+        success: response.success,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
+      };
+    } catch (error) {
+      console.error('[Directory] Get categories error:', error);
       return {
         success: false,
         message: error.message,
@@ -489,14 +508,11 @@ export class DirectoryService {
     }
   }
 
+  // Use backend enum - must match exactly
   static getOrganizationTypes() {
-    return [
-      { value: "startup", label: "Startup" },
-      { value: "corporate", label: "Corporate" },
-      { value: "nonprofit", label: "Nonprofit" },
-      { value: "government", label: "Government" },
-      { value: "freelance", label: "Freelance" },
-      { value: "other", label: "Other" },
-    ];
+    return ORGANIZATION_TYPE_ENUM.map(type => ({
+      value: type,
+      label: formatEnumValue(type)
+    }));
   }
 }
