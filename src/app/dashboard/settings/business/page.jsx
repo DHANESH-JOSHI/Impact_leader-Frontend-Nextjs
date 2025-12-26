@@ -17,9 +17,9 @@ import {
   Facebook,
   Instagram,
   X,
-  CheckCircle,
 } from "lucide-react";
 import BusinessSettingsService from "@/services/businessSettingsService";
+import DeleteConfirmModal from "@/components/core/DeleteConfirmModal";
 import toast from "react-hot-toast";
 
 const pageVariants = {
@@ -79,6 +79,7 @@ export default function BusinessSettingsPage() {
   const [logo, setLogo] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
   const [newLogoFile, setNewLogoFile] = useState(null);
+  const [isDeleteLogoModalOpen, setIsDeleteLogoModalOpen] = useState(false);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -230,11 +231,11 @@ export default function BusinessSettingsPage() {
     }
   };
 
-  const handleDeleteLogo = async () => {
-    if (!window.confirm("Are you sure you want to delete the company logo?")) {
-      return;
-    }
+  const handleDeleteLogo = () => {
+    setIsDeleteLogoModalOpen(true);
+  };
 
+  const confirmDeleteLogo = async () => {
     try {
       const result = await BusinessSettingsService.deleteCompanyLogo();
       if (result.success) {
@@ -242,6 +243,7 @@ export default function BusinessSettingsPage() {
         setLogo(null);
         setLogoPreview(null);
         setNewLogoFile(null);
+        setIsDeleteLogoModalOpen(false);
       } else {
         toast.error(result.message || "Failed to delete logo");
       }
@@ -726,6 +728,15 @@ export default function BusinessSettingsPage() {
           </motion.div>
         </div>
       </div>
+
+      <DeleteConfirmModal
+        isOpen={isDeleteLogoModalOpen}
+        onClose={() => setIsDeleteLogoModalOpen(false)}
+        onConfirm={confirmDeleteLogo}
+        title="Delete Company Logo"
+        message="Are you sure you want to delete the company logo? This action cannot be undone."
+        isLoading={uploading}
+      />
     </motion.div>
   );
 }

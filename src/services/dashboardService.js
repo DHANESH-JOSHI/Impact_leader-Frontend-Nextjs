@@ -4,7 +4,7 @@ import { NotificationsService } from './notificationsService';
 export class DashboardService {
   /**
    * Get dashboard statistics
-   * Fetches real-time stats from Impact Leaders API
+   * Fetches real-time stats from OnePurpos API
    */
   static async getStats() {
     try {

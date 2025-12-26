@@ -16,7 +16,7 @@ export default function DashboardLayout({ children }) {
     // Check authentication and role
     const checkAuth = () => {
       try {
-        const authData = localStorage.getItem("impactLeadersAuth");
+        const authData = localStorage.getItem("onePurposAuth");
         if (authData) {
           const parsed = JSON.parse(authData);
           const token = parsed?.value?.accessToken || parsed?.accessToken;
@@ -28,7 +28,7 @@ export default function DashboardLayout({ children }) {
             // Check if user is active
             if (user?.isActive === false) {
               // User is inactive, clear session and redirect to login
-              localStorage.removeItem("impactLeadersAuth");
+              localStorage.removeItem("onePurposAuth");
               if (typeof document !== 'undefined') {
                 document.cookie = "authToken=; path=/; max-age=0; SameSite=Lax";
               }

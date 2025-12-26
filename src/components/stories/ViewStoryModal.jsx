@@ -1,5 +1,6 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import toast from "react-hot-toast";
 import {
   FiX,
   FiEye,
@@ -44,7 +45,7 @@ const backdropVariants = {
   exit: { opacity: 0 },
 };
 
-export default function ViewStoryModal({ isOpen, onClose, story }) {
+export default function ViewStoryModal({ isOpen, onClose, story, onEdit }) {
   if (!story) return null;
 
   const getStatusColor = (status) => {
@@ -73,13 +74,19 @@ export default function ViewStoryModal({ isOpen, onClose, story }) {
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: story.title,
-        text: story.content,
+        title: story.caption || story.title,
+        text: story.textContent || story.content,
         url: window.location.href,
+      }).catch(() => {
+        // Fallback to clipboard if share fails
+        const textToCopy = `${story.caption || story.title} - ${story.textContent || story.content}`;
+        navigator.clipboard.writeText(textToCopy);
+        toast.success("Story content copied to clipboard!");
       });
     } else {
-      navigator.clipboard.writeText(`${story.title} - ${story.content}`);
-      alert("Story content copied to clipboard!");
+      const textToCopy = `${story.caption || story.title} - ${story.textContent || story.content}`;
+      navigator.clipboard.writeText(textToCopy);
+      toast.success("Story content copied to clipboard!");
     }
   };
 
@@ -176,13 +183,26 @@ export default function ViewStoryModal({ isOpen, onClose, story }) {
                   transition={{ delay: 0.1 }}
                 >
                   <div className="sticky top-0">
-                    <motion.img
-                      src={story.image}
-                      alt={story.title}
-                      className="w-full h-64 lg:h-80 object-cover rounded-lg shadow-sm"
-                      whileHover={{ scale: 1.02 }}
-                      transition={{ duration: 0.3 }}
-                    />
+                    {(story.mediaUrl || story.thumbnailUrl || story.image) && (
+                      <motion.img
+                        src={story.mediaUrl || story.thumbnailUrl || story.image}
+                        alt={story.caption || story.title || 'Story media'}
+                        className="w-full h-64 lg:h-80 object-cover rounded-lg shadow-sm"
+                        whileHover={{ scale: 1.02 }}
+                        transition={{ duration: 0.3 }}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    )}
+                    {story.type === 'video' && story.mediaUrl && (
+                      <video
+                        src={story.mediaUrl}
+                        controls
+                        className="w-full h-64 lg:h-80 object-cover rounded-lg shadow-sm"
+                        poster={story.thumbnailUrl}
+                      />
+                    )}
 
                     {/* Quick Actions */}
                     <motion.div
@@ -229,26 +249,48 @@ export default function ViewStoryModal({ isOpen, onClose, story }) {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2 }}
                 >
-                  {/* Title */}
+                  {/* Title/Caption */}
                   <div>
                     <h1
                       className="text-2xl font-bold mb-2"
                       style={{ color: "#040606" }}
                     >
-                      {story.title}
+                      {story.caption || story.title || 'Untitled Story'}
                     </h1>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`px-2 py-1 text-xs rounded-full capitalize ${story.type === 'image' ? 'bg-blue-100 text-blue-800' : story.type === 'video' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'}`}>
+                        {story.type || 'text'}
+                      </span>
+                      {story.isFeatured && (
+                        <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
+                          Featured
+                        </span>
+                      )}
+                    </div>
                     <div
                       className="flex items-center gap-4 text-sm"
                       style={{ color: "#646464" }}
                     >
                       <div className="flex items-center gap-1">
                         <FiUser className="w-4 h-4" />
-                        <span>{story.author}</span>
+                        <span>
+                          {typeof story.author === 'object' 
+                            ? `${story.author.firstName || ''} ${story.author.lastName || ''}`.trim() || story.author.email
+                            : story.author || 'Unknown'}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <FiClock className="w-4 h-4" />
-                        <span>{story.duration} hours</span>
-                      </div>
+                      {story.duration && (
+                        <div className="flex items-center gap-1">
+                          <FiClock className="w-4 h-4" />
+                          <span>{Math.floor(story.duration / (60 * 60 * 1000))} hours</span>
+                        </div>
+                      )}
+                      {story.expiresAt && (
+                        <div className="flex items-center gap-1">
+                          <FiClock className="w-4 h-4" />
+                          <span>Expires: {formatTime(story.expiresAt)}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -285,29 +327,68 @@ export default function ViewStoryModal({ isOpen, onClose, story }) {
                   )}
 
                   {/* Content */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                  >
-                    <h3
-                      className="text-lg font-semibold mb-3"
-                      style={{ color: "#040606" }}
+                  {(story.textContent || story.content) && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 }}
                     >
-                      Story Content
-                    </h3>
-                    <div
-                      className="p-4 rounded-lg"
-                      style={{ backgroundColor: "#f8fafc" }}
-                    >
-                      <p
-                        className="leading-relaxed whitespace-pre-wrap"
+                      <h3
+                        className="text-lg font-semibold mb-3"
                         style={{ color: "#040606" }}
                       >
-                        {story.content}
-                      </p>
-                    </div>
-                  </motion.div>
+                        Story Content
+                      </h3>
+                      <div
+                        className="p-4 rounded-lg"
+                        style={{ 
+                          backgroundColor: story.backgroundColor || "#f8fafc",
+                          color: story.textColor || "#040606",
+                          fontFamily: story.fontFamily || 'Arial'
+                        }}
+                      >
+                        <p
+                          className="leading-relaxed whitespace-pre-wrap"
+                        >
+                          {story.textContent || story.content}
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                  
+                  {/* Media URL */}
+                  {(story.mediaUrl || story.thumbnailUrl) && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.55 }}
+                    >
+                      <h3
+                        className="text-lg font-semibold mb-3"
+                        style={{ color: "#040606" }}
+                      >
+                        Media
+                      </h3>
+                      <div className="space-y-2">
+                        {story.mediaUrl && (
+                          <div>
+                            <p className="text-sm text-gray-600 mb-1">Media URL:</p>
+                            <a href={story.mediaUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline break-all">
+                              {story.mediaUrl}
+                            </a>
+                          </div>
+                        )}
+                        {story.thumbnailUrl && (
+                          <div>
+                            <p className="text-sm text-gray-600 mb-1">Thumbnail URL:</p>
+                            <a href={story.thumbnailUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline break-all">
+                              {story.thumbnailUrl}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
 
                   {/* Statistics */}
                   <motion.div
@@ -536,7 +617,9 @@ export default function ViewStoryModal({ isOpen, onClose, story }) {
                 </motion.button>
                 <motion.button
                   onClick={() => {
-                    console.log("Edit story:", story.id);
+                    if (onEdit) {
+                      onEdit(story);
+                    }
                   }}
                   className="px-4 py-2 text-white rounded-lg hover:opacity-90 transition-colors flex items-center gap-2"
                   style={{ backgroundColor: "#2691ce" }}

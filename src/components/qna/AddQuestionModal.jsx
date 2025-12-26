@@ -636,12 +636,12 @@ export default function AddQuestionModal({
                 {isSubmitting ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Creating...</span>
+                    <span>{initialQuestion ? "Updating..." : "Creating..."}</span>
                   </>
                 ) : (
                   <>
                     <Save className="h-4 w-4" />
-                    <span>Create Question</span>
+                    <span>{initialQuestion ? "Update Question" : "Create Question"}</span>
                   </>
                 )}
               </motion.button>

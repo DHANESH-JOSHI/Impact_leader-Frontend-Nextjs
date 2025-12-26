@@ -9,6 +9,7 @@ export class NotificationsService {
         limit = 20,
         type,
         isRead,
+        unreadOnly,
         priority 
       } = params;
       
@@ -16,7 +17,8 @@ export class NotificationsService {
         page,
         limit,
         ...(type && { type }),
-        ...(isRead !== undefined && { isRead }),
+        ...(isRead !== undefined && { isRead: isRead === true || isRead === 'true' ? 'true' : 'false' }),
+        ...(unreadOnly !== undefined && { unreadOnly: unreadOnly === true || unreadOnly === 'true' ? 'true' : 'false' }),
         ...(priority && { priority }),
       };
 

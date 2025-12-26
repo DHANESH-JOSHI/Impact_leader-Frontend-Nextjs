@@ -103,12 +103,15 @@ export default function AddPostModal({
   }, [isOpen, themesProp]);
 
   useEffect(() => {
-    if (initialPost) {
+    if (initialPost && isOpen) {
+      // Map backend isPublic to frontend status
+      const status = initialPost.isPublic !== false ? 'published' : (initialPost.status || 'draft');
+      
       setFormData({
         title: initialPost.title || "",
         content: initialPost.content || "",
-        status: initialPost.status || "draft",
-        tags: Array.isArray(initialPost.tags) ? initialPost.tags : [],
+        status: status,
+        tags: Array.isArray(initialPost.tags) ? initialPost.tags : (initialPost.tags ? [initialPost.tags] : []),
         // Normalize themes: extract names from theme objects or use strings directly
         themes: Array.isArray(initialPost.themes) 
           ? initialPost.themes.map(theme => {
@@ -117,16 +120,24 @@ export default function AddPostModal({
               return String(theme); // Fallback
             }).filter(Boolean)
           : [],
-        featured: initialPost.featured || false,
-        allowComments: initialPost.allowComments !== false,
+        featured: initialPost.featured || initialPost.isPinned || false,
+        allowComments: typeof initialPost.allowComments === 'boolean' ? initialPost.allowComments : true,
       });
       // Load existing media if editing
       if (initialPost.media && Array.isArray(initialPost.media)) {
-        setSelectedMedia(initialPost.media.map(m => ({ url: m, isExisting: true })));
+        setSelectedMedia(initialPost.media.map(m => {
+          // Handle both string URLs and media objects
+          if (typeof m === 'string') {
+            return { url: m, isExisting: true };
+          } else if (m && typeof m === 'object') {
+            return { url: m.url || m.path || m, isExisting: true };
+          }
+          return { url: String(m), isExisting: true };
+        }));
       } else {
         setSelectedMedia([]);
       }
-    } else {
+    } else if (!initialPost && isOpen) {
       setFormData({
         title: "",
         content: "",
@@ -748,10 +759,10 @@ export default function AddPostModal({
                           >
                             {media.url && (
                               <>
-                                {media.url.match(/\.(jpg|jpeg|png|gif|webp)$/i) || 
+                                {(typeof media.url === 'string' && media.url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) || 
                                  (media.file && media.file.type.startsWith('image/')) ? (
                                   <img
-                                    src={media.url}
+                                    src={typeof media.url === 'string' ? media.url : (media.url?.url || media.url?.path || '')}
                                     alt={media.name || `Media ${index + 1}`}
                                     className="w-full h-32 object-cover rounded-lg border border-gray-200"
                                   />

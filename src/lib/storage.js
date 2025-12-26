@@ -193,7 +193,7 @@ export const STORAGE_KEYS = {
   AUTH_TOKEN: 'auth_token',
   REFRESH_TOKEN: 'refresh_token',
   USER_DATA: 'user_data',
-  IMPACT_LEADERS_AUTH: 'impactLeadersAuth',
+  ONE_PURPOS_AUTH: 'onePurposAuth',
 
   // App settings
   THEME: 'app_theme',
@@ -221,14 +221,14 @@ export const authStorage = {
    * Save auth tokens
    */
   saveTokens(tokens) {
-    localStorage.set(STORAGE_KEYS.IMPACT_LEADERS_AUTH, tokens);
+    localStorage.set(STORAGE_KEYS.ONE_PURPOS_AUTH, tokens);
   },
 
   /**
    * Get auth tokens
    */
   getTokens() {
-    return localStorage.get(STORAGE_KEYS.IMPACT_LEADERS_AUTH, {
+    return localStorage.get(STORAGE_KEYS.ONE_PURPOS_AUTH, {
       accessToken: null,
       refreshToken: null,
       user: null,
@@ -241,7 +241,7 @@ export const authStorage = {
   clearTokens() {
     try {
       if (typeof window === 'undefined') return;
-      localStorage.remove(STORAGE_KEYS.IMPACT_LEADERS_AUTH);
+      localStorage.remove(STORAGE_KEYS.ONE_PURPOS_AUTH);
     } catch (error) {
       console.error('[AuthStorage] Error clearing tokens:', error);
     }

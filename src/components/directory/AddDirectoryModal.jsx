@@ -52,6 +52,7 @@ export default function AddDirectoryModal({
   isOpen,
   onClose,
   onSubmit,
+  initialDirectory = null,
 }) {
   const [formData, setFormData] = useState({
     title: "",
@@ -109,6 +110,71 @@ export default function AddDirectoryModal({
       loadThemes();
     }
   }, [isOpen]);
+
+  // Initialize form data when editing
+  useEffect(() => {
+    if (initialDirectory && isOpen) {
+      setFormData({
+        title: initialDirectory.title || "",
+        description: initialDirectory.description || "",
+        category: initialDirectory.category || "",
+        organizationType: initialDirectory.organizationType || "",
+        website: initialDirectory.website || "",
+        logo: initialDirectory.logo || null,
+        contactInfo: {
+          email: initialDirectory.contactInfo?.email || "",
+          phone: initialDirectory.contactInfo?.phone || "",
+        },
+        location: {
+          city: initialDirectory.location?.city || "",
+          state: initialDirectory.location?.state || "",
+          country: initialDirectory.location?.country || "",
+        },
+        socialLinks: {
+          linkedin: initialDirectory.socialLinks?.linkedin || "",
+          twitter: initialDirectory.socialLinks?.twitter || "",
+        },
+        // Normalize themes: extract names from theme objects or use strings directly
+        themes: Array.isArray(initialDirectory.themes) 
+          ? initialDirectory.themes.map(theme => {
+              if (typeof theme === 'string') return theme; // Already a name
+              if (theme && typeof theme === 'object') return theme.name || String(theme._id || theme.id || theme); // Extract name from object
+              return String(theme); // Fallback
+            }).filter(Boolean)
+          : [],
+        tags: Array.isArray(initialDirectory.tags) ? initialDirectory.tags : (initialDirectory.tags ? [initialDirectory.tags] : []),
+      });
+      if (initialDirectory.logo) {
+        setLogoPreview(initialDirectory.logo);
+      }
+    } else if (!initialDirectory && isOpen) {
+      // Reset form when opening for new entry
+      setFormData({
+        title: "",
+        description: "",
+        category: "",
+        organizationType: "",
+        website: "",
+        logo: null,
+        contactInfo: {
+          email: "",
+          phone: "",
+        },
+        location: {
+          city: "",
+          state: "",
+          country: "",
+        },
+        socialLinks: {
+          linkedin: "",
+          twitter: "",
+        },
+        themes: [],
+        tags: [],
+      });
+      setLogoPreview(null);
+    }
+  }, [initialDirectory, isOpen]);
 
   const loadThemes = async () => {
     try {

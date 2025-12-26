@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import {
   X,
   User,
@@ -64,7 +65,6 @@ export default function EditUserModal({ isOpen, onClose, user, onUpdate }) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [selectedThemes, setSelectedThemes] = useState([]);
-  const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   const [formData, setFormData] = useState({
@@ -76,8 +76,18 @@ export default function EditUserModal({ isOpen, onClose, user, onUpdate }) {
     organizationType: '',
     designation: '',
     bio: '',
+    experience: '',
     phone: '',
-    location: '',
+    location: {
+      city: '',
+      state: '',
+      country: ''
+    },
+    socialLinks: {
+      linkedin: '',
+      twitter: '',
+      website: ''
+    },
     themes: [],
     role: 'user',
     isActive: true,
@@ -96,17 +106,54 @@ export default function EditUserModal({ isOpen, onClose, user, onUpdate }) {
           }).filter(Boolean)
         : [];
 
+      // Handle location - can be object or string
+      let locationData = { city: '', state: '', country: '' };
+      if (user.location) {
+        if (typeof user.location === 'object') {
+          locationData = {
+            city: user.location.city || '',
+            state: user.location.state || '',
+            country: user.location.country || ''
+          };
+        } else {
+          // If it's a string, try to parse or use as city
+          locationData.city = user.location;
+        }
+      }
+
+      // Handle socialLinks - can be object or undefined
+      let socialLinksData = { linkedin: '', twitter: '', website: '' };
+      if (user.socialLinks && typeof user.socialLinks === 'object') {
+        socialLinksData = {
+          linkedin: user.socialLinks.linkedin || '',
+          twitter: user.socialLinks.twitter || '',
+          website: user.socialLinks.website || ''
+        };
+      }
+
+      // Normalize organizationType to match enum values (case-insensitive)
+      const validOrgTypes = ['startup', 'corporate', 'nonprofit', 'government', 'freelance', 'other'];
+      let normalizedOrgType = '';
+      if (user.organizationType) {
+        const orgTypeLower = String(user.organizationType).toLowerCase().trim();
+        // Find matching enum value (case-insensitive)
+        const matchedType = validOrgTypes.find(type => type.toLowerCase() === orgTypeLower);
+        normalizedOrgType = matchedType || orgTypeLower;
+      }
+
       setFormData({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         email: user.email || '',
         password: '', // Don't pre-fill password
         companyName: user.companyName || '',
-        organizationType: user.organizationType || '',
+        organizationType: normalizedOrgType,
         designation: user.designation || '',
         bio: user.bio || '',
+        experience: user.experience || '',
         phone: user.phone || '',
-        location: user.location || '',
+        location: locationData,
+        socialLinks: socialLinksData,
         themes: normalizedThemes,
         role: user.role || 'user',
         isActive: user.isActive !== false,
@@ -124,7 +171,16 @@ export default function EditUserModal({ isOpen, onClose, user, onUpdate }) {
       ...prev,
       [field]: value
     }));
-    setError('');
+  };
+
+  const handleNestedInputChange = (parentField, childField, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [parentField]: {
+        ...prev[parentField],
+        [childField]: value
+      }
+    }));
   };
 
   const handleThemeToggle = (themeValue) => {
@@ -140,14 +196,20 @@ export default function EditUserModal({ isOpen, onClose, user, onUpdate }) {
   };
 
   const validateForm = () => {
-    if (!formData.email) return 'Email is required';
-    if (!formData.firstName) return 'First name is required';
-    if (!formData.lastName) return 'Last name is required';
-    if (!formData.companyName) return 'Company name is required';
-    if (!formData.organizationType) return 'Organization type is required';
-    if (!formData.designation) return 'Designation is required';
+    if (!formData.email || !formData.email.trim()) return 'Email is required';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) return 'Please enter a valid email address';
+    if (!formData.firstName || !formData.firstName.trim()) return 'First name is required';
+    if (!formData.lastName || !formData.lastName.trim()) return 'Last name is required';
+    if (!formData.companyName || !formData.companyName.trim()) return 'Company name is required';
+    if (!formData.organizationType || !formData.organizationType.trim()) return 'Organization type is required';
+    if (!formData.designation || !formData.designation.trim()) return 'Designation is required';
     // Password is optional for updates
     if (formData.password && formData.password.length < 6) return 'Password must be at least 6 characters';
+    // Validate organizationType is valid enum value (only if it has a value)
+    const validOrgTypes = ['startup', 'corporate', 'nonprofit', 'government', 'freelance', 'other'];
+    if (formData.organizationType && formData.organizationType.trim() && !validOrgTypes.includes(formData.organizationType.trim())) {
+      return 'Invalid organization type';
+    }
 
     return null;
   };
@@ -157,40 +219,79 @@ export default function EditUserModal({ isOpen, onClose, user, onUpdate }) {
 
     const validationError = validateForm();
     if (validationError) {
-      setError(validationError);
+      toast.error(validationError);
       return;
     }
 
     setLoading(true);
-    setError('');
     setSuccess('');
 
     try {
       // Prepare update data - only include fields that are allowed
       const updateData = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        companyName: formData.companyName,
-        organizationType: formData.organizationType,
-        designation: formData.designation,
-        themes: selectedThemes,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim().toLowerCase(),
+        companyName: formData.companyName.trim(),
+        designation: formData.designation.trim(),
+        themes: Array.isArray(selectedThemes) ? selectedThemes : [],
         role: formData.role,
         isActive: formData.isActive,
         isApproved: formData.isApproved,
         isEmailVerified: formData.isEmailVerified,
       };
 
+      // Only include organizationType if it has a valid value (backend validator is optional)
+      const validOrgTypes = ['startup', 'corporate', 'nonprofit', 'government', 'freelance', 'other'];
+      if (formData.organizationType && formData.organizationType.trim() && validOrgTypes.includes(formData.organizationType.trim())) {
+        updateData.organizationType = formData.organizationType.trim();
+      }
+
       // Add optional fields if they have values
-      if (formData.bio) updateData.bio = formData.bio;
-      if (formData.phone) updateData.phone = formData.phone;
-      if (formData.location) updateData.location = formData.location;
+      if (formData.bio && formData.bio.trim()) updateData.bio = formData.bio.trim();
+      if (formData.experience !== undefined && formData.experience !== '') {
+        const exp = parseInt(formData.experience);
+        if (!isNaN(exp) && exp >= 0 && exp <= 50) {
+          updateData.experience = exp;
+        }
+      }
+      if (formData.phone && formData.phone.trim()) updateData.phone = formData.phone.trim();
+      
+      // Handle location object
+      if (formData.location && (formData.location.city || formData.location.state || formData.location.country)) {
+        updateData.location = {};
+        if (formData.location.city && formData.location.city.trim()) {
+          updateData.location.city = formData.location.city.trim();
+        }
+        if (formData.location.state && formData.location.state.trim()) {
+          updateData.location.state = formData.location.state.trim();
+        }
+        if (formData.location.country && formData.location.country.trim()) {
+          updateData.location.country = formData.location.country.trim();
+        }
+      }
+      
+      // Handle socialLinks object
+      if (formData.socialLinks && (formData.socialLinks.linkedin || formData.socialLinks.twitter || formData.socialLinks.website)) {
+        updateData.socialLinks = {};
+        if (formData.socialLinks.linkedin && formData.socialLinks.linkedin.trim()) {
+          updateData.socialLinks.linkedin = formData.socialLinks.linkedin.trim();
+        }
+        if (formData.socialLinks.twitter && formData.socialLinks.twitter.trim()) {
+          updateData.socialLinks.twitter = formData.socialLinks.twitter.trim();
+        }
+        if (formData.socialLinks.website && formData.socialLinks.website.trim()) {
+          updateData.socialLinks.website = formData.socialLinks.website.trim();
+        }
+      }
+      
       if (formData.password) updateData.password = formData.password;
 
       const response = await AdminService.updateUser(user.id || user._id, updateData);
 
       if (response.success) {
         setSuccess('User updated successfully!');
+        toast.success('User updated successfully!');
         setTimeout(() => {
           if (onUpdate) {
             onUpdate(updateData);
@@ -198,10 +299,34 @@ export default function EditUserModal({ isOpen, onClose, user, onUpdate }) {
           handleClose();
         }, 1500);
       } else {
-        setError(response.message || 'Update failed');
+        // Extract error message from response
+        let errorMessage = response.message || 'Update failed';
+        
+        // If there are validation errors, format them
+        if (response.errors && Array.isArray(response.errors)) {
+          const errorMessages = response.errors.map(err => err.msg || err.message || `${err.path}: ${err.msg || 'Invalid value'}`).join(', ');
+          errorMessage = errorMessages || errorMessage;
+        }
+        
+        toast.error(errorMessage);
       }
     } catch (error) {
-      setError(error.message || 'Update failed');
+      // Extract error message from API response
+      let errorMessage = 'Update failed';
+      
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          const errorMessages = errorData.errors.map(err => err.msg || err.message || `${err.path}: ${err.msg || 'Invalid value'}`).join(', ');
+          errorMessage = errorMessages || errorData.message || errorMessage;
+        } else {
+          errorMessage = errorData.message || error.message || errorMessage;
+        }
+      } else {
+        errorMessage = error.message || errorMessage;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -217,8 +342,18 @@ export default function EditUserModal({ isOpen, onClose, user, onUpdate }) {
       organizationType: '',
       designation: '',
       bio: '',
+      experience: '',
       phone: '',
-      location: '',
+      location: {
+        city: '',
+        state: '',
+        country: ''
+      },
+      socialLinks: {
+        linkedin: '',
+        twitter: '',
+        website: ''
+      },
       themes: [],
       role: 'user',
       isActive: true,
@@ -226,7 +361,6 @@ export default function EditUserModal({ isOpen, onClose, user, onUpdate }) {
       isEmailVerified: false,
     });
     setSelectedThemes([]);
-    setError('');
     setSuccess('');
     onClose();
   };
@@ -242,12 +376,6 @@ export default function EditUserModal({ isOpen, onClose, user, onUpdate }) {
     <ModalWrapper isOpen={isOpen} onClose={onClose} title="Edit User">
       <Card className="border-0 shadow-none">
         <CardContent className="space-y-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
-
           {success && (
             <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
               {success}
@@ -336,26 +464,83 @@ export default function EditUserModal({ isOpen, onClose, user, onUpdate }) {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
-                  placeholder="Enter phone number"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    placeholder="Enter phone number"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="experience">Experience (Years)</Label>
+                  <Input
+                    id="experience"
+                    type="number"
+                    min="0"
+                    max="50"
+                    value={formData.experience}
+                    onChange={(e) => handleInputChange('experience', e.target.value)}
+                    placeholder="Years of experience"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Label>Location</Label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="location-city"
+                      value={formData.location.city}
+                      onChange={(e) => handleNestedInputChange('location', 'city', e.target.value)}
+                      placeholder="City"
+                      className="pl-9"
+                    />
+                  </div>
                   <Input
-                    id="location"
-                    value={formData.location}
-                    onChange={(e) => handleInputChange('location', e.target.value)}
-                    placeholder="Enter location"
-                    className="pl-9"
+                    id="location-state"
+                    value={formData.location.state}
+                    onChange={(e) => handleNestedInputChange('location', 'state', e.target.value)}
+                    placeholder="State"
+                  />
+                  <Input
+                    id="location-country"
+                    value={formData.location.country}
+                    onChange={(e) => handleNestedInputChange('location', 'country', e.target.value)}
+                    placeholder="Country"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Social Links</Label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="social-linkedin"
+                      value={formData.socialLinks.linkedin}
+                      onChange={(e) => handleNestedInputChange('socialLinks', 'linkedin', e.target.value)}
+                      placeholder="LinkedIn URL"
+                      className="pl-9"
+                    />
+                  </div>
+                  <Input
+                    id="social-twitter"
+                    value={formData.socialLinks.twitter}
+                    onChange={(e) => handleNestedInputChange('socialLinks', 'twitter', e.target.value)}
+                    placeholder="Twitter URL"
+                  />
+                  <Input
+                    id="social-website"
+                    value={formData.socialLinks.website}
+                    onChange={(e) => handleNestedInputChange('socialLinks', 'website', e.target.value)}
+                    placeholder="Website URL"
                   />
                 </div>
               </div>

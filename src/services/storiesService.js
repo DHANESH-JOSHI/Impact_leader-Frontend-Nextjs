@@ -164,8 +164,10 @@ export class StoriesService {
     try {
       const formData = new FormData();
 
-      // Add story metadata
+      // Add story metadata (exclude type as it's set explicitly below)
       Object.keys(storyData).forEach((key) => {
+        if (key === 'type') return; // Skip type, will be set explicitly
+        
         const value = storyData[key];
         
         // Handle arrays - send as JSON string
@@ -213,8 +215,10 @@ export class StoriesService {
     try {
       const formData = new FormData();
 
-      // Add story metadata
+      // Add story metadata (exclude type as it's set explicitly below)
       Object.keys(storyData).forEach((key) => {
+        if (key === 'type') return; // Skip type, will be set explicitly
+        
         const value = storyData[key];
         
         // Handle arrays - send as JSON string

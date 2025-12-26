@@ -55,6 +55,7 @@ export default function DirectoryPage() {
   });
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState(null);
@@ -283,6 +284,12 @@ export default function DirectoryPage() {
     setIsViewModalOpen(true);
   };
 
+  const handleEditEntry = (entry) => {
+    setSelectedEntry(entry);
+    setIsViewModalOpen(false); // Close view modal
+    setIsEditModalOpen(true); // Open edit modal
+  };
+
   const handlePageChange = (newPage) => {
     setPagination((prev) => ({ ...prev, page: newPage }));
   };
@@ -355,6 +362,7 @@ export default function DirectoryPage() {
           <DirectoryCardView
             entries={filteredEntries}
             onViewEntry={handleViewEntry}
+            onEditEntry={handleEditEntry}
             onDeleteEntry={(entry) => {
               setSelectedEntry(entry);
               setIsDeleteModalOpen(true);
@@ -401,8 +409,25 @@ export default function DirectoryPage() {
 
       <AddDirectoryModal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setSelectedEntry(null);
+        }}
         onSubmit={handleAddEntry}
+      />
+
+      <AddDirectoryModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedEntry(null);
+        }}
+        onSubmit={(entryData) => {
+          if (selectedEntry?.id) {
+            handleUpdateEntry(selectedEntry.id, entryData);
+          }
+        }}
+        initialDirectory={selectedEntry}
       />
 
       <ViewDirectoryModal
@@ -413,6 +438,7 @@ export default function DirectoryPage() {
         }}
         entry={selectedEntry}
         onUpdate={handleUpdateEntry}
+        onEdit={handleEditEntry}
       />
 
       <DeleteConfirmModal

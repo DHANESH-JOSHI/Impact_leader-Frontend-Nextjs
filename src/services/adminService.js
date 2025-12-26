@@ -50,7 +50,7 @@ export class AdminService {
 
   static async getDashboardCounts() {
     try {
-      console.log("Fetching dashboard counts from Impact Leaders API...");
+      console.log("Fetching dashboard counts from OnePurpos API...");
 
       // Make concurrent API calls for better performance
       const [
@@ -145,7 +145,7 @@ export class AdminService {
         success: true,
         data: counts,
         message:
-          "Dashboard counts retrieved successfully from Impact Leaders API",
+          "Dashboard counts retrieved successfully from OnePurpos API",
       };
     } catch (error) {
       console.error("Get dashboard counts error:", error);
@@ -687,9 +687,23 @@ export class AdminService {
       };
     } catch (error) {
       console.error("Update user (admin) error:", error);
+      
+      // Extract error message and validation errors
+      let message = "Failed to update user";
+      let errors = null;
+      
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        message = errorData.message || message;
+        errors = errorData.errors || null;
+      } else {
+        message = error.message || message;
+      }
+      
       return {
         success: false,
-        message: error.message || error.response?.data?.message || "Failed to update user",
+        message,
+        errors,
       };
     }
   }

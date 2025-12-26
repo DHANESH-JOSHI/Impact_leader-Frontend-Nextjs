@@ -175,7 +175,7 @@ export default function ImpactLeadersAdminDashboard() {
     return (
       <div className="p-6">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold">Impact Leaders Admin</h1>
+          <h1 className="text-3xl font-bold">OnePurpos Admin</h1>
           <p className="text-gray-600 mt-2">Loading dashboard...</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -197,9 +197,9 @@ export default function ImpactLeadersAdminDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Impact Leaders Admin</h1>
+          <h1 className="text-3xl font-bold">OnePurpos Admin</h1>
           <p className="text-gray-600 mt-2">
-            Manage your Impact Leaders mobile app backend
+            Manage your OnePurpos mobile app backend
           </p>
         </div>
         <div className="flex gap-2">
@@ -325,13 +325,13 @@ export default function ImpactLeadersAdminDashboard() {
           <CardHeader>
             <CardTitle>API Health Status</CardTitle>
             <CardDescription>
-              Connection status to Impact Leaders API
+              Connection status to OnePurpos API
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
               <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm">Connected to Impact Leaders API</span>
+              <span className="text-sm">Connected to OnePurpos API</span>
               <Badge variant="outline">http://13.60.221.160</Badge>
             </div>
           </CardContent>

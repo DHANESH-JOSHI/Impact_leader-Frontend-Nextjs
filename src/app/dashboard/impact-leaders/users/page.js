@@ -219,7 +219,7 @@ export default function UsersManagement() {
         <div>
           <h1 className="text-3xl font-bold">User Management</h1>
           <p className="text-gray-600 mt-2">
-            Manage Impact Leaders app users and registrations
+            Manage OnePurpos app users and registrations
           </p>
         </div>
         <div className="flex gap-2">

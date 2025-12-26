@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Impact Leader Admin Portal",
-  description: "Developed by Impact Leader | TechWithJoshi Private Limited",
+  title: "OnePurpos Admin Portal",
+  description: "Developed by OnePurpos | TechWithJoshi Private Limited",
 };
 
 export default function RootLayout({ children }) {

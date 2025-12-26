@@ -50,7 +50,6 @@ export default function AddResourceModal({
   isOpen,
   onClose,
   onSubmit,
-  categories = [],
   initialResource = null,
 }) {
   const [formData, setFormData] = useState({
@@ -61,7 +60,7 @@ export default function AddResourceModal({
     fileName: "",
     fileSize: 0,
     duration: 0,
-    category: categories[0] || "",
+    category: "",
     tags: "",
     themes: [],
     author: "",
@@ -90,7 +89,7 @@ export default function AddResourceModal({
         fileName: initialResource.file?.originalName || initialResource.fileName || "",
         fileSize: initialResource.file?.size || initialResource.fileSize || 0,
         duration: initialResource.duration || 0,
-        category: initialResource.category || categories[0] || "",
+        category: initialResource.category || "",
         tags: Array.isArray(initialResource.tags) ? initialResource.tags.join(", ") : (initialResource.tags || ""),
         // Normalize themes: extract names from theme objects or use strings directly
         themes: Array.isArray(initialResource.themes) 
@@ -114,7 +113,7 @@ export default function AddResourceModal({
         fileName: "",
         fileSize: 0,
         duration: 0,
-        category: categories[0] || "",
+        category: "",
         tags: "",
         themes: [],
         author: "",
@@ -123,7 +122,7 @@ export default function AddResourceModal({
         featured: false,
       });
     }
-  }, [initialResource, isOpen, categories]);
+  }, [initialResource, isOpen]);
 
   // Handle input changes
   const handleInputChange = (e) => {
@@ -241,7 +240,7 @@ export default function AddResourceModal({
         fileName: "",
         fileSize: 0,
         duration: 0,
-        category: categories[0] || "",
+        category: "",
         tags: "",
         themes: [],
         author: "",
@@ -275,7 +274,7 @@ export default function AddResourceModal({
         fileName: "",
         fileSize: 0,
         duration: 0,
-        category: categories[0] || "",
+        category: "",
         tags: "",
         themes: [],
         author: "",
@@ -559,18 +558,15 @@ export default function AddResourceModal({
                       <Tag className="inline h-4 w-4 mr-1" />
                       Category *
                     </label>
-                    <select
+                    <input
+                      type="text"
                       name="category"
                       value={formData.category}
                       onChange={handleInputChange}
-                    >
-                      <option value="">Select a category</option>
-                      {categories && categories.map((category) => (
-                        <option key={category} value={category}>
-                          {category}
-                        </option>
-                      ))}
-                    </select>
+                      placeholder="Enter category (e.g., General, Education, Technology)"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
+                      style={{ focusRingColor: "#2691ce" }}
+                    />
 
                     {errors.category && (
                       <motion.p

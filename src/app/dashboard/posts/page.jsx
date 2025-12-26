@@ -204,11 +204,8 @@ export default function PostsPage() {
         content: newPost.content,
         themes: Array.isArray(newPost.themes) ? newPost.themes : [],
         tags: Array.isArray(newPost.tags) ? newPost.tags : [],
-        isPublic: newPost.status === 'published',
-        allowComments: true,
-        isPinned: newPost.isPinned || newPost.featured || false,
-        status: newPost.status || 'draft',
-        // Ensure exactly one is true (mutually exclusive)
+        isPublic: newPost.status === 'published' || newPost.isPublic === true,
+        allowComments: newPost.allowComments !== false,
       };
   
       let result;
@@ -246,21 +243,22 @@ export default function PostsPage() {
 
   const handleEditPost = (post) => {
     setSelectedPost(post);
-    setIsEditModalOpen(true);
+    setIsViewModalOpen(false); // Close view modal
+    setIsEditModalOpen(true); // Open edit modal
   };
 
   const handleSaveEditedPost = async (postData) => {
     try {
       if (postData.id) {
         // Prepare update data matching backend structure
+        // Backend allowedFields: title, content, themes, tags, isPublic, allowComments
         const updateData = {
           title: postData.title,
           content: postData.content,
           themes: Array.isArray(postData.themes) ? postData.themes : [],
           tags: Array.isArray(postData.tags) ? postData.tags : [],
-          isPublic: postData.status === 'published',
+          isPublic: postData.status === 'published' || postData.isPublic === true,
           allowComments: postData.allowComments !== false,
-          status: postData.status || 'draft',
         };
 
         // Check if there are media files to upload

@@ -50,6 +50,7 @@ export default function ViewDirectoryModal({
   onClose,
   entry,
   onUpdate,
+  onEdit,
 }) {
   if (!entry) return null;
 
@@ -306,6 +307,32 @@ export default function ViewDirectoryModal({
                   </div>
                 )}
 
+                {/* Status & Statistics */}
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+                  <div>
+                    <h4 className="text-sm font-medium mb-2" style={{ color: "#040606" }}>Status</h4>
+                    <div className="flex flex-wrap gap-2">
+                      <span className={`px-2 py-1 text-xs rounded-full ${entry.isActive !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {entry.isActive !== false ? 'Active' : 'Inactive'}
+                      </span>
+                      {entry.isVerified && (
+                        <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                          Verified
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {entry.views !== undefined && (
+                    <div>
+                      <h4 className="text-sm font-medium mb-2" style={{ color: "#040606" }}>Views</h4>
+                      <p className="text-sm font-semibold" style={{ color: "#2691ce" }}>
+                        {entry.views || 0}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Submission & Timestamps */}
                 <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
                   <div>
                     <h4 className="text-sm font-medium mb-2 flex items-center" style={{ color: "#040606" }}>
@@ -328,10 +355,38 @@ export default function ViewDirectoryModal({
                     </div>
                   )}
                 </div>
+
+                {/* Submitted By */}
+                {entry.submittedBy && (
+                  <div className="pt-4 border-t border-gray-200">
+                    <h4 className="text-sm font-medium mb-2" style={{ color: "#040606" }}>Submitted By</h4>
+                    <p className="text-sm" style={{ color: "#646464" }}>
+                      {typeof entry.submittedBy === 'object' 
+                        ? `${entry.submittedBy.firstName || ''} ${entry.submittedBy.lastName || ''}`.trim() || entry.submittedBy.email
+                        : entry.submittedBy}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="p-6 border-t border-gray-200 flex items-center justify-end space-x-3">
+              {onEdit && (
+                <motion.button
+                  onClick={() => {
+                    if (onEdit) {
+                      onEdit(entry);
+                    }
+                  }}
+                  className="px-6 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                  style={{ backgroundColor: "#2691ce", color: "white" }}
+                  whileHover={{ scale: 1.02, opacity: 0.9 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Edit className="h-4 w-4" />
+                  <span>Edit</span>
+                </motion.button>
+              )}
               <motion.button
                 onClick={onClose}
                 className="px-6 py-2 border border-gray-300 rounded-lg transition-colors hover:bg-gray-50"

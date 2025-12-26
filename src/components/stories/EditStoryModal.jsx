@@ -45,7 +45,8 @@ const backdropVariants = {
 };
 
 export default function EditStoryModal({ isOpen, onClose, story, onEdit }) {
-  const [formData, setFormData] = useState({
+  // Initialize with all fields to ensure controlled inputs
+  const getInitialFormData = () => ({
     title: "",
     content: "",
     image: "",
@@ -54,34 +55,96 @@ export default function EditStoryModal({ isOpen, onClose, story, onEdit }) {
     duration: 24,
     isActive: false,
     tags: [],
+    // Additional story fields
+    type: "text",
+    caption: "",
+    textContent: "",
+    mediaUrl: "",
+    thumbnailUrl: "",
+    backgroundColor: "#000000",
+    textColor: "#FFFFFF",
+    fontFamily: "Arial",
+    isFeatured: false,
+    moderationStatus: "approved",
   });
 
+  const [formData, setFormData] = useState(getInitialFormData());
+
   const [imagePreview, setImagePreview] = useState("");
+  const [mediaFile, setMediaFile] = useState(null); // Store the actual File object
   const [errors, setErrors] = useState({});
   const [tagInput, setTagInput] = useState("");
 
   useEffect(() => {
-    if (story && isOpen) {
+    if (!isOpen) {
+      // Reset form when modal closes
+      setFormData(getInitialFormData());
+      setImagePreview("");
+      setMediaFile(null);
+      return;
+    }
+
+    if (story) {
+      // Map story data to form fields based on Story model
+      const durationHours = story.duration ? Math.floor(story.duration / (60 * 60 * 1000)) : 24;
+      
+      // Ensure all fields are always defined (never undefined)
       setFormData({
-        title: story.title || "",
-        content: story.content || "",
-        image: story.image || "",
-        author: story.author || "",
-        status: story.status || "draft",
-        duration: story.duration || 24,
-        isActive: story.isActive || false,
-        tags: story.tags || [],
+        // Map story fields to form fields - always provide fallback values
+        title: String(story.caption || story.title || ""),
+        content: String(story.textContent || story.content || ""),
+        author: story.author?.firstName && story.author?.lastName 
+          ? String(`${story.author.firstName} ${story.author.lastName}`)
+          : String(story.author?.name || story.author || ""),
+        image: String(story.mediaUrl || story.thumbnailUrl || story.image || ""),
+        status: story.moderationStatus === "approved" ? "published" : 
+                story.moderationStatus === "pending" ? "draft" : 
+                String(story.status || "draft"),
+        duration: Number(durationHours) || 24,
+        isActive: Boolean(story.isActive !== false),
+        tags: Array.isArray(story.tags) ? story.tags : [],
+        // Additional story fields
+        type: String(story.type || "text"),
+        caption: String(story.caption || story.title || ""),
+        textContent: String(story.textContent || ""),
+        mediaUrl: String(story.mediaUrl || ""),
+        thumbnailUrl: String(story.thumbnailUrl || ""),
+        backgroundColor: String(story.backgroundColor || "#000000"),
+        textColor: String(story.textColor || "#FFFFFF"),
+        fontFamily: String(story.fontFamily || "Arial"),
+        isFeatured: Boolean(story.isFeatured || false),
+        moderationStatus: String(story.moderationStatus || "approved"),
       });
-      setImagePreview(story.image || "");
+      
+      // Set preview based on story type
+      if (story.type === 'image' || story.type === 'video') {
+        setImagePreview(String(story.mediaUrl || story.thumbnailUrl || ""));
+      } else {
+        setImagePreview("");
+      }
+      // Clear any previously selected file when loading existing story
+      setMediaFile(null);
+    } else {
+      // Reset form when opening for new story
+      setFormData(getInitialFormData());
+      setImagePreview("");
+      setMediaFile(null);
     }
   }, [story, isOpen]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      };
+      // Sync title to caption (backend expects caption)
+      if (name === "title") {
+        updated.caption = value;
+      }
+      return updated;
+    });
 
     if (errors[name]) {
       setErrors((prev) => ({
@@ -102,6 +165,10 @@ export default function EditStoryModal({ isOpen, onClose, story, onEdit }) {
         return;
       }
 
+      // Store the actual File object for upload
+      setMediaFile(file);
+
+      // Create preview
       const reader = new FileReader();
       reader.onload = (e) => {
         setImagePreview(e.target.result);
@@ -121,6 +188,8 @@ export default function EditStoryModal({ isOpen, onClose, story, onEdit }) {
       image: url,
     }));
     setImagePreview(url);
+    // Clear mediaFile when using URL instead
+    setMediaFile(null);
   };
 
   const handleAddTag = (e) => {
@@ -174,13 +243,18 @@ export default function EditStoryModal({ isOpen, onClose, story, onEdit }) {
     e.preventDefault();
 
     if (validateForm()) {
-      onEdit(formData);
+      // Include mediaFile in the data passed to onEdit
+      onEdit({
+        ...formData,
+        mediaFile: mediaFile, // Include the File object if a new file was uploaded
+      });
     }
   };
 
   const handleClose = () => {
     setErrors({});
     setTagInput("");
+    setMediaFile(null);
     onClose();
   };
 

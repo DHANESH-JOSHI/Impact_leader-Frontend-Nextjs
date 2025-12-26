@@ -378,7 +378,7 @@ export default function APIMonitoring() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">API Monitoring</h1>
             <p className="text-sm text-gray-600">
-              Real-time tracking of Impact Leaders API endpoints
+              Real-time tracking of OnePurpos API endpoints
             </p>
           </div>
         </div>

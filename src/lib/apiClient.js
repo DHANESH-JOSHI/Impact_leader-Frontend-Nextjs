@@ -85,7 +85,7 @@ class ApiClient {
       } else {
         if (typeof window !== 'undefined') {
           try {
-            const raw = window.localStorage?.getItem('impactLeadersAuth');
+            const raw = window.localStorage?.getItem('onePurposAuth');
             const parsed = raw ? JSON.parse(raw) : null;
             console.warn('[API Client] No token available for request', {
               hasTokenGetter: !!this.tokenGetter,
@@ -148,11 +148,6 @@ class ApiClient {
       if (data && method !== "GET") {
         requestOptions.body = isFormData ? data : JSON.stringify(data);
       }
-
-      console.log('[API]', method, url, {
-        hasAuth: !!headers["Authorization"],
-        hasData: !!data,
-      });
 
       let response;
       try {

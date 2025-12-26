@@ -113,12 +113,12 @@ export default function PostsCardView({
       {posts.map((post) => (
         <motion.div
           key={post.id}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group flex flex-col min-h-[320px]"
+          className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group flex flex-col"
           variants={cardVariants}
           whileHover="hover"
         >
           {/* Card Header */}
-          <div className="p-4 flex-1 flex flex-col">
+          <div className="p-4 flex-1 flex flex-col min-h-0">
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1 min-w-0">
                 <h3
@@ -191,7 +191,7 @@ export default function PostsCardView({
 
             {/* Card Stats */}
             <div
-              className="px-3 py-2 rounded mt-auto"
+              className="px-3 py-2 rounded"
               style={{ backgroundColor: "#f8fafc" }}
             >
               <div

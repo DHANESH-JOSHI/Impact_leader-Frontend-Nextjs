@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -13,13 +13,7 @@ import {
   Star,
   Clock,
   Share2,
-  Save,
-  Check,
-  Upload,
-  Video,
-  Trash2,
 } from "lucide-react";
-import { ThemesService } from "@/services/themesService";
 
 const modalVariants = {
   hidden: {
@@ -53,165 +47,8 @@ const backdropVariants = {
 };
 
 export default function ViewPostModal({ isOpen, onClose, post, onEdit, themes: themesProp = null }) {
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editFormData, setEditFormData] = useState({});
-  const [availableThemes, setAvailableThemes] = useState([]);
-  const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
-  const themeDropdownRef = useRef(null);
-  const [selectedMedia, setSelectedMedia] = useState([]);
-  const fileInputRef = useRef(null);
-
-  // Load themes only if not provided as prop, and only when modal opens
-  useEffect(() => {
-    if (!isOpen) return;
-    
-    if (themesProp && themesProp.length > 0) {
-      setAvailableThemes(themesProp);
-    } else if (availableThemes.length === 0) {
-      // Only load if themes prop is not provided and we don't have themes yet
-      loadThemes();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, themesProp]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target)) {
-        setIsThemeDropdownOpen(false);
-      }
-    };
-
-    if (isThemeDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isThemeDropdownOpen]);
-
-  const loadThemes = async () => {
-    try {
-      const result = await ThemesService.getAllThemes({ limit: 100, sortBy: "name", sortOrder: "asc" });
-      if (result.success && Array.isArray(result.data)) {
-        setAvailableThemes(result.data);
-      }
-    } catch (error) {
-      console.error("Failed to load themes:", error);
-    }
-  };
-
-  // Initialize edit form data when entering edit mode
-  const handleEditToggle = () => {
-    if (!isEditMode && post) {
-      setEditFormData({
-        title: post.title,
-        content: post.content,
-        status: post.status || "draft",
-        tags: Array.isArray(post.tags) ? post.tags.join(", ") : (post.tags || ""),
-        // Normalize themes: extract names from theme objects or use strings directly
-        themes: Array.isArray(post.themes) 
-          ? post.themes.map(theme => {
-              if (typeof theme === 'string') return theme; // Already a name
-              if (theme && typeof theme === 'object') return theme.name || String(theme._id || theme.id || theme); // Extract name from object
-              return String(theme); // Fallback
-            }).filter(Boolean)
-          : [],
-        allowComments: post.allowComments !== false,
-      });
-      // Load existing media if editing
-      if (post.media && Array.isArray(post.media)) {
-        setSelectedMedia(post.media.map(m => ({ 
-          url: typeof m === 'string' ? m : (m.url || m.path || ''), 
-          isExisting: true,
-          name: typeof m === 'string' ? 'Existing media' : (m.name || 'Existing media')
-        })));
-      } else {
-        setSelectedMedia([]);
-      }
-    }
-    setIsEditMode(!isEditMode);
-  };
-
-  // Handle input changes in edit mode
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setEditFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
-
-  // Handle media file selection
-  const handleMediaSelect = (e) => {
-    const files = Array.from(e.target.files || []);
-    const validFiles = files.filter(file => {
-      const isImage = file.type.startsWith('image/');
-      const isVideo = file.type.startsWith('video/');
-      return isImage || isVideo;
-    });
-
-    const newMedia = validFiles.map(file => ({
-      file,
-      url: URL.createObjectURL(file),
-      isExisting: false,
-      name: file.name
-    }));
-
-    setSelectedMedia(prev => [...prev, ...newMedia]);
-    
-    // Reset input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  // Remove media
-  const handleRemoveMedia = (index) => {
-    setSelectedMedia(prev => {
-      const newMedia = prev.filter((_, i) => i !== index);
-      // Revoke object URL if it was a new file
-      if (!prev[index].isExisting && prev[index].url.startsWith('blob:')) {
-        URL.revokeObjectURL(prev[index].url);
-      }
-      return newMedia;
-    });
-  };
-
-  // Handle save changes
-  const handleSaveChanges = () => {
-    if (post) {
-      const updatedPost = {
-        ...post,
-        ...editFormData,
-        tags: editFormData.tags
-          ? editFormData.tags.split(",").map((tag) => tag.trim()).filter((tag) => tag)
-          : [],
-        themes: Array.isArray(editFormData.themes) ? editFormData.themes : [],
-        status: editFormData.status || "draft",
-        allowComments: editFormData.allowComments !== false,
-        // Include media files (only new files, not existing URLs)
-        media: selectedMedia.filter(m => !m.isExisting && m.file).map(m => m.file),
-        images: selectedMedia.filter(m => !m.isExisting && m.file).map(m => m.file),
-      };
-      onEdit(updatedPost);
-      setIsEditMode(false);
-    }
-  };
-
   // Handle modal close
   const handleClose = () => {
-    setIsThemeDropdownOpen(false);
-    setIsEditMode(false);
-    setEditFormData({});
-    // Clean up blob URLs
-    selectedMedia.forEach(media => {
-      if (!media.isExisting && media.url.startsWith('blob:')) {
-        URL.revokeObjectURL(media.url);
-      }
-    });
-    setSelectedMedia([]);
     onClose();
   };
 
@@ -244,10 +81,7 @@ export default function ViewPostModal({ isOpen, onClose, post, onEdit, themes: t
     return readingTime;
   };
 
-  if (!post){ return null;}
-  else{
-    console.log("post:",post)
-  }
+  if (!post) return null;
 
   return (
     <AnimatePresence>
@@ -279,31 +113,29 @@ export default function ViewPostModal({ isOpen, onClose, post, onEdit, themes: t
                   className="p-2 rounded-lg"
                   style={{ backgroundColor: "#eff6ff" }}
                 >
-                  {isEditMode ? (
-                    <Edit className="h-6 w-6" style={{ color: "#2691ce" }} />
-                  ) : (
-                    <Eye className="h-6 w-6" style={{ color: "#2691ce" }} />
-                  )}
+                  <Eye className="h-6 w-6" style={{ color: "#2691ce" }} />
                 </div>
                 <div>
                   <h2
                     className="text-xl font-semibold"
                     style={{ color: "#040606" }}
                   >
-                    {isEditMode ? "Edit Post" : "View Post"}
+                    View Post
                   </h2>
                   <p className="text-sm" style={{ color: "#646464" }}>
-                    {isEditMode
-                      ? "Make changes to your post"
-                      : "Post details and content"}
+                    Post details and content
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-2">
-                {!isEditMode && (
+                {onEdit && (
                   <motion.button
-                    onClick={handleEditToggle}
+                    onClick={() => {
+                      if (onEdit) {
+                        onEdit(post);
+                      }
+                    }}
                     className="flex items-center space-x-2 px-4 py-2 text-white rounded-lg font-medium hover:shadow-md transition-all"
                     style={{ backgroundColor: "#2691ce" }}
                     whileHover={{ scale: 1.02 }}
@@ -327,360 +159,7 @@ export default function ViewPostModal({ isOpen, onClose, post, onEdit, themes: t
 
             {/* Modal Content */}
             <div className="max-h-[calc(90vh-140px)] overflow-y-auto">
-              {isEditMode ? (
-                /* Edit Mode Interface */
-                <div className="p-6 space-y-6">
-                  {/* Post Title Edit */}
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 }}
-                  >
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
-                    >
-                      Post Title
-                    </label>
-                    <input
-                      type="text"
-                      name="title"
-                      value={editFormData.title || ""}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all text-lg font-semibold"
-                      style={{ focusRingColor: "#2691ce" }}
-                      placeholder="Enter post title..."
-                    />
-                  </motion.div>
-
-                  {/* Status and Allow Comments */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.2 }}
-                    >
-                      <label
-                        className="block text-sm font-medium mb-2"
-                        style={{ color: "#040606" }}
-                      >
-                        Status
-                      </label>
-                      <select
-                        name="status"
-                        value={editFormData.status || ""}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                        style={{ focusRingColor: "#2691ce" }}
-                      >
-                        <option value="draft">Draft</option>
-                        <option value="published">Published</option>
-                        <option value="archived">Archived</option>
-                      </select>
-                    </motion.div>
-
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.3 }}
-                    >
-                      <label
-                        className="block text-sm font-medium mb-2"
-                        style={{ color: "#040606" }}
-                      >
-                        Comments
-                      </label>
-                      <div className="flex items-center space-x-2 p-3 border border-gray-300 rounded-lg">
-                        <input
-                          type="checkbox"
-                          name="allowComments"
-                          checked={editFormData.allowComments !== false}
-                          onChange={handleInputChange}
-                          className="w-4 h-4 rounded focus:ring-2"
-                          style={{
-                            color: "#2691ce",
-                            focusRingColor: "#2691ce",
-                          }}
-                        />
-                        <span className="text-sm" style={{ color: "#646464" }}>
-                          Allow Comments
-                        </span>
-                      </div>
-                    </motion.div>
-                  </div>
-
-                  {/* Full Content */}
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.7 }}
-                  >
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
-                    >
-                      Post Content
-                    </label>
-                    <textarea
-                      name="content"
-                      value={editFormData.content || ""}
-                      onChange={handleInputChange}
-                      rows={15}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none font-mono text-sm"
-                      style={{ focusRingColor: "#2691ce" }}
-                      placeholder="Write your full post content here..."
-                    />
-                    <div className="flex justify-between items-center mt-2">
-                      <p className="text-xs" style={{ color: "#646464" }}>
-                        The main content of your post
-                      </p>
-                      <span className="text-xs" style={{ color: "#646464" }}>
-                        {(editFormData.content || "").length} characters
-                      </span>
-                    </div>
-                  </motion.div>
-
-                  {/* Tags Input */}
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.8 }}
-                  >
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
-                    >
-                      Tags
-                    </label>
-                    <input
-                      type="text"
-                      name="tags"
-                      value={editFormData.tags || ""}
-                      onChange={handleInputChange}
-                      placeholder="Enter tags separated by commas (e.g., technology, tutorial, react)"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                      style={{ focusRingColor: "#2691ce" }}
-                    />
-                    <p className="text-xs mt-1" style={{ color: "#646464" }}>
-                      Separate multiple tags with commas for better discoverability
-                    </p>
-                  </motion.div>
-
-                  {/* Themes Multi-Select */}
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.85 }}
-                    className="relative"
-                    ref={themeDropdownRef}
-                  >
-                    <label
-                      className="flex items-center text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
-                    >
-                      <Tag className="w-4 h-4 mr-2" style={{ color: "#2691ce" }} />
-                      Themes
-                    </label>
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all text-left flex items-center justify-between"
-                        style={{ focusRingColor: "#2691ce" }}
-                      >
-                        <span className={(Array.isArray(editFormData.themes) ? editFormData.themes.length : 0) > 0 ? "text-gray-900" : "text-gray-500"}>
-                          {(Array.isArray(editFormData.themes) ? editFormData.themes.length : 0) > 0 
-                            ? `${editFormData.themes.length} theme${editFormData.themes.length !== 1 ? 's' : ''} selected`
-                            : "Select themes..."}
-                        </span>
-                        <span className="text-gray-400">▼</span>
-                      </button>
-                      {isThemeDropdownOpen && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
-                        >
-                          {availableThemes.length > 0 ? (
-                            availableThemes.map((theme) => {
-                              const isSelected = Array.isArray(editFormData.themes) && editFormData.themes.includes(theme.name);
-                              return (
-                                <div
-                                  key={theme._id || theme.id}
-                                  onClick={() => {
-                                    const currentThemes = Array.isArray(editFormData.themes) ? editFormData.themes : [];
-                                    if (isSelected) {
-                                      setEditFormData(prev => ({
-                                        ...prev,
-                                        themes: currentThemes.filter(t => t !== theme.name)
-                                      }));
-                                    } else {
-                                      setEditFormData(prev => ({
-                                        ...prev,
-                                        themes: [...currentThemes, theme.name]
-                                      }));
-                                    }
-                                  }}
-                                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center justify-between"
-                                >
-                                  <span>{theme.name}</span>
-                                  {isSelected && (
-                                    <Check className="w-4 h-4" style={{ color: "#2691ce" }} />
-                                  )}
-                                </div>
-                              );
-                            })
-                          ) : (
-                            <div className="px-4 py-2 text-gray-500 text-sm">No themes available</div>
-                          )}
-                        </motion.div>
-                      )}
-                    </div>
-                    {Array.isArray(editFormData.themes) && editFormData.themes.length > 0 && (
-                      <motion.div
-                        className="flex flex-wrap gap-2 mt-2"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                      >
-                        {editFormData.themes.map((themeName, index) => (
-                          <motion.span
-                            key={themeName}
-                            className="px-3 py-1 text-sm rounded-full text-white cursor-pointer flex items-center gap-1"
-                            style={{ backgroundColor: "#10b981" }}
-                            onClick={() => {
-                              setEditFormData(prev => ({
-                                ...prev,
-                                themes: (Array.isArray(prev.themes) ? prev.themes : []).filter(t => t !== themeName)
-                              }));
-                            }}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: index * 0.1 }}
-                          >
-                            {themeName}
-                            <span className="ml-1 text-xs">×</span>
-                          </motion.span>
-                        ))}
-                      </motion.div>
-                    )}
-                    <p className="text-xs mt-1" style={{ color: "#646464" }}>
-                      Select themes from the dropdown. Click on selected themes to remove them.
-                    </p>
-                  </motion.div>
-
-                  {/* Media Upload */}
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.9 }}
-                  >
-                    <label
-                      className="flex items-center text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
-                    >
-                      <Upload className="w-4 h-4 mr-2" style={{ color: "#2691ce" }} />
-                      Media (Images/Videos) - Optional
-                    </label>
-                    <div className="space-y-3">
-                      {/* File Input */}
-                      <div className="relative">
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          onChange={handleMediaSelect}
-                          accept="image/*,video/*"
-                          multiple
-                          className="hidden"
-                          id="media-upload-edit"
-                        />
-                        <label
-                          htmlFor="media-upload-edit"
-                          className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 transition-colors"
-                          style={{ 
-                            borderColor: "#2691ce",
-                            backgroundColor: "#f8fafc"
-                          }}
-                        >
-                          <Upload className="w-5 h-5 mr-2" style={{ color: "#2691ce" }} />
-                          <span className="text-sm" style={{ color: "#646464" }}>
-                            Click to upload images or videos
-                          </span>
-                        </label>
-                      </div>
-
-                      {/* Media Preview */}
-                      {selectedMedia.length > 0 && (
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
-                          {selectedMedia.map((media, index) => (
-                            <motion.div
-                              key={index}
-                              className="relative group"
-                              initial={{ opacity: 0, scale: 0.9 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              transition={{ delay: index * 0.1 }}
-                            >
-                              {media.url && (
-                                <>
-                                  {media.url.match(/\.(jpg|jpeg|png|gif|webp)$/i) || 
-                                   (media.file && media.file.type.startsWith('image/')) ? (
-                                    <img
-                                      src={media.url}
-                                      alt={media.name || `Media ${index + 1}`}
-                                      className="w-full h-32 object-cover rounded-lg border border-gray-200"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-32 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
-                                      <Video className="w-8 h-8" style={{ color: "#2691ce" }} />
-                                    </div>
-                                  )}
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveMedia(index)}
-                                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                  {media.isExisting && (
-                                    <span className="absolute bottom-1 left-1 px-2 py-1 text-xs bg-blue-500 text-white rounded">
-                                      Existing
-                                    </span>
-                                  )}
-                                </>
-                              )}
-                            </motion.div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-xs mt-1" style={{ color: "#646464" }}>
-                      Upload images or videos to attach to your post. You can select multiple files.
-                    </p>
-                  </motion.div>
-
-                  {/* Featured/Pinned Checkbox */}
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.9 }}
-                  >
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        name="featured"
-                        checked={editFormData.featured || false}
-                        onChange={handleInputChange}
-                        className="w-4 h-4 rounded focus:ring-2"
-                        style={{ accentColor: "#2691ce" }}
-                      />
-                      <span className="text-sm font-medium" style={{ color: "#040606" }}>
-                        Pin/Feature this post
-                      </span>
-                    </label>
-                  </motion.div>
-                </div>
-              ) : (
+              {post && (
                 /* View Mode Display */
                 <div className="p-6">
                   {/* Post Header Section */}
@@ -810,7 +289,7 @@ export default function ViewPostModal({ isOpen, onClose, post, onEdit, themes: t
                   {/* Post Tags Section */}
                   {post.tags && post.tags.length > 0 && (
                     <motion.div
-                      className="border-t border-gray-200 pt-6"
+                      className="border-t border-gray-200 pt-6 mb-6"
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.5 }}
@@ -842,37 +321,191 @@ export default function ViewPostModal({ isOpen, onClose, post, onEdit, themes: t
                       </div>
                     </motion.div>
                   )}
+
+                  {/* Themes Section */}
+                  {post.themes && post.themes.length > 0 && (
+                    <motion.div
+                      className="border-t border-gray-200 pt-6 mb-6"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.6 }}
+                    >
+                      <h3
+                        className="text-sm font-medium mb-4"
+                        style={{ color: "#040606" }}
+                      >
+                        Themes
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {post.themes.map((theme, index) => {
+                          const themeName = typeof theme === 'string' ? theme : (theme?.name || String(theme?._id || theme?.id || theme || ''));
+                          return (
+                            <motion.span
+                              key={index}
+                              className="px-3 py-1 text-sm rounded-full"
+                              style={{
+                                backgroundColor: "#fef3c7",
+                                color: "#92400e",
+                              }}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.6 + index * 0.1 }}
+                            >
+                              {themeName}
+                            </motion.span>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Media Section */}
+                  {post.media && post.media.length > 0 && (
+                    <motion.div
+                      className="border-t border-gray-200 pt-6 mb-6"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.7 }}
+                    >
+                      <h3
+                        className="text-sm font-medium mb-4"
+                        style={{ color: "#040606" }}
+                      >
+                        Media Attachments ({post.media.length})
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {post.media.map((media, index) => (
+                          <div key={index} className="border border-gray-200 rounded-lg p-3">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <Tag className="h-4 w-4" style={{ color: "#646464" }} />
+                              <span className="text-xs font-medium capitalize" style={{ color: "#646464" }}>
+                                {media.type || 'Unknown'}
+                              </span>
+                            </div>
+                            {media.url && (
+                              <a
+                                href={media.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm hover:underline"
+                                style={{ color: "#2691ce" }}
+                              >
+                                {media.filename || media.url}
+                              </a>
+                            )}
+                            {media.size && (
+                              <p className="text-xs mt-1" style={{ color: "#646464" }}>
+                                Size: {(media.size / 1024).toFixed(2)} KB
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Engagement & Settings Section */}
+                  <motion.div
+                    className="border-t border-gray-200 pt-6 mb-6"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.8 }}
+                  >
+                    <h3
+                      className="text-sm font-medium mb-4"
+                      style={{ color: "#040606" }}
+                    >
+                      Engagement & Settings
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <p className="text-xs" style={{ color: "#646464" }}>Upvotes</p>
+                        <p className="text-lg font-semibold" style={{ color: "#10b981" }}>
+                          {Array.isArray(post.upvotes) ? post.upvotes.length : (post.upvotes || 0)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs" style={{ color: "#646464" }}>Downvotes</p>
+                        <p className="text-lg font-semibold" style={{ color: "#ef4444" }}>
+                          {Array.isArray(post.downvotes) ? post.downvotes.length : (post.downvotes || 0)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs" style={{ color: "#646464" }}>Score</p>
+                        <p className="text-lg font-semibold" style={{ color: "#040606" }}>
+                          {post.score || 0}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs" style={{ color: "#646464" }}>Comments</p>
+                        <p className="text-lg font-semibold" style={{ color: "#040606" }}>
+                          {Array.isArray(post.comments) ? post.comments.length : (post.comments || 0)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-4">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs" style={{ color: "#646464" }}>Public:</span>
+                        <span className={`text-xs font-medium ${post.isPublic !== false ? 'text-green-600' : 'text-red-600'}`}>
+                          {post.isPublic !== false ? 'Yes' : 'No'}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs" style={{ color: "#646464" }}>Comments Allowed:</span>
+                        <span className={`text-xs font-medium ${post.allowComments !== false ? 'text-green-600' : 'text-red-600'}`}>
+                          {post.allowComments !== false ? 'Yes' : 'No'}
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Author & Timestamps Section */}
+                  <motion.div
+                    className="border-t border-gray-200 pt-6"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.9 }}
+                  >
+                    <h3
+                      className="text-sm font-medium mb-4"
+                      style={{ color: "#040606" }}
+                    >
+                      Additional Information
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {post.author && typeof post.author === 'object' && (
+                        <div>
+                          <p className="text-xs mb-1" style={{ color: "#646464" }}>Author Details</p>
+                          <p className="text-sm font-medium">{post.author.firstName} {post.author.lastName}</p>
+                          {post.author.email && (
+                            <p className="text-xs" style={{ color: "#646464" }}>{post.author.email}</p>
+                          )}
+                        </div>
+                      )}
+                      {post.createdAt && (
+                        <div>
+                          <p className="text-xs mb-1" style={{ color: "#646464" }}>Created At</p>
+                          <p className="text-sm font-medium">{formatDate(post.createdAt)}</p>
+                        </div>
+                      )}
+                      {post.updatedAt && (
+                        <div>
+                          <p className="text-xs mb-1" style={{ color: "#646464" }}>Last Updated</p>
+                          <p className="text-sm font-medium">{formatDate(post.updatedAt)}</p>
+                        </div>
+                      )}
+                      {post.id && (
+                        <div>
+                          <p className="text-xs mb-1" style={{ color: "#646464" }}>Post ID</p>
+                          <p className="text-xs font-mono" style={{ color: "#646464" }}>{post.id}</p>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
                 </div>
               )}
             </div>
 
-            {/* Modal Footer - Only shows in edit mode */}
-            {isEditMode && (
-              <div
-                className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200"
-                style={{ backgroundColor: "#f8fafc" }}
-              >
-                <motion.button
-                  onClick={handleEditToggle}
-                  className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                  style={{ color: "#646464" }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  Cancel Changes
-                </motion.button>
-                <motion.button
-                  onClick={handleSaveChanges}
-                  className="flex items-center space-x-2 px-6 py-2 text-white rounded-lg font-medium hover:shadow-md transition-all"
-                  style={{ backgroundColor: "#2691ce" }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Save className="h-4 w-4" />
-                  <span>Save Changes</span>
-                </motion.button>
-              </div>
-            )}
           </motion.div>
         </motion.div>
       )}

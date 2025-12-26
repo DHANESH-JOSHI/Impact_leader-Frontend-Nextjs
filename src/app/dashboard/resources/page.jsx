@@ -77,9 +77,6 @@ export default function ResourcesPage() {
   const [selectedResource, setSelectedResource] = useState(null);
 
   const [categories, setCategories] = useState(["all"]);
-  const modalCategories = useMemo(() => {
-    return categories.filter((c) => c !== "all" && c !== "");
-  }, [categories]);
 
   // Load categories from backend
   useEffect(() => {
@@ -518,7 +515,6 @@ export default function ResourcesPage() {
             setIsAddModalOpen(false);
           }}
           onSubmit={handleAddResource}
-          categories={modalCategories}
         />
 
         <AddResourceModal
@@ -528,7 +524,6 @@ export default function ResourcesPage() {
             setSelectedResource(null);
           }}
           onSubmit={handleSaveEditedResource}
-          categories={modalCategories}
           initialResource={selectedResource}
         />
 

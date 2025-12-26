@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import {
   X,
   User,
@@ -102,15 +103,107 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
   };
 
   const validateForm = () => {
-    if (!formData.email) return 'Email is required';
-    if (!formData.password || formData.password.length < 6) return 'Password must be at least 6 characters';
-    if (!formData.firstName) return 'First name is required';
-    if (!formData.lastName) return 'Last name is required';
-    if (!formData.companyName) return 'Company name is required';
-    if (!formData.organizationType) return 'Organization type is required';
-    if (!formData.designation) return 'Designation is required';
-    if (selectedThemes.length === 0) return 'At least one theme is required';
-    if (!formData.termsAccepted) return 'Terms and conditions must be accepted';
+    // Email validation
+    if (!formData.email || !formData.email.trim()) {
+      toast.error('Email is required');
+      return 'Email is required';
+    }
+    const email = formData.email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error('Please enter a valid email address');
+      return 'Please enter a valid email address';
+    }
+    if (email.length > 100) {
+      toast.error('Email must be less than 100 characters');
+      return 'Email must be less than 100 characters';
+    }
+
+    // Password validation
+    if (!formData.password || formData.password.trim().length === 0) {
+      toast.error('Password is required');
+      return 'Password is required';
+    }
+    if (formData.password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return 'Password must be at least 6 characters';
+    }
+    if (formData.password.length > 128) {
+      toast.error('Password must be less than 128 characters');
+      return 'Password must be less than 128 characters';
+    }
+
+    // First name validation
+    if (!formData.firstName || !formData.firstName.trim()) {
+      toast.error('First name is required');
+      return 'First name is required';
+    }
+    const firstName = formData.firstName.trim();
+    if (firstName.length > 50) {
+      toast.error('First name must be less than 50 characters');
+      return 'First name must be less than 50 characters';
+    }
+
+    // Last name validation
+    if (!formData.lastName || !formData.lastName.trim()) {
+      toast.error('Last name is required');
+      return 'Last name is required';
+    }
+    const lastName = formData.lastName.trim();
+    if (lastName.length > 50) {
+      toast.error('Last name must be less than 50 characters');
+      return 'Last name must be less than 50 characters';
+    }
+
+    // Company name validation
+    if (!formData.companyName || !formData.companyName.trim()) {
+      toast.error('Company name is required');
+      return 'Company name is required';
+    }
+    const companyName = formData.companyName.trim();
+    if (companyName.length > 100) {
+      toast.error('Company name must be less than 100 characters');
+      return 'Company name must be less than 100 characters';
+    }
+
+    // Organization type validation
+    if (!formData.organizationType || !formData.organizationType.trim()) {
+      toast.error('Organization type is required');
+      return 'Organization type is required';
+    }
+    const validOrgTypes = ['startup', 'corporate', 'nonprofit', 'government', 'freelance', 'other'];
+    if (!validOrgTypes.includes(formData.organizationType.trim())) {
+      toast.error('Invalid organization type. Please select a valid option');
+      return 'Invalid organization type';
+    }
+
+    // Designation validation
+    if (!formData.designation || !formData.designation.trim()) {
+      toast.error('Designation is required');
+      return 'Designation is required';
+    }
+    const designation = formData.designation.trim();
+    if (designation.length > 100) {
+      toast.error('Designation must be less than 100 characters');
+      return 'Designation must be less than 100 characters';
+    }
+
+    // Themes validation
+    if (selectedThemes.length === 0) {
+      toast.error('Please select at least one area of interest (theme)');
+      return 'At least one theme is required';
+    }
+
+    // Terms validation
+    if (!formData.termsAccepted) {
+      toast.error('You must accept the terms and conditions to continue');
+      return 'Terms and conditions must be accepted';
+    }
+
+    // Referral code validation (optional)
+    if (formData.referralCode && formData.referralCode.trim().length > 50) {
+      toast.error('Referral code must be less than 50 characters');
+      return 'Referral code must be less than 50 characters';
+    }
 
     return null;
   };
@@ -118,42 +211,70 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Clear previous errors and success messages
+    setError('');
+    setSuccess('');
+
+    // Validate form - toast messages are shown in validateForm
     const validationError = validateForm();
     if (validationError) {
-      setError(validationError);
+      // Error already shown as toast in validateForm
       return;
     }
 
     setLoading(true);
-    setError('');
-    setSuccess('');
 
     try {
-      // Use the Impact Leaders registration API
+      // Use the OnePurpos registration API
       const response = await AuthService.register({
-        email: formData.email,
+        email: formData.email.trim().toLowerCase(),
         password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        companyName: formData.companyName,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        companyName: formData.companyName.trim(),
         organizationType: formData.organizationType,
-        designation: formData.designation,
-        themes: selectedThemes,
-        termsAccepted: formData.termsAccepted,
-        ...(formData.referralCode && { referralCode: formData.referralCode })
+        designation: formData.designation.trim(),
+        themes: Array.isArray(selectedThemes) ? selectedThemes : [],
+        termsAccepted: formData.termsAccepted === true || formData.termsAccepted === 'true',
+        ...(formData.referralCode && { referralCode: formData.referralCode.trim() })
       });
 
       if (response.success) {
         setSuccess('User registered successfully!');
+        toast.success('User registered successfully!');
         setTimeout(() => {
           onUserAdded();
           handleClose();
         }, 1500);
       } else {
-        setError(response.message || 'Registration failed');
+        // Extract error message from response
+        let errorMessage = response.message || 'Registration failed';
+        
+        // If there are validation errors, format them
+        if (response.errors && Array.isArray(response.errors)) {
+          const errorMessages = response.errors.map(err => err.msg || err.message || `${err.path}: ${err.msg || 'Invalid value'}`).join(', ');
+          errorMessage = errorMessages || errorMessage;
+        }
+        
+        toast.error(errorMessage);
       }
     } catch (error) {
-      setError(error.message || 'Registration failed');
+      // Extract error message from API response
+      let errorMessage = 'Registration failed';
+      
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          const errorMessages = errorData.errors.map(err => err.msg || err.message || `${err.path}: ${err.msg || 'Invalid value'}`).join(', ');
+          errorMessage = errorMessages || errorData.message || errorMessage;
+        } else {
+          errorMessage = errorData.message || error.message || errorMessage;
+        }
+      } else {
+        errorMessage = error.message || errorMessage;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -200,11 +321,6 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
             </CardHeader>
 
             <CardContent className="space-y-6">
-              {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-                  {error}
-                </div>
-              )}
 
               {success && (
                 <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">

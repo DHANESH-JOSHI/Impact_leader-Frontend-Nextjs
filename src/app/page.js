@@ -48,7 +48,7 @@ export default function AdminLoginPage() {
     // Check if user is already authenticated - redirect based on role
     const checkAuth = () => {
       try {
-        const authData = localStorage.getItem("impactLeadersAuth");
+        const authData = localStorage.getItem("onePurposAuth");
         if (authData) {
           const parsed = JSON.parse(authData);
           const token = parsed?.value?.accessToken || parsed?.accessToken;
@@ -60,7 +60,7 @@ export default function AdminLoginPage() {
             // Check if user is inactive
             if (user?.isActive === false) {
               // Clear inactive session
-              localStorage.removeItem("impactLeadersAuth");
+              localStorage.removeItem("onePurposAuth");
               if (typeof document !== 'undefined') {
                 document.cookie = "authToken=; path=/; max-age=0; SameSite=Lax";
               }
@@ -163,7 +163,6 @@ export default function AdminLoginPage() {
       const result = await AuthService.login(email, password);
 
       if (result.success) {
-        console.log("✅ Login: Success response received:", result);
 
         // Check if user is active
         if (result.user?.isActive === false) {
@@ -197,10 +196,6 @@ export default function AdminLoginPage() {
             24 * 60 * 60
           }; SameSite=Lax`;
           document.cookie = cookieValue;
-          console.log(
-            "🍪 Login: Cookie set:",
-            cookieValue.substring(0, 50) + "..."
-          );
         }
 
         // Verify token was stored correctly
@@ -378,7 +373,7 @@ export default function AdminLoginPage() {
                   Admin Login
                 </CardTitle>
                 <CardDescription className="text-center text-white/90 mt-1">
-                  Admin Portal for Impact Leader
+                  Admin Portal for OnePurpos
                 </CardDescription>
               </div>
             </div>

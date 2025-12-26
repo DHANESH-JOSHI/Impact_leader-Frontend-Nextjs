@@ -9,6 +9,7 @@ import StoryTable from "@/components/stories/StoryTable";
 import AddStoryModal from "@/components/stories/AddStoryModal";
 import EditStoryModal from "@/components/stories/EditStoryModal";
 import ViewStoryModal from "@/components/stories/ViewStoryModal";
+import DeleteConfirmModal from "@/components/core/DeleteConfirmModal";
 import { StoriesService } from "@/services/storiesService";
 
 const pageVariants = {
@@ -31,7 +32,7 @@ const cardVariants = {
 const getStoredAuth = () => {
   if (typeof window === "undefined") return null;
   try {
-    const raw = localStorage.getItem("impactLeadersAuth");
+    const raw = localStorage.getItem("onePurposAuth");
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -62,6 +63,8 @@ export default function StoriesPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [storyToDelete, setStoryToDelete] = useState(null);
 
   const token = useMemo(
     () => (typeof window !== "undefined" ? getToken() : null),
@@ -277,16 +280,20 @@ export default function StoriesPage() {
       }
 
       // Prepare update data matching backend structure
+      // Convert duration from hours to milliseconds (backend expects milliseconds)
+      const durationHours = Number(updatedStoryData.duration) || 24;
+      const durationMs = durationHours * 60 * 60 * 1000; // Convert hours to milliseconds
+      
       const updateData = {
         type: updatedStoryData.type || selectedStory?.type,
         textContent: updatedStoryData.textContent || updatedStoryData.content,
-        caption: updatedStoryData.caption,
+        caption: updatedStoryData.caption || updatedStoryData.title || "",
         backgroundColor: updatedStoryData.backgroundColor,
         textColor: updatedStoryData.textColor,
         fontFamily: updatedStoryData.fontFamily,
-        duration: updatedStoryData.duration,
+        duration: durationMs, // Send in milliseconds
         tags: Array.isArray(updatedStoryData.tags) ? updatedStoryData.tags : (updatedStoryData.tags ? updatedStoryData.tags.split(',').map(t => t.trim()).filter(Boolean) : []),
-        isActive: updatedStoryData.status === "published",
+        isActive: updatedStoryData.isActive !== false,
       };
 
       // Check if there's a new media file to upload
@@ -312,29 +319,35 @@ export default function StoriesPage() {
     }
   };
 
-  const handleDeleteStory = async (storyId) => {
-    const storyToDelete = stories.find((s) => s.id === storyId);
+  const handleDeleteStory = (storyId) => {
+    const story = stories.find((s) => s.id === storyId);
+    setStoryToDelete(story);
+    setIsDeleteModalOpen(true);
+  };
 
-    if (window.confirm("Are you sure you want to delete this story?")) {
-      try {
-        setLoading(true);
-        const result = await StoriesService.deleteStory(storyId);
+  const confirmDeleteStory = async () => {
+    if (!storyToDelete?.id) return;
 
-        if (result?.success) {
-          await loadStories();
-          toast.success(
-            `"${storyToDelete?.title}" deleted successfully`
-          );
-        } else {
-          toast.error(
-            `Delete failed: ${result?.message || "Unknown error"}`
-          );
-        }
-      } catch (error) {
-        toast.error("There was a problem deleting the story. Please try again.");
-      } finally {
-        setLoading(false);
+    try {
+      setLoading(true);
+      const result = await StoriesService.deleteStory(storyToDelete.id);
+
+      if (result?.success) {
+        await loadStories();
+        toast.success(
+          `"${storyToDelete?.caption || storyToDelete?.title}" deleted successfully`
+        );
+        setIsDeleteModalOpen(false);
+        setStoryToDelete(null);
+      } else {
+        toast.error(
+          `Delete failed: ${result?.message || "Unknown error"}`
+        );
       }
+    } catch (error) {
+      toast.error("There was a problem deleting the story. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -344,6 +357,11 @@ export default function StoriesPage() {
   };
 
   const handleEditClick = (story) => {
+    // Close view modal first if it's open
+    if (isViewModalOpen) {
+      setIsViewModalOpen(false);
+    }
+    // Set selected story and open edit modal
     setSelectedStory(story);
     setIsEditModalOpen(true);
   };
@@ -457,6 +475,24 @@ export default function StoriesPage() {
           setSelectedStory(null);
         }}
         story={selectedStory}
+        onEdit={(story) => {
+          setIsViewModalOpen(false); // Close view modal
+          setSelectedStory(story); // Set story for edit modal
+          setIsEditModalOpen(true); // Open edit modal
+        }}
+      />
+
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setStoryToDelete(null);
+        }}
+        onConfirm={confirmDeleteStory}
+        title="Delete Story"
+        message="Are you sure you want to delete this story? This action cannot be undone."
+        itemName={storyToDelete?.caption || storyToDelete?.title}
+        isLoading={loading}
       />
       </div>
     </motion.div>

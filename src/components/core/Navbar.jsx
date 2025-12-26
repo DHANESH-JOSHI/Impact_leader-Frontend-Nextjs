@@ -21,7 +21,7 @@ export default function Navbar({ sidebarCollapsed, setSidebarCollapsed }) {
   // Get user info from localStorage
   useEffect(() => {
     try {
-      const authData = localStorage.getItem('impactLeadersAuth');
+      const authData = localStorage.getItem('onePurposAuth');
       if (authData) {
         const parsedData = JSON.parse(authData);
         setCurrentUser(parsedData.user);
@@ -236,7 +236,7 @@ export default function Navbar({ sidebarCollapsed, setSidebarCollapsed }) {
                         const { AuthService } = await import('@/services/authService');
                         await AuthService.logout();
 
-                        localStorage.removeItem('impactLeadersAuth');
+                        localStorage.removeItem('onePurposAuth');
 
                         document.cookie = 'impactLeadersToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
                         document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
@@ -245,7 +245,7 @@ export default function Navbar({ sidebarCollapsed, setSidebarCollapsed }) {
                       } catch (error) {
                         console.error('Logout error:', error);
                         // Still clear local data and redirect even if API fails
-                        localStorage.removeItem('impactLeadersAuth');
+                        localStorage.removeItem('onePurposAuth');
                         document.cookie = 'impactLeadersToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
                         document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
                         window.location.href = '/?message=logged_out';

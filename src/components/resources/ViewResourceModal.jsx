@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import toast from "react-hot-toast";
 import {
   X,
   Edit,
@@ -771,11 +772,13 @@ export default function ViewResourceModal({
                               const { ResourcesService } = await import('@/services/resourcesService');
                               const result = await ResourcesService.downloadResource(resource.id, resource.fileName || resource.title);
                               if (!result?.success) {
-                                alert(result?.message || 'Download failed');
+                                toast.error(result?.message || 'Download failed');
+                              } else {
+                                toast.success('Download started');
                               }
                             } catch (error) {
                               console.error('Download error:', error);
-                              alert('Download failed. Please try again.');
+                              toast.error('Download failed. Please try again.');
                             }
                           }}
                           className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -986,8 +989,130 @@ export default function ViewResourceModal({
                             {formatDate(resource.updatedAt)}
                           </span>
                         </div>
+                        {resource.file && (
+                          <>
+                            {resource.file.originalName && (
+                              <div className="flex items-center justify-between">
+                                <span style={{ color: "#646464" }}>Original Name:</span>
+                                <span className="font-medium" style={{ color: "#040606" }}>
+                                  {resource.file.originalName}
+                                </span>
+                              </div>
+                            )}
+                            {resource.file.mimetype && (
+                              <div className="flex items-center justify-between">
+                                <span style={{ color: "#646464" }}>MIME Type:</span>
+                                <span className="font-medium" style={{ color: "#040606" }}>
+                                  {resource.file.mimetype}
+                                </span>
+                              </div>
+                            )}
+                            {resource.file.path && (
+                              <div className="flex items-center justify-between">
+                                <span style={{ color: "#646464" }}>File Path:</span>
+                                <span className="font-medium text-xs font-mono" style={{ color: "#040606" }}>
+                                  {resource.file.path}
+                                </span>
+                              </div>
+                            )}
+                          </>
+                        )}
+                        <div className="flex items-center justify-between">
+                          <span style={{ color: "#646464" }}>Public:</span>
+                          <span className={`font-medium ${resource.isPublic !== false ? 'text-green-600' : 'text-red-600'}`}>
+                            {resource.isPublic !== false ? 'Yes' : 'No'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span style={{ color: "#646464" }}>Active:</span>
+                          <span className={`font-medium ${resource.isActive !== false ? 'text-green-600' : 'text-red-600'}`}>
+                            {resource.isActive !== false ? 'Yes' : 'No'}
+                          </span>
+                        </div>
+                        {resource.downloadCount !== undefined && (
+                          <div className="flex items-center justify-between">
+                            <span style={{ color: "#646464" }}>Download Count:</span>
+                            <span className="font-medium" style={{ color: "#040606" }}>
+                              {resource.downloadCount || 0}
+                            </span>
+                          </div>
+                        )}
+                        {resource.uploadedBy && (
+                          <div className="flex items-center justify-between">
+                            <span style={{ color: "#646464" }}>Uploaded By:</span>
+                            <span className="font-medium" style={{ color: "#040606" }}>
+                              {typeof resource.uploadedBy === 'object' 
+                                ? `${resource.uploadedBy.firstName || ''} ${resource.uploadedBy.lastName || ''}`.trim() || resource.uploadedBy.email
+                                : resource.uploadedBy}
+                            </span>
+                          </div>
+                        )}
+                        {resource.createdBy && (
+                          <div className="flex items-center justify-between">
+                            <span style={{ color: "#646464" }}>Created By:</span>
+                            <span className="font-medium" style={{ color: "#040606" }}>
+                              {typeof resource.createdBy === 'object' 
+                                ? `${resource.createdBy.firstName || ''} ${resource.createdBy.lastName || ''}`.trim() || resource.createdBy.email
+                                : resource.createdBy}
+                            </span>
+                          </div>
+                        )}
+                        {resource.updatedBy && (
+                          <div className="flex items-center justify-between">
+                            <span style={{ color: "#646464" }}>Updated By:</span>
+                            <span className="font-medium" style={{ color: "#040606" }}>
+                              {typeof resource.updatedBy === 'object' 
+                                ? `${resource.updatedBy.firstName || ''} ${resource.updatedBy.lastName || ''}`.trim() || resource.updatedBy.email
+                                : resource.updatedBy}
+                            </span>
+                          </div>
+                        )}
+                        {resource.likes && Array.isArray(resource.likes) && resource.likes.length > 0 && (
+                          <div className="flex items-center justify-between">
+                            <span style={{ color: "#646464" }}>Likes Count:</span>
+                            <span className="font-medium" style={{ color: "#040606" }}>
+                              {resource.likes.length}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </motion.div>
+
+                    {/* Themes Section */}
+                    {resource.themes && resource.themes.length > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.35 }}
+                      >
+                        <h3
+                          className="text-lg font-semibold mb-4"
+                          style={{ color: "#040606" }}
+                        >
+                          Themes
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          {resource.themes.map((theme, index) => {
+                            const themeName = typeof theme === 'string' ? theme : (theme?.name || String(theme?._id || theme?.id || theme || ''));
+                            return (
+                              <motion.span
+                                key={index}
+                                className="px-3 py-1 text-sm rounded-full"
+                                style={{
+                                  backgroundColor: "#fef3c7",
+                                  color: "#92400e",
+                                }}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.35 + index * 0.1 }}
+                              >
+                                {themeName}
+                              </motion.span>
+                            );
+                          })}
+                        </div>
+                      </motion.div>
+                    )}
 
                     {/* Resource Tags */}
                     {resource.tags && resource.tags.length > 0 && (

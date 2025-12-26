@@ -49,6 +49,7 @@ export default function AddStoryModal({
   isOpen,
   onClose,
   onAdd,
+  initialStory = null,
 }) {
   const [formData, setFormData] = useState({
     type: "text",

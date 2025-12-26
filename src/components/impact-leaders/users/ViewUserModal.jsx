@@ -200,6 +200,82 @@ export default function ViewUserModal({ isOpen, onClose, user, onEdit }) {
               </Card>
             </div>
 
+            {/* Contact Information */}
+            {(user.phone || user.location || user.socialLinks) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center">
+                    <Mail className="h-5 w-5 mr-2" />
+                    Contact Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {user.phone && (
+                    <div>
+                      <p className="text-sm text-gray-600">Phone</p>
+                      <p className="font-medium">{user.phone}</p>
+                    </div>
+                  )}
+                  {user.location && (user.location.city || user.location.state || user.location.country) && (
+                    <div>
+                      <p className="text-sm text-gray-600">Location</p>
+                      <p className="font-medium">
+                        {[user.location.city, user.location.state, user.location.country].filter(Boolean).join(', ')}
+                      </p>
+                    </div>
+                  )}
+                  {user.socialLinks && (user.socialLinks.linkedin || user.socialLinks.twitter || user.socialLinks.website) && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-2">Social Links</p>
+                      <div className="flex flex-wrap gap-2">
+                        {user.socialLinks.linkedin && (
+                          <a href={user.socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
+                            LinkedIn
+                          </a>
+                        )}
+                        {user.socialLinks.twitter && (
+                          <a href={user.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
+                            Twitter
+                          </a>
+                        )}
+                        {user.socialLinks.website && (
+                          <a href={user.socialLinks.website} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
+                            Website
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Bio and Experience */}
+            {(user.bio || user.experience !== undefined) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center">
+                    <User className="h-5 w-5 mr-2" />
+                    Professional Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {user.bio && (
+                    <div>
+                      <p className="text-sm text-gray-600">Bio</p>
+                      <p className="font-medium">{user.bio}</p>
+                    </div>
+                  )}
+                  {user.experience !== undefined && (
+                    <div>
+                      <p className="text-sm text-gray-600">Experience</p>
+                      <p className="font-medium">{user.experience} years</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Themes and Interests */}
             {user.themes && user.themes.length > 0 && (
               <Card>
@@ -213,7 +289,7 @@ export default function ViewUserModal({ isOpen, onClose, user, onEdit }) {
                   <div className="flex flex-wrap gap-2">
                     {user.themes.map((theme, index) => (
                       <Badge key={index} variant="secondary" className="capitalize">
-                        {theme.replace('-', ' ')}
+                        {typeof theme === 'string' ? theme.replace('-', ' ') : (theme?.name || String(theme))}
                       </Badge>
                     ))}
                   </div>
@@ -258,7 +334,49 @@ export default function ViewUserModal({ isOpen, onClose, user, onEdit }) {
                   {user.referredBy && (
                     <div>
                       <p className="text-sm text-gray-600">Referred By</p>
-                      <p className="font-medium">{user.referredBy}</p>
+                      <p className="font-medium">
+                        {typeof user.referredBy === 'object' 
+                          ? `${user.referredBy.firstName || ''} ${user.referredBy.lastName || ''}`.trim() || user.referredBy.email
+                          : user.referredBy}
+                      </p>
+                    </div>
+                  )}
+                  {user.rejectionReason && (
+                    <div>
+                      <p className="text-sm text-gray-600">Rejection Reason</p>
+                      <p className="font-medium text-red-600">{user.rejectionReason}</p>
+                    </div>
+                  )}
+                  {user.approvedBy && (
+                    <div>
+                      <p className="text-sm text-gray-600">Approved By</p>
+                      <p className="font-medium">
+                        {typeof user.approvedBy === 'object' 
+                          ? `${user.approvedBy.firstName || ''} ${user.approvedBy.lastName || ''}`.trim() || user.approvedBy.email
+                          : user.approvedBy}
+                      </p>
+                    </div>
+                  )}
+                  {user.approvedAt && (
+                    <div>
+                      <p className="text-sm text-gray-600">Approved At</p>
+                      <p className="font-medium">{formatDate(user.approvedAt)}</p>
+                    </div>
+                  )}
+                  {user.privilegeGrantedBy && (
+                    <div>
+                      <p className="text-sm text-gray-600">Privilege Granted By</p>
+                      <p className="font-medium">
+                        {typeof user.privilegeGrantedBy === 'object' 
+                          ? `${user.privilegeGrantedBy.firstName || ''} ${user.privilegeGrantedBy.lastName || ''}`.trim() || user.privilegeGrantedBy.email
+                          : user.privilegeGrantedBy}
+                      </p>
+                    </div>
+                  )}
+                  {user.privilegeGrantedAt && (
+                    <div>
+                      <p className="text-sm text-gray-600">Privilege Granted At</p>
+                      <p className="font-medium">{formatDate(user.privilegeGrantedAt)}</p>
                     </div>
                   )}
                 </CardContent>

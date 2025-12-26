@@ -1,14 +1,14 @@
 import React from "react";
 import { motion } from "framer-motion";
 import {
-  FiEye,
-  FiEdit2,
-  FiTrash2,
-  FiHeart,
-  FiClock,
-  FiUser,
-  FiTag,
-} from "react-icons/fi";
+  Eye,
+  Edit,
+  Trash2,
+  Heart,
+  Clock,
+  User,
+  Tag,
+} from "lucide-react";
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -20,6 +20,15 @@ const cardVariants = {
       ease: "easeOut",
     },
   },
+  hover: {
+    y: -5,
+    transition: { duration: 0.2 },
+  },
+};
+
+const buttonVariants = {
+  hover: { scale: 1.05 },
+  tap: { scale: 0.95 },
 };
 
 export default function StoryCard({ stories, onView, onEdit, onDelete }) {
@@ -51,7 +60,7 @@ export default function StoryCard({ stories, onView, onEdit, onDelete }) {
       {stories.map((story, index) => (
         <motion.div
           key={story.id}
-          className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow duration-200"
+          className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group flex flex-col"
           variants={cardVariants}
           initial="hidden"
           animate="visible"
@@ -94,7 +103,7 @@ export default function StoryCard({ stories, onView, onEdit, onDelete }) {
           </div>
 
           {/* Story Content */}
-          <div className="p-4">
+          <div className="p-4 flex-1 flex flex-col min-h-0">
             {/* Title */}
             <h3
               className="font-semibold mb-2 line-clamp-1"
@@ -145,7 +154,7 @@ export default function StoryCard({ stories, onView, onEdit, onDelete }) {
               className="flex items-center text-sm mb-3"
               style={{ color: "#646464" }}
             >
-              <FiUser className="w-4 h-4 mr-1" />
+              <User className="w-4 h-4 mr-1" />
               <span>{story.author}</span>
             </div>
 
@@ -156,17 +165,17 @@ export default function StoryCard({ stories, onView, onEdit, onDelete }) {
             >
               <div className="flex items-center gap-3">
                 <div className="flex items-center">
-                  <FiEye className="w-4 h-4 mr-1" />
-                  <span>{story.views}</span>
+                  <Eye className="w-4 h-4 mr-1" />
+                  <span>{story.views || 0}</span>
                 </div>
                 <div className="flex items-center">
-                  <FiHeart className="w-4 h-4 mr-1" />
-                  <span>{story.likes}</span>
+                  <Heart className="w-4 h-4 mr-1" />
+                  <span>{story.likes || 0}</span>
                 </div>
               </div>
               <div className="flex items-center">
-                <FiClock className="w-4 h-4 mr-1" />
-                <span>{story.duration}h</span>
+                <Clock className="w-4 h-4 mr-1" />
+                <span>{story.duration || 24}h</span>
               </div>
             </div>
 
@@ -174,41 +183,50 @@ export default function StoryCard({ stories, onView, onEdit, onDelete }) {
             <p className="text-xs mb-4" style={{ color: "#646464" }}>
               Created: {formatTime(story.createdAt)}
             </p>
+          </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+          {/* Action Buttons */}
+          <div className="p-3 bg-white border-t border-gray-100 mt-auto">
+            <div className="flex items-center justify-between space-x-2">
               <motion.button
                 onClick={() => onView(story)}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-md transition-colors"
-                style={{ color: "#2691ce" }}
-                whileHover={{ backgroundColor: "#eff6ff", scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+                variants={buttonVariants}
+                whileHover="hover"
+                whileTap="tap"
               >
-                <FiEye className="w-4 h-4" />
-                View
+                <Eye className="h-4 w-4" />
+                <span>View</span>
               </motion.button>
 
-              <div className="flex items-center gap-1">
-                <motion.button
-                  onClick={() => onEdit(story)}
-                  className="flex items-center gap-1 px-3 py-1.5 text-green-600 hover:bg-green-50 rounded-md transition-colors"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <FiEdit2 className="w-4 h-4" />
-                  Edit
-                </motion.button>
+              <motion.button
+                onClick={() => onEdit(story)}
+                className="p-2 text-gray-600 hover:text-white rounded-lg transition-colors"
+                style={{ backgroundColor: "transparent" }}
+                variants={buttonVariants}
+                whileHover="hover"
+                whileTap="tap"
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = "#2691ce";
+                  e.target.style.color = "white";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = "transparent";
+                  e.target.style.color = "#6b7280";
+                }}
+              >
+                <Edit className="h-4 w-4" />
+              </motion.button>
 
-                <motion.button
-                  onClick={() => onDelete(story.id)}
-                  className="flex items-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <FiTrash2 className="w-4 h-4" />
-                  Delete
-                </motion.button>
-              </div>
+              <motion.button
+                onClick={() => onDelete(story.id)}
+                className="p-2 text-gray-600 hover:text-white hover:bg-red-500 rounded-lg transition-colors"
+                variants={buttonVariants}
+                whileHover="hover"
+                whileTap="tap"
+              >
+                <Trash2 className="h-4 w-4" />
+              </motion.button>
             </div>
           </div>
         </motion.div>

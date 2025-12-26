@@ -4,6 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import {
   Eye,
+  Edit,
   Trash2,
   Calendar,
   Building2,
@@ -52,6 +53,7 @@ const buttonVariants = {
 export default function DirectoryCardView({
   entries,
   onViewEntry,
+  onEditEntry,
   onDeleteEntry,
 }) {
   const formatDate = (dateString) => {
@@ -105,11 +107,11 @@ export default function DirectoryCardView({
       {entries.map((entry) => (
         <motion.div
           key={entry.id}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group flex flex-col min-h-[320px]"
+          className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group flex flex-col"
           variants={cardVariants}
           whileHover="hover"
         >
-          <div className="p-4 flex-1 flex flex-col">
+          <div className="p-4 flex-1 flex flex-col min-h-0">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center space-x-3 flex-1 min-w-0">
                 {entry.logo ? (
@@ -246,12 +248,11 @@ export default function DirectoryCardView({
           )}
 
           {/* Action Buttons */}
-          <div className="p-3 bg-white border-t border-gray-100">
-            <div className="flex items-center justify-end space-x-2">
+          <div className="p-3 bg-white border-t border-gray-100 mt-auto">
+            <div className="flex items-center justify-between space-x-2">
               <motion.button
                 onClick={() => onViewEntry(entry)}
-                className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-                style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
+                className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
                 variants={buttonVariants}
                 whileHover="hover"
                 whileTap="tap"
@@ -259,16 +260,34 @@ export default function DirectoryCardView({
                 <Eye className="h-4 w-4" />
                 <span>View</span>
               </motion.button>
+
+              <motion.button
+                onClick={() => onEditEntry && onEditEntry(entry)}
+                className="p-2 text-gray-600 hover:text-white rounded-lg transition-colors"
+                style={{ backgroundColor: "transparent" }}
+                variants={buttonVariants}
+                whileHover="hover"
+                whileTap="tap"
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = "#2691ce";
+                  e.target.style.color = "white";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = "transparent";
+                  e.target.style.color = "#6b7280";
+                }}
+              >
+                <Edit className="h-4 w-4" />
+              </motion.button>
+
               <motion.button
                 onClick={() => onDeleteEntry(entry)}
-                className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-                style={{ backgroundColor: "#fef2f2", color: "#ef4444" }}
+                className="p-2 text-gray-600 hover:text-white hover:bg-red-500 rounded-lg transition-colors"
                 variants={buttonVariants}
                 whileHover="hover"
                 whileTap="tap"
               >
                 <Trash2 className="h-4 w-4" />
-                <span>Delete</span>
               </motion.button>
             </div>
           </div>

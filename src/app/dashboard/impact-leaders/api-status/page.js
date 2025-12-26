@@ -279,7 +279,7 @@ export default function APIStatusPage() {
         <div>
           <h1 className="text-3xl font-bold">API Status Monitor</h1>
           <p className="text-gray-600 mt-2">
-            Monitor the health and status of Impact Leaders API endpoints
+            Monitor the health and status of OnePurpos API endpoints
           </p>
           {lastChecked && (
             <p className="text-sm text-gray-500 mt-1">
