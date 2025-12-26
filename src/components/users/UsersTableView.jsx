@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import {
   Eye,
   Trash2,
+  Edit,
   Calendar,
   Mail,
   Building,
@@ -53,6 +54,7 @@ const buttonVariants = {
 export default function UsersTableView({
   users,
   onViewUser,
+  onEditUser,
   onDeleteUser,
 }) {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
@@ -288,29 +290,41 @@ export default function UsersTableView({
                     </span>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right">
-                  <div className="flex items-center justify-end space-x-2">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center justify-center space-x-2">
                     <motion.button
                       onClick={() => onViewUser(user)}
                       className="p-2 rounded-lg transition-colors"
-                      style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
-                      variants={buttonVariants}
-                      whileHover="hover"
-                      whileTap="tap"
-                      title="View"
+                      style={{ color: "#2691ce" }}
+                      whileHover={{ backgroundColor: "#eff6ff", scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      title="View User"
                     >
                       <Eye className="h-4 w-4" />
                     </motion.button>
+
+                    {onEditUser && (
+                      <motion.button
+                        onClick={() => onEditUser(user)}
+                        className="p-2 hover:bg-yellow-50 rounded-lg transition-colors"
+                        variants={buttonVariants}
+                        whileHover="hover"
+                        whileTap="tap"
+                        title="Edit User"
+                      >
+                        <Edit className="h-4 w-4 text-yellow-600" />
+                      </motion.button>
+                    )}
+
                     <motion.button
                       onClick={() => onDeleteUser(user)}
-                      className="p-2 rounded-lg transition-colors"
-                      style={{ backgroundColor: "#fef2f2", color: "#ef4444" }}
+                      className="p-2 hover:bg-red-50 rounded-lg transition-colors"
                       variants={buttonVariants}
                       whileHover="hover"
                       whileTap="tap"
-                      title="Delete"
+                      title="Delete User"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4 text-red-500" />
                     </motion.button>
                   </div>
                 </td>
