@@ -630,19 +630,36 @@ export class AdminService {
 
   static async getAllUsersAdmin(params = {}) {
     try {
-      const { page = 1, limit = 50 } = params;
+      const {
+        page = 1,
+        limit = 20,
+        search,
+        role,
+        isActive,
+        organizationType,
+        sortBy = "createdAt",
+        sortOrder = "desc",
+      } = params;
 
-      let queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-      });
+      const queryParams = {
+        page,
+        limit,
+        sortBy,
+        sortOrder,
+        ...(search && { search }),
+        ...(role && { role }),
+        // Convert boolean to string for query params (URL params are always strings)
+        ...(isActive !== undefined && { isActive: isActive === true || isActive === "true" ? "true" : "false" }),
+        ...(organizationType && { organizationType }),
+      };
 
-      const response = await apiClient.get(ADMIN.USERS.BASE, { params: { page, limit } });
+      const response = await apiClient.get(ADMIN.USERS.BASE, { params: queryParams });
       const backendResponse = response.data || {};
 
       return {
         success: response.success && backendResponse.success !== false,
         data: backendResponse.data || backendResponse,
+        pagination: backendResponse.pagination,
         message: backendResponse.message || response.message,
       };
     } catch (error) {

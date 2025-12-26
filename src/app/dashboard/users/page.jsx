@@ -8,6 +8,7 @@ import UsersCardView from "@/components/users/UsersCardView";
 import UsersTableView from "@/components/users/UsersTableView";
 import AddUserModal from "@/components/impact-leaders/users/AddUserModal";
 import ViewUserModal from "@/components/impact-leaders/users/ViewUserModal";
+import EditUserModal from "@/components/impact-leaders/users/EditUserModal";
 import DeleteConfirmModal from "@/components/core/DeleteConfirmModal";
 import { UsersService } from "@/services/usersService";
 import { AdminService } from "@/services/adminService";
@@ -56,6 +57,7 @@ export default function UsersPage() {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -94,7 +96,7 @@ export default function UsersPage() {
         ...(filterOrganization !== "all" && { organizationType: filterOrganization }),
       };
 
-      const result = await UsersService.getAllUsers(params);
+      const result = await AdminService.getAllUsersAdmin(params);
 
       if (result.success) {
         const usersData = Array.isArray(result.data) ? result.data : [];
@@ -125,7 +127,7 @@ export default function UsersPage() {
         setPagination((prev) => ({
           ...prev,
           total: paginationData.total || transformed.length,
-          totalPages: paginationData.totalPages || Math.ceil((paginationData.total || transformed.length) / pagination.limit),
+          totalPages: paginationData.pages || Math.ceil((paginationData.total || transformed.length) / pagination.limit),
         }));
       } else {
         toast.error(result.message || "Failed to load users");
@@ -187,6 +189,33 @@ export default function UsersPage() {
   const handleViewUser = (user) => {
     setSelectedUser(user);
     setIsViewModalOpen(true);
+  };
+
+  const handleEditUser = (user) => {
+    setSelectedUser(user);
+    setIsViewModalOpen(false);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateUser = async (userData) => {
+    try {
+      setLoading(true);
+      const result = await AdminService.updateUser(selectedUser.id, userData);
+
+      if (result.success) {
+        toast.success("User updated successfully");
+        setIsEditModalOpen(false);
+        setSelectedUser(null);
+        await loadUsers();
+      } else {
+        toast.error(result.message || "Failed to update user");
+      }
+    } catch (error) {
+      console.error("Failed to update user:", error);
+      toast.error(error.message || "Failed to update user");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePageChange = (newPage) => {
@@ -259,6 +288,7 @@ export default function UsersPage() {
           <UsersCardView
             users={filteredUsers}
             onViewUser={handleViewUser}
+            onEditUser={handleEditUser}
             onDeleteUser={(user) => {
               setSelectedUser(user);
               setIsDeleteModalOpen(true);
@@ -268,6 +298,7 @@ export default function UsersPage() {
           <UsersTableView
             users={filteredUsers}
             onViewUser={handleViewUser}
+            onEditUser={handleEditUser}
             onDeleteUser={(user) => {
               setSelectedUser(user);
               setIsDeleteModalOpen(true);
@@ -316,6 +347,17 @@ export default function UsersPage() {
           setSelectedUser(null);
         }}
         user={selectedUser}
+        onEdit={handleEditUser}
+      />
+
+      <EditUserModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedUser(null);
+        }}
+        user={selectedUser}
+        onUpdate={handleUpdateUser}
       />
 
       <DeleteConfirmModal

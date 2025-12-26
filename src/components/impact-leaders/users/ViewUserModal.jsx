@@ -1,8 +1,9 @@
 "use client";
 
 import React from 'react';
+import { motion } from 'framer-motion';
 import {
-  Pencil,
+  Edit,
   X,
   User,
   Mail,
@@ -15,7 +16,6 @@ import {
   XCircle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 export default function ViewUserModal({ isOpen, onClose, user, onEdit }) {
@@ -42,30 +42,63 @@ export default function ViewUserModal({ isOpen, onClose, user, onEdit }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <div 
+      className="fixed inset-0 flex items-center justify-center z-50 p-4"
+      style={{
+        backdropFilter: "blur(8px)",
+        backgroundColor: "rgba(100, 100, 100, 0.3)",
+      }}
+    >
+      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
         <Card className="border-0 shadow-none">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <CardTitle className="text-xl font-bold">User Details</CardTitle>
-            <div className="flex items-center gap-2">
+          <CardHeader 
+            className="flex flex-row items-center justify-between space-y-0 pb-4 p-6 border-b border-gray-200"
+            style={{ backgroundColor: "#f8fafc" }}
+          >
+            <div className="flex items-center space-x-3">
+              <div
+                className="p-2 rounded-lg"
+                style={{ backgroundColor: "#eff6ff" }}
+              >
+                <User className="h-6 w-6" style={{ color: "#2691ce" }} />
+              </div>
+              <div>
+                <CardTitle className="text-xl font-semibold" style={{ color: "#040606" }}>
+                  User Details
+                </CardTitle>
+                <p className="text-sm" style={{ color: "#646464" }}>
+                  User information and account status
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
               {onEdit && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onEdit(user)}
-                  className="flex items-center gap-2"
+                <motion.button
+                  onClick={() => {
+                    onEdit(user);
+                  }}
+                  className="flex items-center space-x-2 px-4 py-2 text-white rounded-lg font-medium hover:shadow-md transition-all"
+                  style={{ backgroundColor: "#2691ce" }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <Pencil className="h-4 w-4" />
-                  Edit
-                </Button>
+                  <Edit className="h-4 w-4" />
+                  <span>Edit User</span>
+                </motion.button>
               )}
-              <Button variant="ghost" size="sm" onClick={onClose}>
-                <X className="h-4 w-4" />
-              </Button>
+              <motion.button
+                onClick={onClose}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <X className="h-5 w-5" style={{ color: "#646464" }} />
+              </motion.button>
             </div>
           </CardHeader>
 
-          <CardContent className="space-y-6">
+          <div className="max-h-[calc(90vh-140px)] overflow-y-auto">
+            <CardContent className="space-y-6 p-6">
             {/* Profile Header */}
             <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
               <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
@@ -290,14 +323,8 @@ export default function ViewUserModal({ isOpen, onClose, user, onEdit }) {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Close Button */}
-            <div className="flex justify-end pt-4">
-              <Button onClick={onClose}>
-                Close
-              </Button>
-            </div>
-          </CardContent>
+            </CardContent>
+          </div>
         </Card>
       </div>
     </div>
