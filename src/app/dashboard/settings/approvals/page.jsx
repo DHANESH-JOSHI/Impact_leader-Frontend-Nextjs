@@ -29,6 +29,7 @@ import {
   Tag,
   User,
   Clock,
+  X,
 } from "lucide-react";
 import { AdminService } from "@/services/adminService";
 
@@ -177,13 +178,14 @@ export default function ApprovalsPage() {
   const [loading, setLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all"); // post | resource | qna | story | all
-  const [sortBy, setSortBy] = useState("submittedAt"); // submittedAt | title | author | type
+  const [sortBy, setSortBy] = useState("submittedAt"); // submittedAt | name | email
   const [sortOrder, setSortOrder] = useState("desc"); // asc | desc
 
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
+    total: 0,
+    totalPages: 0,
   });
 
   // modal state
@@ -192,36 +194,74 @@ export default function ApprovalsPage() {
   const [selectedItem, setSelectedItem] = useState(null);
 
   const transform = (raw) => {
+    // Backend returns: { approvals: [...], inactiveUsers: [...] }
+    // approvals can be UserApproval objects OR User objects (for backward compatibility)
     const approvalsArray = Array.isArray(raw?.approvals) 
       ? raw.approvals 
       : Array.isArray(raw) 
         ? raw 
-        : raw?.data?.approvals || raw?.items?.approvals || [];
+        : [];
 
     return approvalsArray.map((x, idx) => {
-      const registration = x || {};
-      return {
-        id: x._id || x.id || `user_${idx}`,
-        contentId: x._id || x.id || `user_${idx}`,
-        contentType: "user-registration",
-        title: registration.companyName || `${registration.firstName || ''} ${registration.lastName || ''}`.trim() || "User Registration",
-        snippet: registration.designation || "Pending user registration",
-        authorName: `${registration.firstName || ''} ${registration.lastName || ''}`.trim() || "Unknown User",
-        authorHandle: registration.email || "no-email",
-        submittedAt: x.createdAt || x.submittedAt || new Date().toISOString(),
-        tags: Array.isArray(x.themes) ? x.themes : [],
-        userData: {
-          email: registration.email,
-          firstName: registration.firstName,
-          lastName: registration.lastName,
-          fullName: `${registration.firstName || ''} ${registration.lastName || ''}`.trim(),
-          designation: registration.designation,
-          companyName: registration.companyName,
-          organizationType: registration.organizationType,
+      // Handle both UserApproval and User objects
+      const isUserApproval = x.registrationData !== undefined;
+      
+      let userData, approvalId, userId, createdAt, submittedAt;
+      
+      if (isUserApproval) {
+        // UserApproval object structure
+        approvalId = x._id || x.id;
+        userId = x.user?._id || x.user;
+        const regData = x.registrationData || {};
+        userData = {
+          email: regData.email || x.user?.email,
+          firstName: regData.firstName || x.user?.firstName,
+          lastName: regData.lastName || x.user?.lastName,
+          fullName: `${regData.firstName || ''} ${regData.lastName || ''}`.trim() || 
+                   `${x.user?.firstName || ''} ${x.user?.lastName || ''}`.trim() || "Unknown User",
+          designation: regData.designation,
+          companyName: regData.companyName,
+          organizationType: regData.organizationType,
+          themes: Array.isArray(regData.themes) ? regData.themes : [],
+        };
+        submittedAt = x.submittedAt || x.createdAt || new Date().toISOString();
+        createdAt = new Date(submittedAt);
+      } else {
+        // Direct User object (backward compatibility)
+        userId = x._id || x.id;
+        approvalId = userId; // Use user ID as approval ID for legacy
+        userData = {
+          email: x.email,
+          firstName: x.firstName,
+          lastName: x.lastName,
+          fullName: `${x.firstName || ''} ${x.lastName || ''}`.trim() || "Unknown User",
+          designation: x.designation,
+          companyName: x.companyName,
+          organizationType: x.organizationType,
           themes: Array.isArray(x.themes) ? x.themes : [],
-          daysPending: x.daysPending || 0
-        },
+        };
+        submittedAt = x.createdAt || new Date().toISOString();
+        createdAt = new Date(submittedAt);
+      }
 
+      const now = new Date();
+      const daysPending = Math.floor((now - createdAt) / (1000 * 60 * 60 * 24));
+
+      return {
+        id: approvalId || `approval_${idx}`,
+        contentId: approvalId || `approval_${idx}`,
+        userId: userId, // Store user ID separately for reference
+        contentType: "user-registration",
+        title: userData.companyName || userData.fullName || "User Registration",
+        snippet: userData.designation || "Pending user registration",
+        authorName: userData.fullName,
+        authorHandle: userData.email || "no-email",
+        submittedAt: submittedAt,
+        tags: userData.themes || [],
+        userData: {
+          ...userData,
+          daysPending: daysPending
+        },
         // keep original for potential deep-linking
         _raw: x,
       };
@@ -231,18 +271,45 @@ export default function ApprovalsPage() {
   const loadPending = async () => {
     setLoading(true);
     try {
-      const res = await AdminService.getPendingApprovals();
+      // Map frontend sort fields to backend supported fields
+      const backendSortBy = 
+        sortBy === "name" || sortBy === "author" ? "firstName" :
+        sortBy === "email" ? "email" :
+        sortBy === "submittedAt" ? "createdAt" :
+        "createdAt"; // default
+
+      const res = await AdminService.getPendingApprovals({
+        page: pagination.page,
+        limit: pagination.limit,
+        search: searchQuery || undefined,
+        sortBy: backendSortBy,
+        sortOrder: sortOrder,
+      });
+      
       if (res?.success && res.data) {
+        // Backend returns: { approvals: [...], inactiveUsers: [...] }
+        // We use approvals array
         const list = transform(res.data);
         setItems(list);
+        
+        // Update pagination from backend response
+        if (res.pagination?.approvals) {
+          setPagination(prev => ({
+            ...prev,
+            total: res.pagination.approvals.total || list.length,
+            totalPages: res.pagination.approvals.pages || 1,
+          }));
+        }
       } else {
         setItems([]);
-        toast.error(res?.message || "Failed to load approvals");
+        if (res?.message) {
+          toast.error(res.message);
+        }
       }
     } catch (e) {
       console.error("Approvals load error:", e);
       setItems([]);
-      toast.error(e.message || "Failed to load approvals");
+      toast.error(e.message || e.response?.data?.message || "Failed to load approvals");
     } finally {
       setLoading(false);
     }
@@ -251,68 +318,13 @@ export default function ApprovalsPage() {
   useEffect(() => {
     loadPending();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [pagination.page, pagination.limit, searchQuery, sortBy, sortOrder]);
 
-  // derived data
-  const filtered = useMemo(() => {
-    let data = [...items];
-
-    // type filter
-    if (typeFilter !== "all") {
-      data = data.filter((i) => i.contentType === typeFilter);
-    }
-
-    // search filter
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      data = data.filter((i) => {
-        return (
-          i.title.toLowerCase().includes(q) ||
-          i.authorName.toLowerCase().includes(q) ||
-          i.authorHandle.toLowerCase().includes(q) ||
-          i.contentType.toLowerCase().includes(q) ||
-          i.tags?.some((t) => t.toLowerCase().includes(q))
-        );
-      });
-    }
-
-    // sort
-    data.sort((a, b) => {
-      let va, vb;
-      switch (sortBy) {
-        case "title":
-          va = a.title.toLowerCase();
-          vb = b.title.toLowerCase();
-          break;
-        case "author":
-          va = a.authorName.toLowerCase();
-          vb = b.authorName.toLowerCase();
-          break;
-        case "type":
-          va = a.contentType.toLowerCase();
-          vb = b.contentType.toLowerCase();
-          break;
-        case "submittedAt":
-        default:
-          va = new Date(a.submittedAt).getTime();
-          vb = new Date(b.submittedAt).getTime();
-      }
-      if (va < vb) return sortOrder === "asc" ? -1 : 1;
-      if (va > vb) return sortOrder === "asc" ? 1 : -1;
-      return 0;
-    });
-
-    return data;
-  }, [items, searchQuery, typeFilter, sortBy, sortOrder]);
-
-  const total = filtered.length;
-  const totalPages = Math.max(1, Math.ceil(total / pagination.limit));
+  // Use items directly since filtering/sorting/pagination is done on backend
+  const total = pagination.total || items.length;
+  const totalPages = pagination.totalPages || Math.max(1, Math.ceil(total / pagination.limit));
   const page = Math.min(pagination.page, totalPages);
-  const startIdx = (page - 1) * pagination.limit;
-  const currentPageItems = filtered.slice(
-    startIdx,
-    startIdx + pagination.limit
-  );
+  const currentPageItems = items;
 
   // handlers
   const toggleSort = (key) => {
@@ -329,6 +341,7 @@ export default function ApprovalsPage() {
       const next = Math.min(totalPages, Math.max(1, p.page + dir));
       return { ...p, page: next };
     });
+    // loadPending will be called automatically via useEffect when pagination.page changes
   };
 
   const handleView = (item) => {
@@ -343,22 +356,29 @@ export default function ApprovalsPage() {
     try {
       if (item.contentType === "user-registration") {
         const userId = item.id || item.contentId;
+        if (!userId) {
+          throw new Error("User ID is required");
+        }
+
         const res = await AdminService.approveUser(userId, {
-          approvedBy: "admin",
-          approvedAt: new Date().toISOString(),
+          notes: `Approved by admin on ${new Date().toLocaleString()}`,
         });
 
         if (res?.success) {
           toast.success(`User approved successfully: ${item.userData?.fullName || item.authorName}`);
+          
+          // Reload the list to get updated data
+          await loadPending();
 
-          try {
-            const privilegeRes = await AdminService.grantAutoApprovePrivilege(userId);
-            if (privilegeRes?.success) {
-              toast.success(`Auto-approve privilege granted to user`);
-            }
-          } catch (privilegeError) {
-            console.warn("Could not grant auto-approve privilege:", privilegeError);
-          }
+          // Optionally grant auto-approve privilege (commented out as it might not be needed for all users)
+          // try {
+          //   const privilegeRes = await AdminService.grantAutoApprovePrivilege(userId);
+          //   if (privilegeRes?.success) {
+          //     toast.success(`Auto-approve privilege granted to user`);
+          //   }
+          // } catch (privilegeError) {
+          //   console.warn("Could not grant auto-approve privilege:", privilegeError);
+          // }
         } else {
           setItems(prev); // rollback
           toast.error(res?.message || "User approval failed");
@@ -371,6 +391,7 @@ export default function ApprovalsPage() {
         );
         if (res?.success) {
           toast.success(`Approved: "${item.title}"`);
+          await loadPending();
         } else {
           setItems(prev); // rollback
           toast.error(res?.message || "Approve failed");
@@ -378,7 +399,8 @@ export default function ApprovalsPage() {
       }
     } catch (e) {
       setItems(prev); // rollback
-      toast.error("Approve error — rolled back");
+      const errorMessage = e.message || e.response?.data?.message || "Approve error — rolled back";
+      toast.error(errorMessage);
       console.error("Approve error:", e);
     }
   };
@@ -393,6 +415,11 @@ export default function ApprovalsPage() {
     if (!item) return;
     setIsRejectModalOpen(false);
 
+    if (!reason || reason.trim() === "") {
+      toast.error("Please provide a reason for rejection");
+      return;
+    }
+
     const prev = items;
     setItems((cur) => cur.filter((x) => x.contentId !== item.contentId));
 
@@ -400,24 +427,31 @@ export default function ApprovalsPage() {
       let res;
 
       if (item.contentType === "user-registration") {
-        res = await AdminService.rejectUser(item.id || item.contentId, reason);
+        const userId = item.id || item.contentId;
+        if (!userId) {
+          throw new Error("User ID is required");
+        }
+        res = await AdminService.rejectUser(userId, reason.trim());
       } else {
         res = await AdminService.rejectContent(
           item.contentType,
           item.contentId,
-          { reason }
+          { reason: reason.trim() }
         );
       }
 
       if (res?.success) {
         toast.success(`Rejected: "${item.title}"`);
+        await loadPending();
       } else {
         setItems(prev); // rollback
         toast.error(res?.message || "Reject failed");
       }
     } catch (e) {
       setItems(prev); // rollback
-      toast.error("Reject error — rolled back");
+      const errorMessage = e.message || e.response?.data?.message || "Reject error — rolled back";
+      toast.error(errorMessage);
+      console.error("Reject error:", e);
     } finally {
       setRejectTarget(null);
     }
@@ -435,19 +469,6 @@ export default function ApprovalsPage() {
       )
     ) : null;
 
-  const TypeIcon = ({ type }) => {
-    const t = (type || "").toLowerCase();
-    const map = {
-      post: FileText,
-      resource: BookOpen,
-      qna: MessageSquare,
-      story: Image,
-    };
-    const Icon = map[t] || FileText;
-    return <Icon className="h-4 w-4" />;
-  };
-
-  const typeOptions = ["all", "post", "resource", "qna", "story"];
 
   return (
     <motion.div
@@ -473,33 +494,14 @@ export default function ApprovalsPage() {
                 <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
                 <input
                   className="w-full rounded-lg border pl-9 pr-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Search title, author, tags…"
+                  placeholder="Search name, email, company…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
 
-              <div className="flex items-center gap-2">
-                <select
-                  className="rounded-lg border px-3 py-2 text-sm"
-                  value={typeFilter}
-                  onChange={(e) => {
-                    setTypeFilter(e.target.value);
-                    setPagination((p) => ({ ...p, page: 1 }));
-                  }}
-                  title="Filter by type"
-                >
-                  {typeOptions.map((t) => (
-                    <option key={t} value={t}>
-                      {t === "all"
-                        ? "All Types"
-                        : t.charAt(0).toUpperCase() + t.slice(1)}
-                    </option>
-                  ))}
-                </select>
-                <div className="hidden md:flex items-center gap-1 text-gray-600">
-                  <Filter className="h-4 w-4" />
-                </div>
+              <div className="hidden md:flex items-center gap-1 text-gray-600">
+                <Filter className="h-4 w-4" />
               </div>
             </div>
           </div>

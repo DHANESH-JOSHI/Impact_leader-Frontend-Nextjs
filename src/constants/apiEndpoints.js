@@ -233,8 +233,10 @@ export const API_ENDPOINTS = {
     
     // Approvals
     PENDING_APPROVALS: '/admin/approvals/pending',
-    APPROVE_USER: (id) => `/admin/approvals/users/${id}/approve`,
-    REJECT_USER: (id) => `/admin/approvals/users/${id}/reject`,
+    APPROVAL_STATS: '/admin/approvals/stats',
+    APPROVAL_DETAILS: (id) => `/admin/approvals/${id}`,
+    APPROVE_USER: (id) => `/admin/approvals/${id}/approve`,
+    REJECT_USER: (id) => `/admin/approvals/${id}/reject`,
     APPROVE_CONTENT: (type, id) => `/admin/approvals/content/${type}/${id}/approve`,
     REJECT_CONTENT: (type, id) => `/admin/approvals/content/${type}/${id}/reject`,
     

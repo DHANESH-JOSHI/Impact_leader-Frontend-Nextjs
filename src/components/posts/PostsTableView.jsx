@@ -213,6 +213,12 @@ export default function PostsTableView({
                 </div>
               </th>
               <th
+                className="text-left px-6 py-4 text-sm font-semibold"
+                style={{ color: "#040606" }}
+              >
+                Type
+              </th>
+              <th
                 className="text-left px-6 py-4 text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
                 style={{ color: "#040606" }}
                 onClick={() => handleSort("publishDate")}
@@ -364,6 +370,33 @@ export default function PostsTableView({
                         animate={{ scale: [1, 1.2, 1] }}
                         transition={{ repeat: Infinity, duration: 1 }}
                       />
+                    )}
+                  </div>
+                </td>
+
+                {/* Type Column (ESG/CSR) */}
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-2">
+                    {post.isESG && (
+                      <span
+                        className="inline-flex px-3 py-1 text-xs font-medium rounded-full text-white"
+                        style={{ backgroundColor: "#10b981" }}
+                      >
+                        ESG
+                      </span>
+                    )}
+                    {post.isCSR && (
+                      <span
+                        className="inline-flex px-3 py-1 text-xs font-medium rounded-full text-white"
+                        style={{ backgroundColor: "#2691ce" }}
+                      >
+                        CSR
+                      </span>
+                    )}
+                    {!post.isESG && !post.isCSR && (
+                      <span className="text-xs" style={{ color: "#646464" }}>
+                        -
+                      </span>
                     )}
                   </div>
                 </td>

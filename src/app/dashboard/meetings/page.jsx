@@ -1,15 +1,19 @@
+/* ==== MEETINGS PAGE TEMPORARILY DISABLED ====
+ * To re-enable: Uncomment all code in this file
+ */
+
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import toast from "react-hot-toast";
-import MeetingsHeader from "@/components/meetings/MeetingsHeader";
-import MeetingsCardView from "@/components/meetings/MeetingsCardView";
-import MeetingsTableView from "@/components/meetings/MeetingsTableView";
-import AddMeetingModal from "@/components/meetings/AddMeetingModal";
-import ViewMeetingModal from "@/components/meetings/ViewMeetingModal";
-import DeleteConfirmModal from "@/components/core/DeleteConfirmModal";
-import { MeetingsService } from "@/services/meetingsService";
+// import React, { useState, useEffect, useMemo } from "react";
+// import { motion, AnimatePresence } from "framer-motion";
+// import toast from "react-hot-toast";
+// import MeetingsHeader from "@/components/meetings/MeetingsHeader";
+// import MeetingsCardView from "@/components/meetings/MeetingsCardView";
+// import MeetingsTableView from "@/components/meetings/MeetingsTableView";
+// import AddMeetingModal from "@/components/meetings/AddMeetingModal";
+// import ViewMeetingModal from "@/components/meetings/ViewMeetingModal";
+// import DeleteConfirmModal from "@/components/core/DeleteConfirmModal";
+// import { MeetingsService } from "@/services/meetingsService";
 
 const pageVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -36,6 +40,22 @@ const cardVariants = {
   },
 };
 
+export default function MeetingsPage() {
+  return (
+    <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold mb-2" style={{ color: "#040606" }}>
+          Meetings Page
+        </h1>
+        <p style={{ color: "#646464" }}>
+          This page has been temporarily disabled.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* UNCOMMENT TO RESTORE MEETINGS PAGE
 export default function MeetingsPage() {
   const [meetings, setMeetings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -397,4 +417,5 @@ export default function MeetingsPage() {
     </motion.div>
   );
 }
+*/
 

@@ -5,7 +5,7 @@ export class PostsService {
 
   static async getAllPosts(params = {}) {
     try {
-      const { page = 1, limit = 10, search, type, themes, theme, isPublic, sortBy, sortOrder } = params;
+      const { page = 1, limit = 10, search, type, themes, theme, isPublic, sortBy, sortOrder, isESG, isCSR } = params;
 
       const queryParams = {
         page,
@@ -17,6 +17,8 @@ export class PostsService {
         ...(isPublic !== undefined && { isPublic }),
         ...(sortBy && { sortBy }),
         ...(sortOrder && { sortOrder }),
+        ...(isESG !== undefined && { isESG }),
+        ...(isCSR !== undefined && { isCSR }),
       };
 
       const response = await apiClient.get(POSTS.BASE, { params: queryParams });

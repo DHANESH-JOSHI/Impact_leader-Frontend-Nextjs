@@ -156,23 +156,23 @@ export class AdminService {
     }
   }
 
-  static async getPendingApprovals() {
+  static async getPendingApprovals(params = {}) {
     try {
-      const response = await apiClient.get(ADMIN.PENDING_APPROVALS);
+      const response = await apiClient.get(ADMIN.PENDING_APPROVALS, { params });
       const backendResponse = response.data || {};
-
-      // console.log("Get pending approvals response:", response);
 
       return {
         success: response.success && backendResponse.success !== false,
         data: backendResponse.data || backendResponse,
         message: backendResponse.message || response.message,
+        pagination: backendResponse.pagination,
       };
     } catch (error) {
       console.error("Get pending approvals error:", error);
       return {
         success: false,
-        message: error.message,
+        message: error.message || error.response?.data?.message || "Failed to load pending approvals",
+        data: { approvals: [], inactiveUsers: [] },
       };
     }
   }
@@ -578,10 +578,10 @@ export class AdminService {
   // Approve user registration
   static async approveUser(userId, approvalData = {}) {
     try {
-      const response = await apiClient.put(
+      const response = await apiClient.post(
         ADMIN.APPROVE_USER(userId),
         {
-          isApproved: true,
+          notes: approvalData.notes || approvalData.approvedBy || '',
           ...approvalData,
         }
       );
@@ -596,7 +596,7 @@ export class AdminService {
       console.error("Approve user error:", error);
       return {
         success: false,
-        message: error.message,
+        message: error.message || error.response?.data?.message || "Failed to approve user",
       };
     }
   }
@@ -605,10 +605,11 @@ export class AdminService {
   // Reject user registration
   static async rejectUser(userId, reason = "") {
     try {
-      const response = await apiClient.put(
+      const response = await apiClient.post(
         ADMIN.REJECT_USER(userId),
         {
-          reason,
+          reason: reason || "Rejected by admin",
+          notes: reason || "",
         }
       );
       const backendResponse = response.data || {};
@@ -622,7 +623,7 @@ export class AdminService {
       console.error("Reject user error:", error);
       return {
         success: false,
-        message: error.message,
+        message: error.message || error.response?.data?.message || "Failed to reject user",
       };
     }
   }
@@ -649,6 +650,49 @@ export class AdminService {
       return {
         success: false,
         message: error.message,
+      };
+    }
+  }
+
+  // Update user (Admin only)
+  static async updateUser(userId, userData) {
+    try {
+      const response = await apiClient.put(
+        ADMIN.USERS.BY_ID(userId),
+        userData
+      );
+      const backendResponse = response.data || {};
+
+      return {
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
+      };
+    } catch (error) {
+      console.error("Update user (admin) error:", error);
+      return {
+        success: false,
+        message: error.message || error.response?.data?.message || "Failed to update user",
+      };
+    }
+  }
+
+  // Delete user (Admin only)
+  static async deleteUser(userId) {
+    try {
+      const response = await apiClient.delete(ADMIN.USERS.BY_ID(userId));
+      const backendResponse = response.data || {};
+
+      return {
+        success: response.success && backendResponse.success !== false,
+        data: backendResponse.data || backendResponse,
+        message: backendResponse.message || response.message,
+      };
+    } catch (error) {
+      console.error("Delete user (admin) error:", error);
+      return {
+        success: false,
+        message: error.message || error.response?.data?.message || "Failed to delete user",
       };
     }
   }

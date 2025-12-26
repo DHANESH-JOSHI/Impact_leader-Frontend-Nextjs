@@ -44,6 +44,7 @@ export default function PostsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterESGCSR, setFilterESGCSR] = useState("all"); // all, esg, csr
   const [sortBy, setSortBy] = useState("publishDate");
   const [sortOrder, setSortOrder] = useState("desc");
   const [pagination, setPagination] = useState({
@@ -61,7 +62,7 @@ export default function PostsPage() {
 
   useEffect(() => {
     loadPosts();
-  }, []);
+  }, [filterESGCSR, filterCategory, filterStatus, searchQuery]);
 
   const loadPosts = async (params = {}) => {
     setLoading(true);
@@ -72,6 +73,8 @@ export default function PostsPage() {
         search: searchQuery || undefined,
         type: filterCategory !== 'all' ? filterCategory : undefined,
         isPublic: filterStatus === 'published' ? true : filterStatus === 'draft' ? false : undefined,
+        isESG: filterESGCSR === "esg" ? true : filterESGCSR === "csr" ? false : undefined,
+        isCSR: filterESGCSR === "csr" ? true : filterESGCSR === "esg" ? false : undefined,
         ...params
       });
 
@@ -134,7 +137,9 @@ export default function PostsPage() {
             media: Array.isArray(post.media) ? post.media : [],
             image: (post.media && Array.isArray(post.media) && post.media.length > 0 && post.media[0].type === 'image') 
               ? post.media[0].url 
-              : (post.image || "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&q=80")
+              : (post.image || "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&q=80"),
+            isESG: post.isESG || false,
+            isCSR: post.isCSR || false
           };
         }) || [];
 
@@ -168,15 +173,21 @@ export default function PostsPage() {
       post.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
       post.tags.some((tag) =>
         tag.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      ) ||
+      (post.isESG && "esg".includes(searchQuery.toLowerCase())) ||
+      (post.isCSR && "csr".includes(searchQuery.toLowerCase()));
 
     const matchesCategory =
       filterCategory === "all" ||
       post.category.toLowerCase() === filterCategory.toLowerCase();
     const matchesStatus =
       filterStatus === "all" || post.status === filterStatus;
+    const matchesESGCSR =
+      filterESGCSR === "all" ||
+      (filterESGCSR === "esg" && post.isESG) ||
+      (filterESGCSR === "csr" && post.isCSR);
 
-    return matchesSearch && matchesCategory && matchesStatus;
+    return matchesSearch && matchesCategory && matchesStatus && matchesESGCSR;
   });
 
   // Sort posts
@@ -206,10 +217,15 @@ export default function PostsPage() {
       const postData = {
         title: newPost.title,
         content: newPost.content,
-        themes: Array.isArray(newPost.themes) ? newPost.themes : (newPost.tags || []),
+        themes: Array.isArray(newPost.themes) ? newPost.themes : [],
         tags: Array.isArray(newPost.tags) ? newPost.tags : [],
         isPublic: newPost.status === 'published',
-        allowComments: true
+        allowComments: true,
+        isPinned: newPost.isPinned || newPost.featured || false,
+        status: newPost.status || 'draft',
+        // Ensure exactly one is true (mutually exclusive)
+        isESG: newPost.isESG === true ? true : false,
+        isCSR: newPost.isESG === true ? false : true
       };
   
       let result;
@@ -260,7 +276,12 @@ export default function PostsPage() {
           themes: Array.isArray(postData.themes) ? postData.themes : [],
           tags: Array.isArray(postData.tags) ? postData.tags : [],
           isPublic: postData.status === 'published',
-          allowComments: postData.allowComments !== false
+          allowComments: postData.allowComments !== false,
+          isPinned: postData.isPinned || postData.featured || false,
+          status: postData.status || 'draft',
+          // Ensure exactly one is true (mutually exclusive)
+          isESG: postData.isESG === true ? true : false,
+          isCSR: postData.isESG === true ? false : true
         };
 
         // Check if there are media files to upload
@@ -329,6 +350,10 @@ export default function PostsPage() {
     setFilterStatus(status);
   };
 
+  const handleESGCSRFilter = (filter) => {
+    setFilterESGCSR(filter);
+  };
+
   const categories = ["all", ...new Set(posts.map((post) => post.category))];
 
   return (
@@ -350,6 +375,8 @@ export default function PostsPage() {
             setFilterCategory={handleCategoryFilter}
             filterStatus={filterStatus}
             setFilterStatus={handleStatusFilter}
+            filterESGCSR={filterESGCSR}
+            setFilterESGCSR={handleESGCSRFilter}
             sortBy={sortBy}
             setSortBy={setSortBy}
             sortOrder={sortOrder}

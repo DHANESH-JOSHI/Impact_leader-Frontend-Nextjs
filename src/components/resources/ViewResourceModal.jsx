@@ -482,6 +482,31 @@ export default function ViewResourceModal({
                     <div className="sticky top-0 space-y-4">
                       {/* Media Player/Preview */}
                       <div className="bg-gray-900 rounded-lg overflow-hidden">
+                        {resource.type === "image" && (
+                          <div className="relative w-full h-96 bg-gray-100 flex items-center justify-center">
+                            {resource.fileUrl ? (
+                              <img
+                                src={resource.fileUrl}
+                                alt={resource.title}
+                                className="max-w-full max-h-full object-contain"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.nextSibling.style.display = 'flex';
+                                }}
+                              />
+                            ) : null}
+                            <div className="hidden absolute inset-0 items-center justify-center">
+                              <div className="text-center text-gray-500">
+                                <FileText className="h-16 w-16 mx-auto mb-4" />
+                                <p className="font-medium">Image Preview</p>
+                                <p className="text-sm opacity-75">
+                                  Unable to load image
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                         {resource.type === "video" && (
                           <div className="relative">
                             <video
@@ -626,13 +651,112 @@ export default function ViewResourceModal({
                           </div>
                         )}
 
-                        {resource.type === "document" && (
-                          <div className="h-64 flex items-center justify-center">
+                        {(resource.type === "document" || 
+                          resource.fileName?.toLowerCase().endsWith('.pdf') ||
+                          resource.fileName?.toLowerCase().match(/\.(doc|docx|xls|xlsx|ppt|pptx|txt|rtf)$/)) && (
+                          <div className="h-[600px] flex flex-col bg-white">
+                            {resource.fileUrl ? (
+                              (() => {
+                                const fileName = resource.fileName?.toLowerCase() || '';
+                                const isPDF = fileName.endsWith('.pdf');
+                                const isOfficeDoc = fileName.match(/\.(doc|docx|xls|xlsx|ppt|pptx)$/);
+                                const isTextFile = fileName.match(/\.(txt|rtf)$/);
+                                
+                                // PDF Preview
+                                if (isPDF) {
+                                  return (
+                                    <div className="flex-1 relative overflow-hidden">
+                                      <iframe
+                                        src={`${resource.fileUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                                        className="w-full h-full border-0"
+                                        title="PDF Preview"
+                                        style={{ 
+                                          minHeight: '600px',
+                                          backgroundColor: '#f5f5f5'
+                                        }}
+                                        allow="fullscreen"
+                                      />
+                                    </div>
+                                  );
+                                }
+                                
+                                // Office Documents - Use Google Docs Viewer or Office Online
+                                if (isOfficeDoc) {
+                                  const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(resource.fileUrl)}`;
+                                  return (
+                                    <div className="flex-1 relative overflow-hidden">
+                                      <iframe
+                                        src={officeViewerUrl}
+                                        className="w-full h-full border-0"
+                                        title="Document Preview"
+                                        style={{ 
+                                          minHeight: '600px',
+                                          backgroundColor: '#f5f5f5'
+                                        }}
+                                        allow="fullscreen"
+                                      />
+                                    </div>
+                                  );
+                                }
+                                
+                                // Text Files - Show content directly
+                                if (isTextFile) {
+                                  return (
+                                    <div className="flex-1 relative overflow-auto bg-white p-4">
+                                      <iframe
+                                        src={resource.fileUrl}
+                                        className="w-full h-full border-0"
+                                        title="Text Preview"
+                                        style={{ 
+                                          minHeight: '600px'
+                                        }}
+                                      />
+                                    </div>
+                                  );
+                                }
+                                
+                                // Default document preview
+                                return (
+                                  <div className="flex-1 relative overflow-hidden">
+                                    <iframe
+                                      src={resource.fileUrl}
+                                      className="w-full h-full border-0"
+                                      title="Document Preview"
+                                      style={{ 
+                                        minHeight: '600px',
+                                        backgroundColor: '#f5f5f5'
+                                      }}
+                                      allow="fullscreen"
+                                    />
+                                  </div>
+                                );
+                              })()
+                            ) : (
+                              <div className="h-full flex items-center justify-center bg-gray-900">
+                                <div className="text-center text-white">
+                                  <FileText className="h-16 w-16 mx-auto mb-4" />
+                                  <p className="font-medium">Document Preview</p>
+                                  <p className="text-sm opacity-75">
+                                    Click download to view full document
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Other file types - show download option */}
+                        {!['video', 'audio', 'image', 'document'].includes(resource.type) && 
+                         !resource.fileName?.toLowerCase().match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|rtf|jpg|jpeg|png|gif|svg|mp4|avi|mov|wmv|flv|mp3|wav|aac|ogg)$/) && (
+                          <div className="h-64 flex items-center justify-center bg-gray-900">
                             <div className="text-center text-white">
                               <FileText className="h-16 w-16 mx-auto mb-4" />
-                              <p className="font-medium">Document Preview</p>
-                              <p className="text-sm opacity-75">
-                                Click download to view full document
+                              <p className="font-medium">File Preview</p>
+                              <p className="text-sm opacity-75 mb-4">
+                                Preview not available for this file type
+                              </p>
+                              <p className="text-xs opacity-60">
+                                {resource.fileName || 'Unknown file'}
                               </p>
                             </div>
                           </div>

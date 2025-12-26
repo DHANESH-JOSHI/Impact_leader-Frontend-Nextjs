@@ -10,6 +10,7 @@ import AddUserModal from "@/components/impact-leaders/users/AddUserModal";
 import ViewUserModal from "@/components/impact-leaders/users/ViewUserModal";
 import DeleteConfirmModal from "@/components/core/DeleteConfirmModal";
 import { UsersService } from "@/services/usersService";
+import { AdminService } from "@/services/adminService";
 
 const pageVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -164,7 +165,8 @@ export default function UsersPage() {
   const handleDeleteUser = async (userId) => {
     try {
       setDeleteLoading(true);
-      const result = await UsersService.deleteUser(userId);
+      // Use AdminService for admin operations
+      const result = await AdminService.deleteUser(userId);
 
       if (result.success) {
         toast.success("User deleted successfully");
@@ -176,7 +178,7 @@ export default function UsersPage() {
       }
     } catch (error) {
       console.error("Failed to delete user:", error);
-      toast.error(error.message || "Failed to delete user");
+      toast.error(error.message || error.response?.data?.message || "Failed to delete user");
     } finally {
       setDeleteLoading(false);
     }

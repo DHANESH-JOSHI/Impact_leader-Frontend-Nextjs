@@ -49,6 +49,8 @@ export default function PostsHeader({
   setFilterCategory,
   filterStatus,
   setFilterStatus,
+  filterESGCSR,
+  setFilterESGCSR,
   sortBy,
   setSortBy,
   sortOrder,
@@ -152,6 +154,24 @@ export default function PostsHeader({
             <option value="published">Published</option>
             <option value="draft">Draft</option>
             <option value="archived">Archived</option>
+          </select>
+          <Filter
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
+            style={{ color: "#646464" }}
+          />
+        </div>
+
+        {/* ESG/CSR Filter */}
+        <div className="relative">
+          <select
+            value={filterESGCSR}
+            onChange={(e) => setFilterESGCSR(e.target.value)}
+            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[120px]"
+            style={{ focusRingColor: "#2691ce" }}
+          >
+            <option value="all">All Types</option>
+            <option value="esg">ESG</option>
+            <option value="csr">CSR</option>
           </select>
           <Filter
             className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"

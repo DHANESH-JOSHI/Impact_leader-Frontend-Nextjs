@@ -56,6 +56,8 @@ export default function AddPostModal({
     status: "draft",
     tags: [],
     featured: false,
+    isESG: false,
+    isCSR: true, // Default to CSR
   });
 
   const [errors, setErrors] = useState({});
@@ -72,6 +74,8 @@ export default function AddPostModal({
         status: initialPost.status || "draft",
         tags: Array.isArray(initialPost.tags) ? initialPost.tags : [],
         featured: initialPost.featured || false,
+        isESG: initialPost.isESG || false,
+        isCSR: initialPost.isCSR !== undefined ? initialPost.isCSR : true,
       });
     } else {
       setFormData({
@@ -82,6 +86,8 @@ export default function AddPostModal({
         status: "draft",
         tags: [],
         featured: false,
+        isESG: false,
+        isCSR: true,
       });
     }
   }, [initialPost, isOpen]);
@@ -172,6 +178,11 @@ export default function AddPostModal({
       newErrors.category = "Category is required";
     }
 
+    // Validate ESG/CSR - exactly one must be true
+    if (formData.isESG === formData.isCSR) {
+      newErrors.esgcsr = "Please select either ESG or CSR (exactly one must be selected)";
+    }
+
     return newErrors;
   };
 
@@ -190,12 +201,15 @@ export default function AddPostModal({
     const postData = {
       title: formData.title,
       content: formData.content,
-      type: formData.category,
-      themes: formData.tags,
+      themes: Array.isArray(formData.themes) ? formData.themes : [],
+      tags: Array.isArray(formData.tags) ? formData.tags : [],
       isPublic: formData.status === "published",
-      isPinned: formData.featured,
-      status: formData.status,
+      isPinned: formData.featured || false,
+      status: formData.status || "draft",
       allowComments: true,
+      // Ensure exactly one is true (mutually exclusive)
+      isESG: formData.isESG === true ? true : false,
+      isCSR: formData.isESG === true ? false : true,
     };
 
     if (initialPost) {
@@ -214,6 +228,8 @@ export default function AddPostModal({
         status: "draft",
         tags: [],
         featured: false,
+        isESG: false,
+        isCSR: true,
       });
       setTagInput("");
       setErrors({});
@@ -235,6 +251,8 @@ export default function AddPostModal({
         status: "draft",
         tags: [],
         featured: false,
+        isESG: false,
+        isCSR: true,
       });
       setTagInput("");
       setErrors({});
@@ -412,51 +430,90 @@ export default function AddPostModal({
                   )}
                 </motion.div>
 
-                {/* Status */}
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  <label
-                    className="block text-sm font-medium mb-2"
-                    style={{ color: "#040606" }}
+                {/* Status and ESG/CSR */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.4 }}
                   >
-                    Publication Status
-                  </label>
-                  <div className="flex items-center space-x-4">
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        name="status"
-                        value="draft"
-                        checked={formData.status === "draft"}
-                        onChange={handleInputChange}
-                        className="w-4 h-4"
-                        style={{ accentColor: "#2691ce" }}
-                        disabled={isSubmitting}
-                      />
-                      <span className="text-sm" style={{ color: "#646464" }}>
-                        Draft
-                      </span>
+                    <label
+                      className="block text-sm font-medium mb-2"
+                      style={{ color: "#040606" }}
+                    >
+                      Publication Status
                     </label>
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        name="status"
-                        value="published"
-                        checked={formData.status === "published"}
-                        onChange={handleInputChange}
-                        className="w-4 h-4"
-                        style={{ accentColor: "#2691ce" }}
-                        disabled={isSubmitting}
-                      />
-                      <span className="text-sm" style={{ color: "#646464" }}>
-                        Published
-                      </span>
+                    <div className="flex items-center space-x-4">
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          name="status"
+                          value="draft"
+                          checked={formData.status === "draft"}
+                          onChange={handleInputChange}
+                          className="w-4 h-4"
+                          style={{ accentColor: "#2691ce" }}
+                          disabled={isSubmitting}
+                        />
+                        <span className="text-sm" style={{ color: "#646464" }}>
+                          Draft
+                        </span>
+                      </label>
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          name="status"
+                          value="published"
+                          checked={formData.status === "published"}
+                          onChange={handleInputChange}
+                          className="w-4 h-4"
+                          style={{ accentColor: "#2691ce" }}
+                          disabled={isSubmitting}
+                        />
+                        <span className="text-sm" style={{ color: "#646464" }}>
+                          Published
+                        </span>
+                      </label>
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.45 }}
+                  >
+                    <label
+                      className="block text-sm font-medium mb-2"
+                      style={{ color: "#040606" }}
+                    >
+                      Type *
                     </label>
-                  </div>
-                </motion.div>
+                    <div className="flex gap-4">
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name="esgcsr"
+                          checked={formData.isESG}
+                          onChange={() => setFormData(prev => ({ ...prev, isESG: true, isCSR: false }))}
+                          className="mr-2"
+                          disabled={isSubmitting}
+                        />
+                        <span style={{ color: "#040606" }}>ESG</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name="esgcsr"
+                          checked={formData.isCSR}
+                          onChange={() => setFormData(prev => ({ ...prev, isESG: false, isCSR: true }))}
+                          className="mr-2"
+                          disabled={isSubmitting}
+                        />
+                        <span style={{ color: "#040606" }}>CSR</span>
+                      </label>
+                    </div>
+                  </motion.div>
+                </div>
 
                 {/* Tags Input */}
                 <motion.div

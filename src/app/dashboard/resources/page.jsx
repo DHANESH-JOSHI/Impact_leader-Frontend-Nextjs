@@ -281,8 +281,9 @@ const modalCategories = useMemo(() => {
         tags: Array.isArray(payload.tags) ? payload.tags : (payload.tags ? payload.tags.split(',').map(t => t.trim()).filter(Boolean) : []),
         themes: Array.isArray(payload.themes) ? payload.themes : (payload.themes ? payload.themes.split(',').map(t => t.trim()).filter(Boolean) : []),
         isPublic: payload.isPublic !== undefined ? payload.isPublic : true,
-        isESG: payload.isESG !== undefined ? payload.isESG : false,
-        isCSR: payload.isCSR !== undefined ? payload.isCSR : true, // Default to CSR if not specified
+        // Ensure exactly one is true (mutually exclusive)
+        isESG: payload.isESG === true ? true : false,
+        isCSR: payload.isESG === true ? false : true, // Default to CSR if ESG is not true
         ...(payload.url && { url: payload.url }),
       };
   
@@ -349,8 +350,9 @@ const modalCategories = useMemo(() => {
           tags: Array.isArray(resourceData.tags) ? resourceData.tags : (resourceData.tags ? resourceData.tags.split(',').map(t => t.trim()).filter(Boolean) : []),
           themes: Array.isArray(resourceData.themes) ? resourceData.themes : (resourceData.themes ? resourceData.themes.split(',').map(t => t.trim()).filter(Boolean) : []),
           isPublic: resourceData.isPublic !== undefined ? resourceData.isPublic : true,
-          isESG: resourceData.isESG !== undefined ? resourceData.isESG : false,
-          isCSR: resourceData.isCSR !== undefined ? resourceData.isCSR : true,
+          // Ensure exactly one is true (mutually exclusive)
+          isESG: resourceData.isESG === true ? true : false,
+          isCSR: resourceData.isESG === true ? false : true,
           ...(resourceData.url && { url: resourceData.url }),
           ...(resourceData.file && { file: resourceData.file }),
         };

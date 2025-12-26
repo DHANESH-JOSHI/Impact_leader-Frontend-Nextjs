@@ -56,13 +56,14 @@ export default function ViewPostModal({ isOpen, onClose, post, onEdit }) {
     if (!isEditMode && post) {
       setEditFormData({
         title: post.title,
-        excerpt: post.excerpt,
         content: post.content,
         author: post.author,
-        category: post.category,
-        status: post.status,
-        tags: post.tags ? post.tags.join(", ") : "",
-        featured: post.featured,
+        status: post.status || "draft",
+        tags: Array.isArray(post.tags) ? post.tags.join(", ") : (post.tags || ""),
+        themes: Array.isArray(post.themes) ? post.themes.join(", ") : (post.themes || ""),
+        featured: post.isPinned || post.featured || false,
+        isESG: post.isESG || false,
+        isCSR: post.isCSR !== undefined ? post.isCSR : true,
       });
     }
     setIsEditMode(!isEditMode);
@@ -84,9 +85,16 @@ export default function ViewPostModal({ isOpen, onClose, post, onEdit }) {
         ...post,
         ...editFormData,
         tags: editFormData.tags
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter((tag) => tag),
+          ? editFormData.tags.split(",").map((tag) => tag.trim()).filter((tag) => tag)
+          : [],
+        themes: editFormData.themes
+          ? editFormData.themes.split(",").map((theme) => theme.trim()).filter((theme) => theme)
+          : [],
+        isPinned: editFormData.featured || false,
+        // Ensure exactly one is true (mutually exclusive)
+        isESG: editFormData.isESG === true ? true : false,
+        isCSR: editFormData.isESG === true ? false : true,
+        status: editFormData.status || "draft",
       };
       onEdit(updatedPost);
       setIsEditMode(false);
@@ -311,6 +319,44 @@ export default function ViewPostModal({ isOpen, onClose, post, onEdit }) {
                     </motion.div>
                   </div>
 
+                  {/* ESG/CSR Type Selection */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.45 }}
+                  >
+                    <label
+                      className="block text-sm font-medium mb-2"
+                      style={{ color: "#040606" }}
+                    >
+                      Type *
+                    </label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name="esgcsr"
+                          checked={editFormData.isESG || false}
+                          onChange={() => setEditFormData(prev => ({ ...prev, isESG: true, isCSR: false }))}
+                          className="mr-2"
+                          style={{ accentColor: "#2691ce" }}
+                        />
+                        <span style={{ color: "#040606" }}>ESG</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name="esgcsr"
+                          checked={editFormData.isCSR !== undefined ? editFormData.isCSR : true}
+                          onChange={() => setEditFormData(prev => ({ ...prev, isESG: false, isCSR: true }))}
+                          className="mr-2"
+                          style={{ accentColor: "#2691ce" }}
+                        />
+                        <span style={{ color: "#040606" }}>CSR</span>
+                      </label>
+                    </div>
+                  </motion.div>
+
                   {/* Featured Post Toggle */}
                   <motion.div
                     className="rounded-lg p-4"
@@ -426,9 +472,55 @@ export default function ViewPostModal({ isOpen, onClose, post, onEdit }) {
                       style={{ focusRingColor: "#2691ce" }}
                     />
                     <p className="text-xs mt-1" style={{ color: "#646464" }}>
-                      Separate multiple tags with commas for better
-                      discoverability
+                      Separate multiple tags with commas for better discoverability
                     </p>
+                  </motion.div>
+
+                  {/* Themes Input */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.85 }}
+                  >
+                    <label
+                      className="block text-sm font-medium mb-2"
+                      style={{ color: "#040606" }}
+                    >
+                      Themes
+                    </label>
+                    <input
+                      type="text"
+                      name="themes"
+                      value={editFormData.themes || ""}
+                      onChange={handleInputChange}
+                      placeholder="Enter themes separated by commas (e.g., sustainability, environment, governance)"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
+                      style={{ focusRingColor: "#2691ce" }}
+                    />
+                    <p className="text-xs mt-1" style={{ color: "#646464" }}>
+                      CSR/ESG themes for categorization
+                    </p>
+                  </motion.div>
+
+                  {/* Featured/Pinned Checkbox */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.9 }}
+                  >
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        name="featured"
+                        checked={editFormData.featured || false}
+                        onChange={handleInputChange}
+                        className="w-4 h-4 rounded focus:ring-2"
+                        style={{ accentColor: "#2691ce" }}
+                      />
+                      <span className="text-sm font-medium" style={{ color: "#040606" }}>
+                        Pin/Feature this post
+                      </span>
+                    </label>
                   </motion.div>
                 </div>
               ) : (
@@ -450,7 +542,7 @@ export default function ViewPostModal({ isOpen, onClose, post, onEdit }) {
                           >
                             {post.title}
                           </h1>
-                          {post.featured && (
+                          {post.isPinned && (
                             <motion.div
                               className="flex items-center space-x-1 px-3 py-1 bg-yellow-100 rounded-full"
                               initial={{ scale: 0 }}
@@ -508,6 +600,26 @@ export default function ViewPostModal({ isOpen, onClose, post, onEdit }) {
                           {calculateReadingTime(post.content)} min read
                         </span>
                       </div>
+                      {(post.isESG || post.isCSR) && (
+                        <div className="flex items-center space-x-2">
+                          {post.isESG && (
+                            <span
+                              className="px-2 py-1 text-xs font-medium rounded-full text-white"
+                              style={{ backgroundColor: "#10b981" }}
+                            >
+                              ESG
+                            </span>
+                          )}
+                          {post.isCSR && (
+                            <span
+                              className="px-2 py-1 text-xs font-medium rounded-full text-white"
+                              style={{ backgroundColor: "#2691ce" }}
+                            >
+                              CSR
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </motion.div>
 
                     {/* Post Statistics */}

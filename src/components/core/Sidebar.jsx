@@ -10,12 +10,9 @@ import {
   FileText,
   Folder,
   HelpCircle,
-  Settings,
   LogOut,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
-  ChevronUp,
   Store,
   Upload,
   Bell,
@@ -67,16 +64,16 @@ const menuItems = [
     icon: HelpCircle,
     href: "/dashboard/qna",
   },
-  {
-    title: "Connections",
-    icon: User2Icon,
-    href: "/dashboard/connections",
-  },
-  {
-    title: "Meetings",
-    icon: Calendar,
-    href: "/dashboard/meetings",
-  },
+  // {
+  //   title: "Connections",
+  //   icon: User2Icon,
+  //   href: "/dashboard/connections",
+  // },
+  // {
+  //   title: "Meetings",
+  //   icon: Calendar,
+  //   href: "/dashboard/meetings",
+  // },
   {
     title: "Support",
     icon: Headphones,
@@ -97,10 +94,6 @@ const menuItems = [
     icon: MessageSquare,
     href: "/dashboard/messages",
   },
-];
-
-// settings submenu items ka data - message, file import etc.
-const settingsItems = [
   {
     title: "Request Approvals",
     icon: Database,
@@ -120,9 +113,6 @@ const settingsItems = [
 
 export default function Sidebar({ collapsed, setCollapsed }) {
   const pathname = usePathname();
-  const [settingsExpanded, setSettingsExpanded] = useState(false);
-
-  const isSettingsActive = pathname.startsWith("/dashboard/settings");
 
   const sidebarVariants = {
     expanded: {
@@ -155,25 +145,6 @@ export default function Sidebar({ collapsed, setCollapsed }) {
       x: -10,
       transition: {
         duration: 0.2,
-      },
-    },
-  };
-
-  const dropdownVariants = {
-    open: {
-      opacity: 1,
-      height: "auto",
-      transition: {
-        duration: 0.3,
-        ease: "easeInOut",
-      },
-    },
-    closed: {
-      opacity: 0,
-      height: 0,
-      transition: {
-        duration: 0.3,
-        ease: "easeInOut",
       },
     },
   };
@@ -310,114 +281,6 @@ export default function Sidebar({ collapsed, setCollapsed }) {
               </motion.div>
             );
           })}
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: menuItems.length * 0.1 }}
-          >
-            <motion.button
-              onClick={() =>
-                !collapsed && setSettingsExpanded(!settingsExpanded)
-              }
-              className={`w-full flex items-center py-2.5 text-sm font-medium rounded-lg transition-colors relative group ${
-                collapsed ? "justify-center px-2" : "justify-between px-3"
-              } ${
-                isSettingsActive
-                  ? "text-white shadow-sm"
-                  : "text-gray-700 hover:text-gray-900 hover:bg-gray-50"
-              }`}
-              style={isSettingsActive ? { backgroundColor: "#2691ce" } : {}}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <div className={`flex items-center ${collapsed ? "" : ""}`}>
-                <Settings
-                  className={`h-5 w-5 flex-shrink-0 ${collapsed ? "" : "mr-3"}`}
-                />
-                <AnimatePresence>
-                  {!collapsed && (
-                    <motion.span
-                      variants={textVariants}
-                      initial="hidden"
-                      animate="visible"
-                      exit="hidden"
-                      className="whitespace-nowrap"
-                    >
-                      Settings
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              <AnimatePresence>
-                {!collapsed && (
-                  <motion.div
-                    className="ml-2"
-                    variants={textVariants}
-                    initial="hidden"
-                    animate="visible"
-                    exit="hidden"
-                  >
-                    <motion.div
-                      animate={{ rotate: settingsExpanded ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <ChevronDown className="h-4 w-4" />
-                    </motion.div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {collapsed && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none">
-                  Settings
-                </div>
-              )}
-            </motion.button>
-
-            <AnimatePresence>
-              {!collapsed && settingsExpanded && (
-                <motion.div
-                  className="mt-1 ml-6 space-y-1 overflow-hidden"
-                  variants={dropdownVariants}
-                  initial="closed"
-                  animate="open"
-                  exit="closed"
-                >
-                  {settingsItems.map((item, index) => {
-                    const Icon = item.icon;
-                    const isActive = pathname === item.href;
-
-                    return (
-                      <motion.div
-                        key={item.href}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ delay: index * 0.05 }}
-                      >
-                        <Link
-                          href={item.href}
-                          className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                            isActive
-                              ? "text-white shadow-sm"
-                              : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                          }`}
-                          style={isActive ? { backgroundColor: "#2691ce" } : {}}
-                        >
-                          <Icon className="h-4 w-4 mr-3 flex-shrink-0" />
-                          <span className="whitespace-nowrap">
-                            {item.title}
-                          </span>
-                        </Link>
-                      </motion.div>
-                    );
-                  })}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
         </div>
       </nav>
 

@@ -1,15 +1,19 @@
+/* ==== CONNECTIONS PAGE TEMPORARILY DISABLED ====
+ * To re-enable: Uncomment all code in this file
+ */
+
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import toast from "react-hot-toast";
-import ConnectionsHeader from "@/components/connections/ConnectionsHeader";
-import ConnectionsCardView from "@/components/connections/ConnectionsCardView";
-import ConnectionsTableView from "@/components/connections/ConnectionsTableView";
-import AddConnectionModal from "@/components/connections/AddConnectionModal";
-import ViewConnectionModal from "@/components/connections/ViewConnectionModal";
-import DeleteConfirmModal from "@/components/core/DeleteConfirmModal";
-import { ConnectionsService } from "@/services/connectionsService";
+// import React, { useState, useEffect, useMemo } from "react";
+// import { motion, AnimatePresence } from "framer-motion";
+// import toast from "react-hot-toast";
+// import ConnectionsHeader from "@/components/connections/ConnectionsHeader";
+// import ConnectionsCardView from "@/components/connections/ConnectionsCardView";
+// import ConnectionsTableView from "@/components/connections/ConnectionsTableView";
+// import AddConnectionModal from "@/components/connections/AddConnectionModal";
+// import ViewConnectionModal from "@/components/connections/ViewConnectionModal";
+// import DeleteConfirmModal from "@/components/core/DeleteConfirmModal";
+// import { ConnectionsService } from "@/services/connectionsService";
 
 const pageVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -36,6 +40,22 @@ const cardVariants = {
   },
 };
 
+export default function ConnectionsPage() {
+  return (
+    <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold mb-2" style={{ color: "#040606" }}>
+          Connections Page
+        </h1>
+        <p style={{ color: "#646464" }}>
+          This page has been temporarily disabled.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* UNCOMMENT TO RESTORE CONNECTIONS PAGE
 export default function ConnectionsPage() {
   const [connections, setConnections] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -392,4 +412,5 @@ export default function ConnectionsPage() {
     </motion.div>
   );
 }
+*/
 

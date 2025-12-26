@@ -142,11 +142,29 @@ export default function PostsCardView({
                   </motion.div>
                 )}
               </div>
-              <div
-                className="px-2 py-1 text-xs font-medium rounded-full flex-shrink-0 ml-2"
-                style={getStatusBadgeStyle(post.status)}
-              >
-                {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
+              <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                <div
+                  className="px-2 py-1 text-xs font-medium rounded-full"
+                  style={getStatusBadgeStyle(post.status)}
+                >
+                  {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
+                </div>
+                {post.isESG && (
+                  <span
+                    className="px-2 py-1 text-xs font-medium rounded-full text-white"
+                    style={{ backgroundColor: "#10b981" }}
+                  >
+                    ESG
+                  </span>
+                )}
+                {post.isCSR && (
+                  <span
+                    className="px-2 py-1 text-xs font-medium rounded-full text-white"
+                    style={{ backgroundColor: "#2691ce" }}
+                  >
+                    CSR
+                  </span>
+                )}
               </div>
             </div>
 
