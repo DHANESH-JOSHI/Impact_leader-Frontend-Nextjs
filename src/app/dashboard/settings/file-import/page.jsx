@@ -50,6 +50,13 @@ export default function FileImportPage() {
   };
 
   const validateFile = (file) => {
+    // Check if file is actually a File object
+    if (!file || !(file instanceof File)) {
+      console.error("Invalid file object:", file);
+      alert("Please select a valid file!");
+      return false;
+    }
+
     const validTypes = [
       "image/jpeg",
       "image/jpg",
@@ -59,7 +66,14 @@ export default function FileImportPage() {
     ];
     const maxSize = 5 * 1024 * 1024;
 
-    if (!validTypes.includes(file.type)) {
+    // Check file type - also check file extension as fallback (some browsers may not set MIME type correctly)
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    const validExtensions = ['jpg', 'jpeg', 'png', 'svg', 'webp'];
+    
+    const isValidType = validTypes.includes(file.type) || 
+                       (fileExtension && validExtensions.includes(fileExtension));
+
+    if (!isValidType) {
       alert("Please upload only image files (JPG, PNG, SVG, WebP)!");
       return false;
     }
@@ -94,13 +108,15 @@ export default function FileImportPage() {
     setDragActive(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileUpload(e.dataTransfer.files);
+      // Pass the first file from FileList, not the FileList itself
+      handleFileUpload(e.dataTransfer.files[0]);
     }
   };
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      handleFileUpload(e.target.files);
+      // Pass the first file from FileList, not the FileList itself
+      handleFileUpload(e.target.files[0]);
     }
   };
 

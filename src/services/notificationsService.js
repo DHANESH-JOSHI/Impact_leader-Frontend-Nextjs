@@ -144,7 +144,8 @@ export class NotificationsService {
 
   static async sendTargetedNotification(notificationData) {
     try {
-      const response = await apiClient.post(ADMIN.SETTINGS.NOTIFICATIONS || '/admin/notifications/send', notificationData);
+      // Backend route is /admin/notifications/send
+      const response = await apiClient.post(ADMIN.NOTIFICATIONS_SEND || '/admin/notifications/send', notificationData);
       const backendResponse = response.data || {};
 
       return {
@@ -156,7 +157,7 @@ export class NotificationsService {
       console.error('Send targeted notification error:', error);
       return {
         success: false,
-        message: error.message
+        message: error.message || error.response?.data?.message || 'Failed to send notification'
       };
     }
   }

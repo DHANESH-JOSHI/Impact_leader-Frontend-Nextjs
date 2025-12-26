@@ -274,6 +274,9 @@ export const API_ENDPOINTS = {
     
     // Export
     EXPORT: (type) => `/admin/export/${type}`,
+    
+    // Notifications
+    NOTIFICATIONS_SEND: '/admin/notifications/send',
 
     // Posts Management
     POSTS: {
