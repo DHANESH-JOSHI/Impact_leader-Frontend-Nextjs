@@ -7,14 +7,12 @@ import {
   Calendar,
   User,
   Tag,
-  Clock,
-  MessageSquare,
   Send,
   AlertCircle,
-  CheckCircle,
   Loader2,
 } from "lucide-react";
 import { SupportService } from "@/services/supportService";
+import toast from "react-hot-toast";
 
 const modalVariants = {
   hidden: { opacity: 0, scale: 0.95 },
@@ -79,27 +77,29 @@ export default function ViewTicketModal({ isOpen, onClose, ticket, onSuccess }) 
   };
 
   const handleStatusChange = async (newStatusValue) => {
+    if (newStatusValue === newStatus) return; // No change needed
+    
     setIsSubmitting(true);
     setError("");
 
     try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      const ticketId = ticket.id || ticket._id;
+      const result = await SupportService.updateStatus(ticketId, newStatusValue);
 
-      // Update status in localStorage
-      const storedTickets = localStorage.getItem("supportTickets");
-      const allTickets = storedTickets ? JSON.parse(storedTickets) : [];
-      const updatedTickets = allTickets.map((t) =>
-        t.id === ticket.id || t._id === ticket._id
-          ? { ...t, status: newStatusValue, updatedAt: new Date().toISOString() }
-          : t
-      );
-      localStorage.setItem("supportTickets", JSON.stringify(updatedTickets));
-
-      setNewStatus(newStatusValue);
-      onSuccess();
+      if (result.success) {
+        setNewStatus(newStatusValue);
+        toast.success("Ticket status updated successfully");
+        if (onSuccess) {
+          onSuccess(); // Refresh ticket list
+        }
+      } else {
+        setError(result.message || "Failed to update status");
+        toast.error(result.message || "Failed to update status");
+      }
     } catch (err) {
-      setError(err.message || "An error occurred while updating status");
+      const errorMessage = err.message || "An error occurred while updating status";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -117,38 +117,23 @@ export default function ViewTicketModal({ isOpen, onClose, ticket, onSuccess }) 
     setError("");
 
     try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      const ticketId = ticket.id || ticket._id;
+      const result = await SupportService.addReply(ticketId, { message: reply.trim() });
 
-      const newReply = {
-        id: `r${Date.now()}`,
-        message: reply.trim(),
-        author: {
-          name: "Admin",
-          role: "support",
-        },
-        createdAt: new Date().toISOString(),
-      };
-
-      // Update ticket with new reply in localStorage
-      const storedTickets = localStorage.getItem("supportTickets");
-      const allTickets = storedTickets ? JSON.parse(storedTickets) : [];
-      const updatedTickets = allTickets.map((t) => {
-        if (t.id === ticket.id || t._id === ticket._id) {
-          return {
-            ...t,
-            replies: [...(t.replies || []), newReply],
-            updatedAt: new Date().toISOString(),
-          };
+      if (result.success) {
+        setReply("");
+        toast.success("Reply added successfully");
+        if (onSuccess) {
+          onSuccess(); // Refresh ticket list
         }
-        return t;
-      });
-      localStorage.setItem("supportTickets", JSON.stringify(updatedTickets));
-
-      setReply("");
-      onSuccess();
+      } else {
+        setError(result.message || "Failed to add reply");
+        toast.error(result.message || "Failed to add reply");
+      }
     } catch (err) {
-      setError(err.message || "An error occurred while adding reply");
+      const errorMessage = err.message || "An error occurred while adding reply";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

@@ -45,15 +45,15 @@ export default function QnaHeader({
   setViewMode,
   searchQuery,
   setSearchQuery,
-  filterCategory,
-  setFilterCategory,
-  filterAnswered,
-  setFilterAnswered,
+  filterTheme,
+  setFilterTheme,
+  filterStatus,
+  setFilterStatus,
   sortBy,
   setSortBy,
   sortOrder,
   setSortOrder,
-  categories,
+  themes,
   onAddQuestion,
   totalQuestions,
 }) {
@@ -120,17 +120,17 @@ export default function QnaHeader({
           />
         </div>
 
-        {/* Category Filter */}
+        {/* Theme Filter */}
         <div className="relative">
           <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
+            value={filterTheme}
+            onChange={(e) => setFilterTheme(e.target.value)}
             className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[120px]"
             style={{ focusRingColor: "#2691ce" }}
           >
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category === "all" ? "All Categories" : category}
+            {themes.map((theme) => (
+              <option key={theme} value={theme}>
+                {theme === "all" ? "All Themes" : theme}
               </option>
             ))}
           </select>
@@ -140,17 +140,18 @@ export default function QnaHeader({
           />
         </div>
 
-        {/* Answered Filter */}
+        {/* Status Filter */}
         <div className="relative">
           <select
-            value={filterAnswered}
-            onChange={(e) => setFilterAnswered(e.target.value)}
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
             className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[120px]"
             style={{ focusRingColor: "#2691ce" }}
           >
-            <option value="all">All Questions</option>
+            <option value="all">All Status</option>
+            <option value="open">Open</option>
             <option value="answered">Answered</option>
-            <option value="unanswered">Unanswered</option>
+            <option value="closed">Closed</option>
           </select>
           <Filter
             className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"

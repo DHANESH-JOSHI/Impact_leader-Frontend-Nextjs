@@ -68,7 +68,7 @@ export class SupportService {
 
   static async createTicket(ticketData) {
     try {
-      const response = await apiClient.post(SUPPORT.BASE, ticketData);
+      const response = await apiClient.post(SUPPORT.CREATE, ticketData);
       const backendResponse = response.data || {};
 
       return {
@@ -125,7 +125,8 @@ export class SupportService {
 
   static async updateStatus(ticketId, status) {
     try {
-      const response = await apiClient.patch(SUPPORT.STATUS(ticketId), { status });
+      // Backend uses PUT /support/ticket/:id (singular) to update ticket, including status
+      const response = await apiClient.put(SUPPORT.BY_ID(ticketId), { status });
       const backendResponse = response.data || {};
 
       return {

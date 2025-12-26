@@ -83,12 +83,13 @@ export default function AddTicketModal({ isOpen, onClose, onSuccess }) {
 
     try {
       const ticketData = {
-        title: formData.title.trim(),
+        subject: formData.title.trim(), // Backend expects 'subject', not 'title'
         description: formData.description.trim(),
         category: formData.category,
         priority: formData.priority,
-        requesterName: formData.requesterName.trim(),
-        requesterEmail: formData.requesterEmail.trim(),
+        status: 'Open', // Backend requires status field
+        // Note: requesterName and requesterEmail are not used by backend
+        // Backend uses the authenticated user from the token
       };
 
       const result = await SupportService.createTicket(ticketData);

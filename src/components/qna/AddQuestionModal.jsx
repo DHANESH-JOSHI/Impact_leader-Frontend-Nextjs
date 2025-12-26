@@ -1,16 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
   Save,
   HelpCircle,
-  User,
   Tag,
-  Star,
-  AlertTriangle,
+  Check,
 } from "lucide-react";
+import { QUESTION_STATUS_ENUM, QUESTION_THEMES_ENUM, QA_PRIORITY_ENUM } from "@/constants/backendEnums";
 
 const modalVariants = {
   hidden: {
@@ -47,55 +46,85 @@ export default function AddQuestionModal({
   isOpen,
   onClose,
   onSubmit,
-  categories,
   initialQuestion = null,
 }) {
   const [formData, setFormData] = useState({
-    question: "",
-    answer: "",
-    category: "General",
-    tags: "",
-    author: "Admin",
+    title: "",
+    content: "",
+    themes: [],
+    tags: [],
     status: "open",
     priority: "medium",
-    difficulty: "easy",
-    featured: false,
   });
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const [parsedTags, setParsedTags] = useState([]);
+  const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
+  const themeDropdownRef = useRef(null);
 
   useEffect(() => {
-    if (initialQuestion) {
+    if (!isOpen) {
       setFormData({
-        question: initialQuestion.question || "",
-        answer: initialQuestion.answer || "",
-        category: initialQuestion.category || "General",
-        tags: Array.isArray(initialQuestion.tags) ? initialQuestion.tags.join(", ") : (initialQuestion.tags || ""),
-        author: initialQuestion.author || "Admin",
+        title: "",
+        content: "",
+        themes: [],
+        tags: [],
+        status: "open",
+        priority: "medium",
+      });
+      setTagInput("");
+      setParsedTags([]);
+      setErrors({});
+      setIsThemeDropdownOpen(false);
+      return;
+    }
+
+    if (initialQuestion) {
+      // Map frontend fields to backend fields
+      const themes = Array.isArray(initialQuestion.themes) 
+        ? initialQuestion.themes 
+        : (initialQuestion.category ? [initialQuestion.category] : []);
+      
+      setFormData({
+        title: initialQuestion.title || initialQuestion.question || "",
+        content: initialQuestion.content || "",
+        themes: themes,
+        tags: Array.isArray(initialQuestion.tags) ? initialQuestion.tags : [],
         status: initialQuestion.status || "open",
         priority: initialQuestion.priority || "medium",
-        difficulty: initialQuestion.difficulty || "easy",
-        featured: initialQuestion.featured || false,
       });
       setParsedTags(Array.isArray(initialQuestion.tags) ? initialQuestion.tags : []);
     } else {
       setFormData({
-        question: "",
-        answer: "",
-        category: "General",
-        tags: "",
-        author: "Admin",
+        title: "",
+        content: "",
+        themes: [],
+        tags: [],
         status: "open",
         priority: "medium",
-        difficulty: "easy",
-        featured: false,
       });
       setParsedTags([]);
     }
   }, [initialQuestion, isOpen]);
+
+  // Close theme dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target)) {
+        setIsThemeDropdownOpen(false);
+      }
+    };
+
+    if (isThemeDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isThemeDropdownOpen]);
 
   // Handle input changes
   const handleInputChange = (e) => {
@@ -121,25 +150,25 @@ export default function AddQuestionModal({
     setFormData((prev) => ({ ...prev, tags: e.target.value }));
   };
 
-  // Validate form - removed category validation
+  // Validate form
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.question.trim()) {
-      newErrors.question = "Question is required";
-    } else if (formData.question.length < 10) {
-      newErrors.question = "Question must be at least 10 characters long";
+    if (!formData.title.trim()) {
+      newErrors.title = "Title is required";
+    } else if (formData.title.length < 1) {
+      newErrors.title = "Title must be at least 1 character";
+    } else if (formData.title.length > 200) {
+      newErrors.title = "Title cannot exceed 200 characters";
     }
 
-    // Author is optional now since backend handles it
-    // if (!formData.author.trim()) {
-    //   newErrors.author = "Author name is required";
-    // }
-
-    // Category validation removed since it's not in API
-    // if (!formData.category) {
-    //   newErrors.category = "Category is required";
-    // }
+    if (!formData.content.trim()) {
+      newErrors.content = "Content is required";
+    } else if (formData.content.length < 1) {
+      newErrors.content = "Content must be at least 1 character";
+    } else if (formData.content.length > 3000) {
+      newErrors.content = "Content cannot exceed 3000 characters";
+    }
 
     return newErrors;
   };
@@ -156,63 +185,52 @@ export default function AddQuestionModal({
 
     setIsSubmitting(true);
 
-    // Use parsedTags directly instead of splitting formData.tags
-    const finalTags = parsedTags.length > 0 ? parsedTags : [formData.category.toLowerCase()];
-
+    // Prepare data matching backend structure
     const questionData = {
-      ...formData,
-      tags: finalTags,
+      title: formData.title.trim(),
+      content: formData.content.trim(),
+      themes: Array.isArray(formData.themes) ? formData.themes : [],
+      tags: parsedTags.length > 0 ? parsedTags : [],
+      status: formData.status,
+      priority: formData.priority,
     };
 
     if (initialQuestion) {
-      questionData.id = initialQuestion.id;
+      questionData.id = initialQuestion.id || initialQuestion._id;
     }
 
     onSubmit(questionData);
-
-    // Reset form
-    setFormData({
-      question: "",
-      answer: "",
-      category: "General",
-      tags: "",
-      author: "Admin",
-      status: "open",
-      priority: "medium",
-      difficulty: "easy",
-      featured: false,
-    });
-    setTagInput("");
-    setParsedTags([]);
-    setErrors({});
     setIsSubmitting(false);
   };
 
   const handleClose = () => {
     if (!isSubmitting) {
       setFormData({
-        question: "",
-        answer: "",
-        category: "General",
-        tags: "",
-        author: "Admin",
+        title: "",
+        content: "",
+        themes: [],
+        tags: [],
         status: "open",
         priority: "medium",
-        difficulty: "easy",
-        featured: false,
       });
       setTagInput("");
       setParsedTags([]);
       setErrors({});
+      setIsThemeDropdownOpen(false);
       onClose();
     }
   };
 
-  // Default categories if none provided
-  const defaultCategories = ["General", "Technical", "Billing", "Account", "Support"];
-  const availableCategories = categories && categories.length > 0 ?
-    categories.filter(cat => cat !== "all") :
-    defaultCategories;
+  const toggleTheme = (theme) => {
+    setFormData((prev) => {
+      const currentThemes = Array.isArray(prev.themes) ? prev.themes : [];
+      if (currentThemes.includes(theme)) {
+        return { ...prev, themes: currentThemes.filter((t) => t !== theme) };
+      } else {
+        return { ...prev, themes: [...currentThemes, theme] };
+      }
+    });
+  };
 
   return (
     <AnimatePresence>
@@ -275,7 +293,7 @@ export default function AddQuestionModal({
             {/* Modal Content */}
             <div className="p-6 max-h-[calc(90vh-140px)] overflow-y-auto">
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Question Input */}
+                {/* Title Input */}
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -285,31 +303,35 @@ export default function AddQuestionModal({
                     className="block text-sm font-medium mb-2"
                     style={{ color: "#040606" }}
                   >
-                    Question *
+                    Title *
                   </label>
-                  <textarea
-                    name="question"
-                    value={formData.question}
+                  <input
+                    type="text"
+                    name="title"
+                    value={formData.title}
                     onChange={handleInputChange}
-                    placeholder="Enter the question here..."
-                    rows={3}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none ${errors.question ? "border-red-500" : "border-gray-300"
+                    placeholder="Enter the question title..."
+                    maxLength={200}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${errors.title ? "border-red-500" : "border-gray-300"
                       }`}
                     style={{ focusRingColor: "#2691ce" }}
                     disabled={isSubmitting}
                   />
-                  {errors.question && (
+                  {errors.title && (
                     <motion.p
                       className="text-red-500 text-sm mt-1"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                     >
-                      {errors.question}
+                      {errors.title}
                     </motion.p>
                   )}
+                  <p className="text-xs mt-1" style={{ color: "#646464" }}>
+                    {formData.title.length}/200 characters
+                  </p>
                 </motion.div>
 
-                {/* Answer Input */}
+                {/* Content Input */}
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -319,100 +341,114 @@ export default function AddQuestionModal({
                     className="block text-sm font-medium mb-2"
                     style={{ color: "#040606" }}
                   >
-                    Answer (Optional)
+                    Content *
                   </label>
                   <textarea
-                    name="answer"
-                    value={formData.answer}
+                    name="content"
+                    value={formData.content}
                     onChange={handleInputChange}
-                    placeholder="Provide an answer (you can leave this empty and answer later)..."
+                    placeholder="Enter the question content..."
                     rows={6}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none"
+                    maxLength={3000}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none ${errors.content ? "border-red-500" : "border-gray-300"
+                      }`}
                     style={{ focusRingColor: "#2691ce" }}
                     disabled={isSubmitting}
                   />
+                  {errors.content && (
+                    <motion.p
+                      className="text-red-500 text-sm mt-1"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      {errors.content}
+                    </motion.p>
+                  )}
                   <p className="text-xs mt-1" style={{ color: "#646464" }}>
-                    You can add or update the answer later from the view page
+                    {formData.content.length}/3000 characters
                   </p>
                 </motion.div>
 
-                {/* Author and Category */}
+                {/* Themes Multi-select */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="relative"
+                  ref={themeDropdownRef}
+                >
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: "#040606" }}
+                  >
+                    <Tag className="inline h-4 w-4 mr-1" />
+                    Themes (Optional)
+                  </label>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all text-left flex items-center justify-between"
+                      style={{ focusRingColor: "#2691ce" }}
+                      disabled={isSubmitting}
+                    >
+                      <span className={formData.themes.length > 0 ? "text-gray-900" : "text-gray-500"}>
+                        {formData.themes.length > 0
+                          ? `${formData.themes.length} theme(s) selected`
+                          : "Select themes..."}
+                      </span>
+                      <X className={`h-4 w-4 transition-transform ${isThemeDropdownOpen ? "rotate-90" : ""}`} />
+                    </button>
+                    {isThemeDropdownOpen && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {QUESTION_THEMES_ENUM.map((theme) => (
+                          <label
+                            key={theme}
+                            className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formData.themes.includes(theme)}
+                              onChange={() => toggleTheme(theme)}
+                              className="mr-2"
+                            />
+                            <span className="text-sm">{theme}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {formData.themes.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {formData.themes.map((theme) => (
+                        <span
+                          key={theme}
+                          className="px-3 py-1 text-sm rounded-full text-white flex items-center gap-1"
+                          style={{ backgroundColor: "#2691ce" }}
+                        >
+                          {theme}
+                          <button
+                            type="button"
+                            onClick={() => toggleTheme(theme)}
+                            className="hover:text-gray-200 text-xs"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-xs mt-1" style={{ color: "#646464" }}>
+                    Select one or more themes for categorization
+                  </p>
+                </motion.div>
+
+                {/* Priority and Status */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 }}
-                  >
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
-                    >
-                      <User className="inline h-4 w-4 mr-1" />
-                      Author
-                    </label>
-                    <input
-                      type="text"
-                      name="author"
-                      value={formData.author}
-                      onChange={handleInputChange}
-                      placeholder="Enter author name..."
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${errors.author ? "border-red-500" : "border-gray-300"
-                        }`}
-                      style={{ focusRingColor: "#2691ce" }}
-                      disabled={isSubmitting}
-                    />
-                    {errors.author && (
-                      <motion.p
-                        className="text-red-500 text-sm mt-1"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                      >
-                        {errors.author}
-                      </motion.p>
-                    )}
-                    <p className="text-xs mt-1" style={{ color: "#646464" }}>
-                      Leave empty to use default author
-                    </p>
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.4 }}
-                  >
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
-                    >
-                      <Tag className="inline h-4 w-4 mr-1" />
-                      Category
-                    </label>
-                    <select
-                      name="category"
-                      value={formData.category}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                      style={{ focusRingColor: "#2691ce" }}
-                      disabled={isSubmitting}
-                    >
-                      {availableCategories.map((category) => (
-                        <option key={category} value={category}>
-                          {category}
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-xs mt-1" style={{ color: "#646464" }}>
-                      Used for organization and filtering
-                    </p>
-                  </motion.div>
-                </div>
-
-                {/* Priority, Status, and Difficulty */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.5 }}
                   >
                     <label
                       className="block text-sm font-medium mb-2"
@@ -428,16 +464,18 @@ export default function AddQuestionModal({
                       style={{ focusRingColor: "#2691ce" }}
                       disabled={isSubmitting}
                     >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
+                      {QA_PRIORITY_ENUM.map((priority) => (
+                        <option key={priority} value={priority}>
+                          {priority.charAt(0).toUpperCase() + priority.slice(1)}
+                        </option>
+                      ))}
                     </select>
                   </motion.div>
 
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.6 }}
+                    transition={{ delay: 0.5 }}
                   >
                     <label
                       className="block text-sm font-medium mb-2"
@@ -453,35 +491,11 @@ export default function AddQuestionModal({
                       style={{ focusRingColor: "#2691ce" }}
                       disabled={isSubmitting}
                     >
-                      <option value="open">Open</option>
-                      <option value="draft">Draft</option>
-                      <option value="published">Published</option>
-                      <option value="archived">Archived</option>
-                    </select>
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.7 }}
-                  >
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
-                    >
-                      Difficulty
-                    </label>
-                    <select
-                      name="difficulty"
-                      value={formData.difficulty}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                      style={{ focusRingColor: "#2691ce" }}
-                      disabled={isSubmitting}
-                    >
-                      <option value="easy">Easy</option>
-                      <option value="medium">Medium</option>
-                      <option value="hard">Hard</option>
+                      {QUESTION_STATUS_ENUM.map((status) => (
+                        <option key={status} value={status}>
+                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                        </option>
+                      ))}
                     </select>
                   </motion.div>
                 </div>
@@ -506,13 +520,13 @@ export default function AddQuestionModal({
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ',') {
                           e.preventDefault();
-                          const newTag = tagInput.trim();
-                          if (newTag && !parsedTags.includes(newTag)) {
+                          const newTag = tagInput.trim().toLowerCase();
+                          if (newTag && !parsedTags.includes(newTag) && newTag.length <= 30) {
                             const updatedTags = [...parsedTags, newTag];
                             setParsedTags(updatedTags);
                             setFormData((prev) => ({
                               ...prev,
-                              tags: updatedTags.join(',')
+                              tags: updatedTags
                             }));
                           }
                           setTagInput('');
@@ -549,7 +563,7 @@ export default function AddQuestionModal({
                               setParsedTags(updatedTags);
                               setFormData((prev) => ({
                                 ...prev,
-                                tags: updatedTags.join(',')
+                                tags: updatedTags
                               }));
                             }}
                             className="hover:text-gray-200 text-xs"
@@ -565,44 +579,6 @@ export default function AddQuestionModal({
                   </p>
                 </motion.div>
 
-                {/* Featured Toggle */}
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.9 }}
-                >
-                  <div
-                    className="rounded-lg p-4"
-                    style={{ backgroundColor: "#f8fafc" }}
-                  >
-                    <label className="flex items-center space-x-3">
-                      <input
-                        type="checkbox"
-                        name="featured"
-                        checked={formData.featured}
-                        onChange={handleInputChange}
-                        className="w-5 h-5 rounded focus:ring-2"
-                        style={{ color: "#2691ce", focusRingColor: "#2691ce" }}
-                        disabled={isSubmitting}
-                      />
-                      <div className="flex items-center space-x-2">
-                        <Star className="h-5 w-5 text-yellow-500" />
-                        <span
-                          className="text-sm font-medium"
-                          style={{ color: "#040606" }}
-                        >
-                          Mark as Featured Question
-                        </span>
-                      </div>
-                    </label>
-                    <p
-                      className="text-xs mt-2 ml-8"
-                      style={{ color: "#646464" }}
-                    >
-                      Featured questions appear prominently in search results
-                    </p>
-                  </div>
-                </motion.div>
               </form>
             </div>
 

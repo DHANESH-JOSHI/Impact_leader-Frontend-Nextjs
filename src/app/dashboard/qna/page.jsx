@@ -61,16 +61,18 @@ export default function QnaPage() {
 
   useEffect(() => {
     loadQnaData();
-  }, [searchQuery, filterCategory, filterAnswered, sortBy, sortOrder, pagination.page]);
+  }, [searchQuery, filterTheme, filterStatus, sortBy, sortOrder, pagination.page]);
 
   const loadQnaData = async (params = {}) => {
     setLoading(true);
     try {
-      // Map filterAnswered to status: answered = closed, unanswered = open
+      // Map filterStatus to backend status
       let statusFilter = undefined;
-      if (filterAnswered === "answered") {
+      if (filterStatus === "answered") {
+        statusFilter = "answered";
+      } else if (filterStatus === "closed") {
         statusFilter = "closed";
-      } else if (filterAnswered === "unanswered") {
+      } else if (filterStatus === "open") {
         statusFilter = "open";
       }
 
@@ -78,7 +80,7 @@ export default function QnaPage() {
         page: pagination.page,
         limit: pagination.limit,
         search: searchQuery || undefined,
-        themes: filterCategory !== "all" ? filterCategory : undefined, // Backend expects 'themes', not 'category'
+        themes: filterTheme !== "all" ? filterTheme : undefined,
         status: statusFilter,
         sortBy: sortBy,
         sortOrder: sortOrder,
@@ -112,18 +114,19 @@ export default function QnaPage() {
 
           const answerCount = Array.isArray(qna.answers) ? qna.answers.length : (typeof qna.answerCount === 'number' ? qna.answerCount : 0);
           const themes = Array.isArray(qna.themes) ? qna.themes : [];
-          const category = themes.length > 0 ? themes[0] : (qna.category || "General");
+          const category = themes.length > 0 ? themes[0] : "General";
 
           return {
             id: qna._id || qna.id,
-            question: qna.title || "Untitled Question",
-            answer: Array.isArray(qna.answers) && qna.answers.length > 0 
-              ? qna.answers[0].content || "" 
-              : qna.content || "",
-            category: category,
+            title: qna.title || "Untitled Question",
+            question: qna.title || "Untitled Question", // Keep for backward compatibility with views
+            content: qna.content || "",
+            themes: themes,
+            category: category, // Keep for backward compatibility with views
             tags: tags,
             author: authorName,
             status: qna.status || "open",
+            priority: qna.priority || "medium",
             createdAt: qna.createdAt,
             updatedAt: qna.updatedAt,
             views: typeof qna.views === 'number' ? qna.views : 0,
@@ -133,6 +136,7 @@ export default function QnaPage() {
             isAnswered: !!(answerCount > 0 || qna.status === 'answered' || qna.status === 'closed'),
             answerCount: answerCount,
             acceptedAnswer: Array.isArray(qna.answers) ? qna.answers.find(a => a.isAccepted) : null,
+            answers: qna.answers || [],
           };
         });
 
@@ -163,10 +167,10 @@ export default function QnaPage() {
       setLoading(true);
 
       const apiData = {
-        title: newQuestion.question || newQuestion.title,
-        content: newQuestion.answer || newQuestion.content || "",
-        tags: Array.isArray(newQuestion.tags) ? newQuestion.tags : (newQuestion.tags ? newQuestion.tags.split(',').map(t => t.trim()).filter(Boolean) : []),
-        themes: Array.isArray(newQuestion.themes) ? newQuestion.themes : (newQuestion.themes ? newQuestion.themes.split(',').map(t => t.trim()).filter(Boolean) : []),
+        title: newQuestion.title || "",
+        content: newQuestion.content || "",
+        tags: Array.isArray(newQuestion.tags) ? newQuestion.tags : [],
+        themes: Array.isArray(newQuestion.themes) ? newQuestion.themes : [],
         priority: newQuestion.priority || 'medium',
       };
 
@@ -204,10 +208,10 @@ export default function QnaPage() {
       if (qnaData.id) {
         // Prepare update data matching backend structure
         const updateData = {
-          title: qnaData.title || qnaData.question,
-          content: qnaData.content || qnaData.answer || "",
-          tags: Array.isArray(qnaData.tags) ? qnaData.tags : (qnaData.tags ? qnaData.tags.split(',').map(t => t.trim()).filter(Boolean) : []),
-          themes: Array.isArray(qnaData.themes) ? qnaData.themes : (qnaData.themes ? qnaData.themes.split(',').map(t => t.trim()).filter(Boolean) : []),
+          title: qnaData.title || "",
+          content: qnaData.content || "",
+          tags: Array.isArray(qnaData.tags) ? qnaData.tags : [],
+          themes: Array.isArray(qnaData.themes) ? qnaData.themes : [],
           priority: qnaData.priority || 'medium',
         };
 
@@ -269,18 +273,18 @@ export default function QnaPage() {
     setSearchQuery(query);
   };
 
-  // Category filter change karne ka function
-  const handleCategoryFilter = (category) => {
-    setFilterCategory(category);
+  // Theme filter change karne ka function
+  const handleThemeFilter = (theme) => {
+    setFilterTheme(theme);
   };
 
-  // Answered filter change karne ka function
-  const handleAnsweredFilter = (answered) => {
-    setFilterAnswered(answered);
+  // Status filter change karne ka function
+  const handleStatusFilter = (status) => {
+    setFilterStatus(status);
   };
 
-  // filter dropdown ke liye unique categories nikal rhe hai
-  const categories = ["all", ...new Set(qnaData.map((qna) => qna.category))];
+  // Get unique themes from questions for filter dropdown
+  const themes = ["all", ...new Set(qnaData.flatMap((qna) => qna.themes || []))];
 
   return (
     <motion.div
@@ -297,15 +301,15 @@ export default function QnaPage() {
             setViewMode={handleViewModeChange}
             searchQuery={searchQuery}
             setSearchQuery={handleSearchChange}
-            filterCategory={filterCategory}
-            setFilterCategory={handleCategoryFilter}
-            filterAnswered={filterAnswered}
-            setFilterAnswered={handleAnsweredFilter}
+            filterTheme={filterTheme}
+            setFilterTheme={handleThemeFilter}
+            filterStatus={filterStatus}
+            setFilterStatus={handleStatusFilter}
             sortBy={sortBy}
             setSortBy={setSortBy}
             sortOrder={sortOrder}
             setSortOrder={setSortOrder}
-            categories={categories}
+            themes={themes}
             onAddQuestion={() => {
               setIsAddModalOpen(true);
             }}
@@ -344,7 +348,6 @@ export default function QnaPage() {
             setIsAddModalOpen(false);
           }}
           onSubmit={handleAddQuestion}
-          categories={categories.filter((cat) => cat !== "all")}
         />
 
         <AddQuestionModal
@@ -354,7 +357,6 @@ export default function QnaPage() {
             setSelectedQna(null);
           }}
           onSubmit={handleSaveEditedQna}
-          categories={categories.filter((cat) => cat !== "all")}
           initialQuestion={selectedQna}
         />
 

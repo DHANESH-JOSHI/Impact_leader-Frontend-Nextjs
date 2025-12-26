@@ -129,18 +129,19 @@ export const API_ENDPOINTS = {
   // ==================== SUPPORT ====================
   SUPPORT: {
     BASE: '/support/tickets',
-    BY_ID: (id) => `/support/tickets/${id}`,
+    CREATE: '/support/ticket', // Backend uses singular 'ticket' for creation
+    BY_ID: (id) => `/support/ticket/${id}`, // Backend uses singular 'ticket' for update/delete
     STATS: '/support/stats',
 
-    // Ticket actions
-    STATUS: (id) => `/support/tickets/${id}/status`,
-    PRIORITY: (id) => `/support/tickets/${id}/priority`,
-    ASSIGN: (id) => `/support/tickets/${id}/assign`,
-    ESCALATE: (id) => `/support/tickets/${id}/escalate`,
+    // Ticket actions - Backend uses PUT /support/ticket/:id for all updates (status, priority, etc.)
+    STATUS: (id) => `/support/ticket/${id}`, // Use BY_ID instead, kept for backward compatibility
+    PRIORITY: (id) => `/support/ticket/${id}`, // Use BY_ID instead
+    ASSIGN: (id) => `/support/ticket/${id}`, // Use BY_ID instead
+    ESCALATE: (id) => `/support/ticket/${id}`, // Use BY_ID instead
 
-    // Replies
-    REPLIES: (id) => `/support/tickets/${id}/replies`,
-    REPLY_BY_ID: (ticketId, replyId) => `/support/tickets/${ticketId}/replies/${replyId}`,
+    // Replies - Backend uses singular 'ticket' and 'reply'
+    REPLIES: (id) => `/support/ticket/${id}/reply`, // Backend: /support/ticket/:id/reply
+    REPLY_BY_ID: (ticketId, replyId) => `/support/ticket/${ticketId}/reply/${replyId}`, // Backend: /support/ticket/:id/reply/:replyId
 
     // Attachments
     ATTACHMENTS: (id) => `/support/tickets/${id}/attachments`,

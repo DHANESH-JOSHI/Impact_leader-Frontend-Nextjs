@@ -16,6 +16,18 @@ export const RESOURCE_TYPE_ENUM = ['document', 'video', 'audio', 'image', 'link'
 // Question/QnA enums
 export const QUESTION_STATUS_ENUM = ['open', 'answered', 'closed'];
 export const QA_PRIORITY_ENUM = ['low', 'medium', 'high', 'urgent'];
+export const QUESTION_THEMES_ENUM = [
+  // CSR/ESG Core Themes
+  'sustainability', 'environment', 'social-responsibility', 'governance', 
+  'corporate-social-responsibility', 'environmental-social-governance',
+  'climate-change', 'renewable-energy', 'waste-management', 'water-conservation',
+  'community-development', 'education', 'healthcare', 'poverty-alleviation',
+  'diversity-inclusion', 'human-rights', 'labor-practices', 'supply-chain',
+  'ethical-business', 'transparency', 'compliance', 'risk-management',
+  // Business Themes
+  'technology', 'leadership', 'innovation', 'entrepreneurship', 'management', 
+  'strategy', 'marketing', 'finance', 'hr', 'operations'
+];
 
 // Support Ticket enums
 export const SUPPORT_CATEGORY_ENUM = [
