@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,7 +14,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Store,
-  Upload,
   Bell,
   Database,
   User2Icon,
@@ -25,6 +24,9 @@ import {
   Building2,
   Palette,
   MessageSquare,
+  Settings,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 // main menu items ka data - dashboard, stories, posts etc.
@@ -94,15 +96,19 @@ const menuItems = [
     icon: MessageSquare,
     href: "/dashboard/messages",
   },
+];
+
+// Settings submenu items
+const settingsMenuItems = [
   {
     title: "Request Approvals",
     icon: Database,
     href: "/dashboard/settings/approvals",
   },
   {
-    title: "File Import",
-    icon: Upload,
-    href: "/dashboard/settings/file-import",
+    title: "Business Settings",
+    icon: Store,
+    href: "/dashboard/settings/business",
   },
   {
     title: "Notification Settings",
@@ -113,6 +119,14 @@ const menuItems = [
 
 export default function Sidebar({ collapsed, setCollapsed }) {
   const pathname = usePathname();
+  const [settingsMenuOpen, setSettingsMenuOpen] = useState(false);
+
+  // Auto-open settings menu if current path is a settings page
+  useEffect(() => {
+    if (settingsMenuItems.some(item => pathname === item.href)) {
+      setSettingsMenuOpen(true);
+    }
+  }, [pathname]);
 
   const sidebarVariants = {
     expanded: {
@@ -281,6 +295,102 @@ export default function Sidebar({ collapsed, setCollapsed }) {
               </motion.div>
             );
           })}
+
+          {/* Settings Submenu */}
+          {!collapsed && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: menuItems.length * 0.1 }}
+            >
+              <motion.button
+                onClick={() => setSettingsMenuOpen(!settingsMenuOpen)}
+                className={`w-full flex items-center justify-between py-2.5 text-sm font-medium rounded-lg transition-colors relative group px-3 ${
+                  settingsMenuItems.some(item => pathname === item.href)
+                    ? "text-white shadow-sm"
+                    : "text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+                style={settingsMenuItems.some(item => pathname === item.href) ? { backgroundColor: "#2691ce" } : {}}
+              >
+                <div className="flex items-center">
+                  <Settings
+                    className="h-5 w-5 flex-shrink-0 mr-3"
+                  />
+                  <span className="whitespace-nowrap">Settings</span>
+                </div>
+                {settingsMenuOpen ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </motion.button>
+
+              <AnimatePresence>
+                {settingsMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="ml-8 mt-1 space-y-1"
+                  >
+                    {settingsMenuItems.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = pathname === item.href;
+
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className={`flex items-center py-2 text-sm font-medium rounded-lg transition-colors relative group w-full px-3 ${
+                            isActive
+                              ? "text-white shadow-sm"
+                              : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                          }`}
+                          style={isActive ? { backgroundColor: "#2691ce" } : {}}
+                        >
+                          <Icon
+                            className="h-4 w-4 flex-shrink-0 mr-3"
+                          />
+                          <span className="whitespace-nowrap">{item.title}</span>
+                        </Link>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )}
+
+          {/* Settings menu item when collapsed */}
+          {collapsed && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: menuItems.length * 0.1 }}
+            >
+              <div className="relative group">
+                <div
+                  className="flex items-center py-2.5 text-sm font-medium rounded-lg transition-colors px-2 justify-center text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                >
+                  <Settings className="h-5 w-5 flex-shrink-0" />
+                </div>
+                <div className="absolute left-full ml-2 top-0 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none">
+                  <div className="py-1">
+                    {settingsMenuItems.map((item) => (
+                      <div key={item.href} className="py-1">
+                        <Link
+                          href={item.href}
+                          className="block hover:text-blue-300"
+                        >
+                          {item.title}
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
       </nav>
 

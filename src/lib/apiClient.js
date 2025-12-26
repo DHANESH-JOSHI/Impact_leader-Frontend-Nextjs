@@ -128,10 +128,20 @@ class ApiClient {
         customHeaders,
       });
 
+      // Create abort controller for timeout (fallback for browsers that don't support AbortSignal.timeout)
+      let abortController;
+      let timeoutId;
+      if (timeout) {
+        abortController = new AbortController();
+        timeoutId = setTimeout(() => {
+          abortController.abort();
+        }, timeout);
+      }
+
       const requestOptions = {
         method,
         headers,
-        signal: timeout ? AbortSignal.timeout(timeout) : undefined,
+        signal: abortController?.signal,
       };
 
       // Add body for non-GET requests
@@ -144,7 +154,15 @@ class ApiClient {
         hasData: !!data,
       });
 
-      const response = await fetch(url, requestOptions);
+      let response;
+      try {
+        response = await fetch(url, requestOptions);
+      } finally {
+        // Clear timeout if request completed
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+      }
 
       // Parse response
       let responseData;
@@ -226,22 +244,43 @@ class ApiClient {
         data: responseData,
       };
     } catch (error) {
-      console.error('[API Exception]', method, endpoint, ':', error);
+      const url = this.buildURL(endpoint, options.params);
+      console.error('[API Exception]', method, endpoint, ':', {
+        error: error.message,
+        name: error.name,
+        url: url,
+        cause: error.cause,
+        stack: error.stack
+      });
 
-      // Retry on network errors
-      if (retries > 0 && error.name === "AbortError") {
-        console.log(
-          '[API] Retrying after timeout... (' + retries + ' attempts left)'
-        );
-        await this.delay(1000);
-        return this.request(endpoint, { ...options, retries: retries - 1 });
+      // Retry on network errors (but not CORS errors)
+      if (retries > 0 && (error.name === "AbortError" || error.name === "TypeError")) {
+        // Don't retry CORS errors
+        if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+          console.warn('[API] CORS or network error detected, not retrying');
+        } else {
+          console.log(
+            '[API] Retrying after error... (' + retries + ' attempts left)'
+          );
+          await this.delay(1000);
+          return this.request(endpoint, { ...options, retries: retries - 1 });
+        }
+      }
+
+      // Provide more helpful error messages
+      let errorMessage = error.message || "Network request failed";
+      if (error.name === "TypeError" && error.message === "Failed to fetch") {
+        errorMessage = "Unable to connect to server. Please check your network connection and ensure the backend server is running.";
+      } else if (error.message?.includes('CORS')) {
+        errorMessage = "CORS error: The server is blocking this request. Please check server CORS configuration.";
       }
 
       return {
         success: false,
         status: 0,
-        message: error.message || "Network request failed",
+        message: errorMessage,
         error: error.name,
+        url: url,
       };
     }
   }

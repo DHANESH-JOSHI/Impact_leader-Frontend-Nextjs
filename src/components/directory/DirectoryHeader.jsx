@@ -45,16 +45,21 @@ export default function DirectoryHeader({
   setViewMode,
   searchQuery,
   setSearchQuery,
-  filterType,
-  setFilterType,
+  filterCategory,
+  setFilterCategory,
   filterOrganization,
   setFilterOrganization,
-  filterESGCSR,
-  setFilterESGCSR,
-  sort,
-  setSort,
+  filterTheme,
+  setFilterTheme,
+  filterLocation,
+  setFilterLocation,
+  sortBy,
+  setSortBy,
+  sortOrder,
+  setSortOrder,
   organizationTypes,
-  esgCsrOptions,
+  categories,
+  themes,
   onAddEntry,
   totalEntries,
 }) {
@@ -137,35 +142,76 @@ export default function DirectoryHeader({
           />
         </div>
 
+        {categories && categories.length > 0 && (
+          <div className="relative">
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[160px]"
+              style={{ focusRingColor: "#2691ce" }}
+            >
+              <option value="all">All Categories</option>
+              {categories.map((cat) => (
+                <option key={cat.value} value={cat.value}>
+                  {cat.label}
+                </option>
+              ))}
+            </select>
+            <Filter
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
+              style={{ color: "#646464" }}
+            />
+          </div>
+        )}
+
+        {themes && themes.length > 0 && (
+          <div className="relative">
+            <select
+              value={filterTheme}
+              onChange={(e) => setFilterTheme(e.target.value)}
+              className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[160px]"
+              style={{ focusRingColor: "#2691ce" }}
+            >
+              <option value="all">All Themes</option>
+              {themes.map((theme) => (
+                <option key={theme.value} value={theme.value}>
+                  {theme.label}
+                </option>
+              ))}
+            </select>
+            <Filter
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
+              style={{ color: "#646464" }}
+            />
+          </div>
+        )}
+
         <div className="relative">
-          <select
-            value={filterESGCSR}
-            onChange={(e) => setFilterESGCSR(e.target.value)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[140px]"
+          <input
+            type="text"
+            placeholder="Filter by location..."
+            value={filterLocation}
+            onChange={(e) => setFilterLocation(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all min-w-[160px]"
             style={{ focusRingColor: "#2691ce" }}
-          >
-            {esgCsrOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <Filter
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
-            style={{ color: "#646464" }}
           />
         </div>
 
         <div className="relative">
           <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
+            value={`${sortBy}-${sortOrder}`}
+            onChange={(e) => {
+              const [by, order] = e.target.value.split('-');
+              setSortBy(by);
+              setSortOrder(order);
+            }}
             className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[160px]"
             style={{ focusRingColor: "#2691ce" }}
           >
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-            <option value="name">Name (A-Z)</option>
+            <option value="createdAt-desc">Newest First</option>
+            <option value="createdAt-asc">Oldest First</option>
+            <option value="title-asc">Name (A-Z)</option>
+            <option value="title-desc">Name (Z-A)</option>
           </select>
           <SortAsc
             className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"

@@ -91,15 +91,6 @@ export default function DirectoryTableView({
     });
   };
 
-  const getESGCSRBadgeStyle = (isESG, isCSR) => {
-    if (isESG) {
-      return { backgroundColor: "#10b981", color: "white" };
-    }
-    if (isCSR) {
-      return { backgroundColor: "#3b82f6", color: "white" };
-    }
-    return { backgroundColor: "#e5e7eb", color: "#374151" };
-  };
 
   const SortIcon = ({ columnKey }) => {
     if (sortConfig.key !== columnKey) {
@@ -177,7 +168,7 @@ export default function DirectoryTableView({
                 className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider"
                 style={{ color: "#646464" }}
               >
-                ESG/CSR
+                Themes
               </th>
               <th
                 className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider"
@@ -250,13 +241,28 @@ export default function DirectoryTableView({
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {(entry.isESG || entry.isCSR) && (
-                    <span
-                      className="px-2 py-1 rounded-md text-xs font-medium"
-                      style={getESGCSRBadgeStyle(entry.isESG, entry.isCSR)}
-                    >
-                      {entry.isESG ? "ESG" : "CSR"}
-                    </span>
+                  {entry.themes && entry.themes.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {entry.themes.slice(0, 2).map((theme, index) => {
+                        const themeName = typeof theme === 'string' ? theme : (theme?.name || String(theme?._id || theme?.id || theme || ''));
+                        return (
+                          <span
+                            key={index}
+                            className="px-2 py-1 rounded-md text-xs font-medium"
+                            style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
+                          >
+                            {themeName}
+                          </span>
+                        );
+                      })}
+                      {entry.themes.length > 2 && (
+                        <span className="text-xs" style={{ color: "#646464" }}>
+                          +{entry.themes.length - 2}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-sm" style={{ color: "#646464" }}>N/A</span>
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

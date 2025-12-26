@@ -149,22 +149,6 @@ export default function PostsCardView({
                 >
                   {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
                 </div>
-                {post.isESG && (
-                  <span
-                    className="px-2 py-1 text-xs font-medium rounded-full text-white"
-                    style={{ backgroundColor: "#10b981" }}
-                  >
-                    ESG
-                  </span>
-                )}
-                {post.isCSR && (
-                  <span
-                    className="px-2 py-1 text-xs font-medium rounded-full text-white"
-                    style={{ backgroundColor: "#2691ce" }}
-                  >
-                    CSR
-                  </span>
-                )}
               </div>
             </div>
 
@@ -200,7 +184,7 @@ export default function PostsCardView({
                   className="px-2 py-1 rounded text-xs"
                   style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
                 >
-                  {post.category}
+                  {/* Category removed - Post model doesn't have category field */}
                 </span>
               </div>
             </div>

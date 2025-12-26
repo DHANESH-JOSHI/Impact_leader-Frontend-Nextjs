@@ -6,8 +6,9 @@ import {
   Eye,
   Trash2,
   Calendar,
-  Tag,
   Palette,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 
 const containerVariants = {
@@ -107,11 +108,27 @@ export default function ThemesCardView({
                   <h3 className="font-semibold text-lg line-clamp-1" style={{ color: "#040606" }}>
                     {theme.name || "Untitled Theme"}
                   </h3>
-                  {theme.category && (
-                    <p className="text-sm truncate" style={{ color: "#646464" }}>
-                      {theme.category}
-                    </p>
-                  )}
+                  <div className="flex items-center space-x-2 mt-1">
+                    <span
+                      className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-xs font-medium ${
+                        theme.isActive !== false
+                          ? "bg-green-100 text-green-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {theme.isActive !== false ? (
+                        <>
+                          <CheckCircle className="h-3 w-3" />
+                          <span>Active</span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-3 w-3" />
+                          <span>Inactive</span>
+                        </>
+                      )}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -131,31 +148,6 @@ export default function ThemesCardView({
               </div>
             </div>
           </div>
-
-          {/* Tags */}
-          {theme.tags && theme.tags.length > 0 && (
-            <div className="px-4 py-3 border-t border-gray-100">
-              <div className="flex flex-wrap gap-1">
-                {theme.tags.slice(0, 3).map((tag, index) => (
-                  <motion.span
-                    key={index}
-                    className="px-2 py-1 text-xs rounded-full text-white"
-                    style={{ backgroundColor: "#2691ce" }}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    {tag}
-                  </motion.span>
-                ))}
-                {theme.tags.length > 3 && (
-                  <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                    +{theme.tags.length - 3}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
 
           {/* Action Buttons */}
           <div className="p-3 bg-white border-t border-gray-100">

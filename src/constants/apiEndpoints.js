@@ -204,7 +204,7 @@ export const API_ENDPOINTS = {
   NOTIFICATIONS: {
     BASE: '/notifications',
     BY_ID: (id) => `/notifications/${id}`,
-    UNREAD_COUNT: '/notifications/unread-count',
+    UNREAD_COUNT: '/notifications/unread/count',
     UNREAD: '/notifications/unread',
     MARK_READ: (id) => `/notifications/${id}/mark-read`,
     READ: (id) => `/notifications/${id}/read`,
@@ -213,6 +213,32 @@ export const API_ENDPOINTS = {
     DELETE: (id) => `/notifications/${id}`,
     DELETE_ALL: '/notifications/delete-all',
     PREFERENCES: '/notifications/preferences',
+  },
+
+  // ==================== SETTINGS ====================
+  SETTINGS: {
+    BASE: '/settings',
+    NOTIFICATIONS: '/settings/notifications',
+    PRIVACY: '/settings/privacy',
+    PREFERENCES: '/settings/preferences',
+    RESET: '/settings/reset',
+    EXPORT: '/settings/export',
+    IMPORT: '/settings/import',
+    LOGO: {
+      UPLOAD: '/settings/logo',
+      GET: '/settings/logo',
+      DELETE: '/settings/logo'
+    }
+  },
+
+  // ==================== BUSINESS SETTINGS ====================
+  BUSINESS_SETTINGS: {
+    BASE: '/business-settings',
+    LOGO: {
+      UPLOAD: '/business-settings/logo',
+      GET: '/business-settings/logo',
+      DELETE: '/business-settings/logo'
+    }
   },
 
   // ==================== THEMES ====================
@@ -337,7 +363,24 @@ export const API_ENDPOINTS = {
     },
 
     // Settings
+    // ==================== SETTINGS ====================
     SETTINGS: {
+      BASE: '/settings',
+      NOTIFICATIONS: '/settings/notifications',
+      PRIVACY: '/settings/privacy',
+      PREFERENCES: '/settings/preferences',
+      RESET: '/settings/reset',
+      EXPORT: '/settings/export',
+      IMPORT: '/settings/import',
+      LOGO: {
+        UPLOAD: '/settings/logo',
+        GET: '/settings/logo',
+        DELETE: '/settings/logo'
+      }
+    },
+    
+    // Admin Settings (legacy - keep for backward compatibility)
+    ADMIN_SETTINGS: {
       BASE: '/admin/settings',
       GENERAL: '/admin/settings/general',
       SECURITY: '/admin/settings/security',
@@ -385,4 +428,4 @@ export const buildURL = (endpoint, params = {}) => {
 };
 
 // Export individual categories for easier imports
-export const { AUTH, USERS, POSTS, STORIES, RESOURCES, QNA, MEETINGS, SUPPORT, MESSAGES, CONNECTIONS, DIRECTORY, NOTIFICATIONS, THEMES, ADMIN, MONITORING, HEALTH } = API_ENDPOINTS;
+export const { AUTH, USERS, POSTS, STORIES, RESOURCES, QNA, MEETINGS, SUPPORT, MESSAGES, CONNECTIONS, DIRECTORY, NOTIFICATIONS, THEMES, ADMIN, MONITORING, HEALTH, SETTINGS, BUSINESS_SETTINGS } = API_ENDPOINTS;

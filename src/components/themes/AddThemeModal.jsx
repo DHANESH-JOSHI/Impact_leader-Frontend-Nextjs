@@ -6,7 +6,6 @@ import {
   X,
   Save,
   Palette,
-  Tag,
 } from "lucide-react";
 
 const modalVariants = {
@@ -48,18 +47,16 @@ export default function AddThemeModal({
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    category: "",
-    tags: [],
+    isActive: true,
   });
-  const [tagInput, setTagInput] = useState("");
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
     if (errors[name]) {
       setErrors((prev) => ({
@@ -69,33 +66,15 @@ export default function AddThemeModal({
     }
   };
 
-  const handleAddTag = () => {
-    if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
-      setFormData((prev) => ({
-        ...prev,
-        tags: [...prev.tags, tagInput.trim()],
-      }));
-      setTagInput("");
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove) => {
-    setFormData((prev) => ({
-      ...prev,
-      tags: prev.tags.filter((tag) => tag !== tagToRemove),
-    }));
-  };
-
   const validateForm = () => {
     const newErrors = {};
     if (!formData.name.trim()) {
       newErrors.name = "Name is required";
+    } else if (formData.name.length > 100) {
+      newErrors.name = "Name cannot exceed 100 characters";
     }
-    if (!formData.description.trim()) {
-      newErrors.description = "Description is required";
-    }
-    if (!formData.category.trim()) {
-      newErrors.category = "Category is required";
+    if (formData.description && formData.description.length > 500) {
+      newErrors.description = "Description cannot exceed 500 characters";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -111,10 +90,8 @@ export default function AddThemeModal({
       setFormData({
         name: "",
         description: "",
-        category: "",
-        tags: [],
+        isActive: true,
       });
-      setTagInput("");
       setErrors({});
       onClose();
     } catch (error) {
@@ -128,10 +105,8 @@ export default function AddThemeModal({
     setFormData({
       name: "",
       description: "",
-      category: "",
-      tags: [],
+      isActive: true,
     });
-    setTagInput("");
     setErrors({});
     onClose();
   };
@@ -197,7 +172,7 @@ export default function AddThemeModal({
 
                 <div>
                   <label className="block text-sm font-medium mb-2" style={{ color: "#040606" }}>
-                    Description <span className="text-red-500">*</span>
+                    Description
                   </label>
                   <textarea
                     name="description"
@@ -206,81 +181,34 @@ export default function AddThemeModal({
                     rows={4}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
                     style={{ focusRingColor: "#2691ce" }}
-                    placeholder="Theme description"
+                    placeholder="Theme description (optional)"
+                    maxLength={500}
                   />
+                  <p className="text-xs mt-1" style={{ color: "#646464" }}>
+                    {formData.description.length}/500 characters
+                  </p>
                   {errors.description && (
                     <p className="text-sm text-red-500 mt-1">{errors.description}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: "#040606" }}>
-                    Category <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
-                    style={{ focusRingColor: "#2691ce" }}
-                    placeholder="Theme category"
-                  />
-                  {errors.category && (
-                    <p className="text-sm text-red-500 mt-1">{errors.category}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: "#040606" }}>
-                    Tags
-                  </label>
-                  <div className="flex items-center space-x-2 mb-2">
+                  <label className="flex items-center space-x-2 cursor-pointer">
                     <input
-                      type="text"
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyPress={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          handleAddTag();
-                        }
-                      }}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
-                      style={{ focusRingColor: "#2691ce" }}
-                      placeholder="Add a tag and press Enter"
+                      type="checkbox"
+                      name="isActive"
+                      checked={formData.isActive}
+                      onChange={handleInputChange}
+                      className="w-4 h-4 rounded focus:ring-2"
+                      style={{ accentColor: "#2691ce" }}
                     />
-                    <motion.button
-                      type="button"
-                      onClick={handleAddTag}
-                      className="px-4 py-2 rounded-lg font-medium"
-                      style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      Add
-                    </motion.button>
-                  </div>
-                  {formData.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {formData.tags.map((tag, index) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center space-x-1 px-3 py-1 rounded-md text-sm"
-                          style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
-                        >
-                          <span>{tag}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveTag(tag)}
-                            className="hover:text-red-500"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                    <span className="text-sm font-medium" style={{ color: "#040606" }}>
+                      Active
+                    </span>
+                  </label>
+                  <p className="text-xs mt-1 ml-6" style={{ color: "#646464" }}>
+                    Inactive themes won't appear in dropdowns but existing references will remain
+                  </p>
                 </div>
 
                 <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">

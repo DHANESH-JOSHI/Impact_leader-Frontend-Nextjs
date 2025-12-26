@@ -63,15 +63,6 @@ export default function DirectoryCardView({
     });
   };
 
-  const getESGCSRBadgeStyle = (isESG, isCSR) => {
-    if (isESG) {
-      return { backgroundColor: "#10b981", color: "white" };
-    }
-    if (isCSR) {
-      return { backgroundColor: "#3b82f6", color: "white" };
-    }
-    return { backgroundColor: "#e5e7eb", color: "#374151" };
-  };
 
   const getOrganizationTypeBadgeStyle = (type) => {
     const styles = {
@@ -196,13 +187,19 @@ export default function DirectoryCardView({
             </div>
 
             <div className="flex flex-wrap gap-2 mb-3">
-              {(entry.isESG || entry.isCSR) && (
-                <span
-                  className="px-2 py-1 rounded-md text-xs font-medium"
-                  style={getESGCSRBadgeStyle(entry.isESG, entry.isCSR)}
-                >
-                  {entry.isESG ? "ESG" : "CSR"}
-                </span>
+              {entry.themes && entry.themes.length > 0 && (
+                entry.themes.slice(0, 3).map((theme, index) => {
+                  const themeName = typeof theme === 'string' ? theme : (theme?.name || String(theme?._id || theme?.id || theme || ''));
+                  return (
+                    <span
+                      key={index}
+                      className="px-2 py-1 rounded-md text-xs font-medium"
+                      style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
+                    >
+                      {themeName}
+                    </span>
+                  );
+                })
               )}
               {entry.organizationType && (
                 <span

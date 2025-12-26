@@ -10,6 +10,7 @@ import AddPostModal from "@/components/posts/AddPostModal";
 import ViewPostModal from "@/components/posts/ViewPostModal";
 import DeleteConfirmModal from "@/components/core/DeleteConfirmModal";
 import { PostsService } from "@/services/postsService";
+import { ThemesService } from "@/services/themesService";
 
 
 const pageVariants = {
@@ -42,10 +43,11 @@ export default function PostsPage() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState("card");
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterCategory, setFilterCategory] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [filterESGCSR, setFilterESGCSR] = useState("all"); // all, esg, csr
-  const [sortBy, setSortBy] = useState("publishDate");
+  const [filterTheme, setFilterTheme] = useState("all");
+  const [themes, setThemes] = useState([]);
+  const [themesLoading, setThemesLoading] = useState(false);
+  const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
   const [pagination, setPagination] = useState({
     page: 1,
@@ -61,20 +63,45 @@ export default function PostsPage() {
   const [selectedPost, setSelectedPost] = useState(null);
 
   useEffect(() => {
+    if (themes.length === 0 && !themesLoading) {
+      loadThemes();
+    }
+  }, []);
+
+  useEffect(() => {
     loadPosts();
-  }, [filterESGCSR, filterCategory, filterStatus, searchQuery]);
+  }, [filterStatus, filterTheme, searchQuery, sortBy, sortOrder, pagination.page]);
+
+  const loadThemes = async () => {
+    if (themesLoading || themes.length > 0) return; // Prevent duplicate requests
+    setThemesLoading(true);
+    try {
+      const result = await ThemesService.getAllThemes({ limit: 100, sortBy: "name", sortOrder: "asc" });
+      if (result.success && Array.isArray(result.data)) {
+        setThemes(result.data);
+      }
+    } catch (error) {
+      console.error("Failed to load themes:", error);
+    } finally {
+      setThemesLoading(false);
+    }
+  };
 
   const loadPosts = async (params = {}) => {
     setLoading(true);
     try {
+      // Map frontend sortBy to backend sortBy (only use fields that exist in Post model)
+      // Backend Post model supports: createdAt, updatedAt, title, upvotes, views
+      // Use sortBy directly as it's already a valid field name
       const result = await PostsService.getAllPosts({
         page: pagination.page,
         limit: pagination.limit,
         search: searchQuery || undefined,
-        type: filterCategory !== 'all' ? filterCategory : undefined,
+        // Using latest API: isPublic instead of type (type doesn't exist in Post model)
         isPublic: filterStatus === 'published' ? true : filterStatus === 'draft' ? false : undefined,
-        isESG: filterESGCSR === "esg" ? true : filterESGCSR === "csr" ? false : undefined,
-        isCSR: filterESGCSR === "csr" ? true : filterESGCSR === "esg" ? false : undefined,
+        themes: filterTheme !== 'all' ? filterTheme : undefined,
+        sortBy: sortBy,
+        sortOrder: sortOrder,
         ...params
       });
 
@@ -120,13 +147,20 @@ export default function PostsPage() {
             excerpt: excerpt,
             content: content,
             author: authorName,
-            category: post.type || post.category || 'General',
+            // Post model doesn't have category field - removed
           status: post.isPublic ? 'published' : 'draft',
             publishDate: post.createdAt 
               ? new Date(post.createdAt).toISOString().split('T')[0] 
               : new Date().toISOString().split('T')[0],
             tags: tags,
-            themes: Array.isArray(post.themes) ? post.themes : [],
+            // Normalize themes: extract names from theme objects or use strings directly
+            themes: Array.isArray(post.themes) 
+              ? post.themes.map(theme => {
+                  if (typeof theme === 'string') return theme; // Already a name
+                  if (theme && typeof theme === 'object') return theme.name || theme; // Extract name from object
+                  return theme; // Fallback
+                }).filter(Boolean)
+              : [],
             views: typeof post.views === 'number' ? post.views : 0,
             likes: Array.isArray(post.upvotes) ? post.upvotes.length : (typeof post.upvotes === 'number' ? post.upvotes : 0),
             upvotes: Array.isArray(post.upvotes) ? post.upvotes : [],
@@ -138,8 +172,6 @@ export default function PostsPage() {
             image: (post.media && Array.isArray(post.media) && post.media.length > 0 && post.media[0].type === 'image') 
               ? post.media[0].url 
               : (post.image || "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&q=80"),
-            isESG: post.isESG || false,
-            isCSR: post.isCSR || false
           };
         }) || [];
 
@@ -163,53 +195,6 @@ export default function PostsPage() {
     }
   };
 
-  
-
-  // Filter posts based on search and filters
-  const filteredPosts = posts.filter((post) => {
-    const matchesSearch =
-      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.tags.some((tag) =>
-        tag.toLowerCase().includes(searchQuery.toLowerCase())
-      ) ||
-      (post.isESG && "esg".includes(searchQuery.toLowerCase())) ||
-      (post.isCSR && "csr".includes(searchQuery.toLowerCase()));
-
-    const matchesCategory =
-      filterCategory === "all" ||
-      post.category.toLowerCase() === filterCategory.toLowerCase();
-    const matchesStatus =
-      filterStatus === "all" || post.status === filterStatus;
-    const matchesESGCSR =
-      filterESGCSR === "all" ||
-      (filterESGCSR === "esg" && post.isESG) ||
-      (filterESGCSR === "csr" && post.isCSR);
-
-    return matchesSearch && matchesCategory && matchesStatus && matchesESGCSR;
-  });
-
-  // Sort posts
-  const sortedPosts = [...filteredPosts].sort((a, b) => {
-    let aVal = a[sortBy];
-    let bVal = b[sortBy];
-
-    if (sortBy === "publishDate") {
-      aVal = new Date(aVal);
-      bVal = new Date(bVal);
-    } else if (typeof aVal === "string") {
-      aVal = aVal.toLowerCase();
-      bVal = bVal.toLowerCase();
-    }
-
-    if (sortOrder === "asc") {
-      return aVal > bVal ? 1 : -1;
-    } else {
-      return aVal < bVal ? 1 : -1;
-    }
-  });
-
   const handleAddPost = async (newPost) => {
     try {
       setLoading(true);
@@ -224,8 +209,6 @@ export default function PostsPage() {
         isPinned: newPost.isPinned || newPost.featured || false,
         status: newPost.status || 'draft',
         // Ensure exactly one is true (mutually exclusive)
-        isESG: newPost.isESG === true ? true : false,
-        isCSR: newPost.isESG === true ? false : true
       };
   
       let result;
@@ -277,11 +260,7 @@ export default function PostsPage() {
           tags: Array.isArray(postData.tags) ? postData.tags : [],
           isPublic: postData.status === 'published',
           allowComments: postData.allowComments !== false,
-          isPinned: postData.isPinned || postData.featured || false,
           status: postData.status || 'draft',
-          // Ensure exactly one is true (mutually exclusive)
-          isESG: postData.isESG === true ? true : false,
-          isCSR: postData.isESG === true ? false : true
         };
 
         // Check if there are media files to upload
@@ -342,19 +321,13 @@ export default function PostsPage() {
     setSearchQuery(query);
   };
 
-  const handleCategoryFilter = (category) => {
-    setFilterCategory(category);
-  };
-
   const handleStatusFilter = (status) => {
     setFilterStatus(status);
   };
 
-  const handleESGCSRFilter = (filter) => {
-    setFilterESGCSR(filter);
+  const handleThemeFilter = (theme) => {
+    setFilterTheme(theme);
   };
-
-  const categories = ["all", ...new Set(posts.map((post) => post.category))];
 
   return (
     <motion.div
@@ -371,21 +344,19 @@ export default function PostsPage() {
             setViewMode={handleViewModeChange}
             searchQuery={searchQuery}
             setSearchQuery={handleSearchChange}
-            filterCategory={filterCategory}
-            setFilterCategory={handleCategoryFilter}
             filterStatus={filterStatus}
             setFilterStatus={handleStatusFilter}
-            filterESGCSR={filterESGCSR}
-            setFilterESGCSR={handleESGCSRFilter}
+            filterTheme={filterTheme}
+            setFilterTheme={handleThemeFilter}
             sortBy={sortBy}
             setSortBy={setSortBy}
             sortOrder={sortOrder}
             setSortOrder={setSortOrder}
-            categories={categories}
+            themes={themes}
             onAddPost={() => {
               setIsAddModalOpen(true);
             }}
-            totalPosts={filteredPosts.length}
+            totalPosts={pagination.total}
           />
         </motion.div>
 
@@ -401,7 +372,7 @@ export default function PostsPage() {
               {viewMode === "card" ? (
                 <PostsCardView
                   key="card-view"
-                  posts={sortedPosts}
+                  posts={posts}
                   onViewPost={handleViewPost}
                   onEditPost={handleEditPost}
                   onDeletePost={handleDeletePost}
@@ -409,7 +380,7 @@ export default function PostsPage() {
               ) : (
                 <PostsTableView
                   key="table-view"
-                  posts={sortedPosts}
+                  posts={posts}
                   onViewPost={handleViewPost}
                   onEditPost={handleEditPost}
                   onDeletePost={handleDeletePost}
@@ -425,7 +396,7 @@ export default function PostsPage() {
             setIsAddModalOpen(false);
           }}
           onSubmit={handleAddPost}
-          categories={categories.filter((cat) => cat !== "all")}
+          themes={themes}
         />
 
         <AddPostModal
@@ -435,8 +406,8 @@ export default function PostsPage() {
             setSelectedPost(null);
           }}
           onSubmit={handleSaveEditedPost}
-          categories={categories.filter((cat) => cat !== "all")}
           initialPost={selectedPost}
+          themes={themes}
         />
 
         <ViewPostModal
@@ -446,6 +417,7 @@ export default function PostsPage() {
           }}
           post={selectedPost}
           onEdit={handleEditPost}
+          themes={themes}
         />
 
         <DeleteConfirmModal

@@ -176,37 +176,6 @@ export default function SupportPage() {
     await fetchTickets();
   };
 
-  // Filtered tickets based on search and filters
-  const filteredTickets = tickets.filter((ticket) => {
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const matchesSearch =
-        ticket.title?.toLowerCase().includes(query) ||
-        ticket.description?.toLowerCase().includes(query) ||
-        ticket.ticketNumber?.toLowerCase().includes(query) ||
-        ticket.requester?.name?.toLowerCase().includes(query);
-
-      if (!matchesSearch) return false;
-    }
-
-    // Category filter
-    if (filterCategory !== "all" && ticket.category !== filterCategory) {
-      return false;
-    }
-
-    // Status filter
-    if (filterStatus !== "all" && ticket.status !== filterStatus) {
-      return false;
-    }
-
-    // Priority filter
-    if (filterPriority !== "all" && ticket.priority !== filterPriority) {
-      return false;
-    }
-
-    return true;
-  });
 
   return (
     <motion.div
@@ -237,7 +206,7 @@ export default function SupportPage() {
         statuses={statuses}
         priorities={priorities}
         onAddTicket={handleAddTicket}
-        totalTickets={filteredTickets.length}
+        totalTickets={pagination.total}
       />
 
       {/* Loading State */}
@@ -255,7 +224,7 @@ export default function SupportPage() {
         </motion.div>
       ) : (
         <SupportTableView
-          tickets={filteredTickets}
+          tickets={tickets}
           onViewTicket={handleViewTicket}
           onEditTicket={handleEditTicket}
           onDeleteTicket={handleDeleteTicket}

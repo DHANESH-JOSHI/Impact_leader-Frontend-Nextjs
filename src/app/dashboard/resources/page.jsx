@@ -10,6 +10,7 @@ import AddResourceModal from "@/components/resources/AddResourceModal";
 import ViewResourceModal from "@/components/resources/ViewResourceModal";
 import DeleteConfirmModal from "@/components/core/DeleteConfirmModal";
 import { ResourcesService } from "@/services/resourcesService";
+import { ThemesService } from "@/services/themesService";
 
 const toISODate = (d) => {
   try {
@@ -55,8 +56,10 @@ export default function ResourcesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterType, setFilterType] = useState("all");
-  const [filterESGCSR, setFilterESGCSR] = useState("all"); // all, esg, csr
+  const [filterTheme, setFilterTheme] = useState("all");
   const [filterPublic, setFilterPublic] = useState("all"); // all, public, private
+  const [themes, setThemes] = useState([]);
+  const [themesLoading, setThemesLoading] = useState(false);
 
   const [sort, setSort] = useState("newest");
 
@@ -73,25 +76,49 @@ export default function ResourcesPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedResource, setSelectedResource] = useState(null);
 
-const categories = useMemo(
-  () => {
-    const uniqueCategories = Array.from(
-      new Set(
-        resources
-          .map((r) => r.category)
-          .filter(Boolean)
-          .filter(c => c !== "all" && c !== "")
-      )
-    );
-    return uniqueCategories.length > 0 
-      ? ["all", ...uniqueCategories]
-      : ["all"];
-  },
-  [resources]
-);
-const modalCategories = useMemo(() => {
-  return categories.filter((c) => c !== "all" && c !== "");
-}, [categories]);
+  const [categories, setCategories] = useState(["all"]);
+  const modalCategories = useMemo(() => {
+    return categories.filter((c) => c !== "all" && c !== "");
+  }, [categories]);
+
+  // Load categories from backend
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const result = await ResourcesService.getResourceCategories();
+        if (result?.success && Array.isArray(result.data)) {
+          setCategories(["all", ...result.data.filter(Boolean)]);
+        }
+      } catch (error) {
+        console.error("Failed to load categories:", error);
+        // Fallback to empty array with "all"
+        setCategories(["all"]);
+      }
+    };
+    loadCategories();
+  }, []);
+
+  // Load themes from backend
+  useEffect(() => {
+    if (themes.length === 0 && !themesLoading) {
+      loadThemes();
+    }
+  }, []);
+
+  const loadThemes = async () => {
+    if (themesLoading || themes.length > 0) return; // Prevent duplicate requests
+    setThemesLoading(true);
+    try {
+      const result = await ThemesService.getAllThemes({ limit: 100, sortBy: "name", sortOrder: "asc" });
+      if (result.success && Array.isArray(result.data)) {
+        setThemes(result.data);
+      }
+    } catch (error) {
+      console.error("Failed to load themes:", error);
+    } finally {
+      setThemesLoading(false);
+    }
+  };
 
   const searchDebounceRef = useRef(null);
 
@@ -107,7 +134,7 @@ const modalCategories = useMemo(() => {
     pagination.limit,
     filterCategory,
     filterType,
-    filterESGCSR,
+    filterTheme,
     filterPublic,
     sort,
     searchQuery,
@@ -122,9 +149,8 @@ const modalCategories = useMemo(() => {
         search: searchQuery || undefined,
         category: filterCategory !== "all" ? filterCategory : undefined,
         type: filterType !== "all" ? filterType : undefined,
-        isESG: filterESGCSR === "esg" ? true : filterESGCSR === "csr" ? false : undefined,
-        isCSR: filterESGCSR === "csr" ? true : filterESGCSR === "esg" ? false : undefined,
         isPublic: filterPublic === "public" ? true : filterPublic === "private" ? false : undefined,
+        themes: filterTheme !== "all" ? filterTheme : undefined,
         sort,
         ...extra,
       });
@@ -180,11 +206,16 @@ const modalCategories = useMemo(() => {
             duration: r.duration || 0,
             category: r.category || "General",
             tags: tags,
-            themes: Array.isArray(r.themes) ? r.themes : [],
+            // Normalize themes: extract names from theme objects or use strings directly
+            themes: Array.isArray(r.themes) 
+              ? r.themes.map(theme => {
+                  if (typeof theme === 'string') return theme; // Already a name
+                  if (theme && typeof theme === 'object') return theme.name || theme; // Extract name from object
+                  return theme; // Fallback
+                }).filter(Boolean)
+              : [],
             author: authorName,
             status: r.isPublic !== false && r.isActive !== false ? "published" : "draft",
-            isESG: r.isESG || false,
-            isCSR: r.isCSR || false,
             isPublic: r.isPublic !== undefined ? r.isPublic : true,
             thumbnail:
               r.thumbnail ||
@@ -233,40 +264,6 @@ const modalCategories = useMemo(() => {
     }
   };
 
-  /* Client-side filtering (for fallback/demo & extra safety) */
-  const filteredResources = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    return resources.filter((r) => {
-      const matchesSearch =
-        !q ||
-        r.title.toLowerCase().includes(q) ||
-        r.description.toLowerCase().includes(q) ||
-        r.author.toLowerCase().includes(q) ||
-        (r.tags || []).some((t) => t.toLowerCase().includes(q));
-      const matchesCategory =
-        filterCategory === "all" ||
-        r.category.toLowerCase() === filterCategory.toLowerCase();
-      const matchesType = filterType === "all" || r.type === filterType;
-      return matchesSearch && matchesCategory && matchesType;
-    });
-  }, [resources, searchQuery, filterCategory, filterType]);
-
-  const sortedResources = useMemo(() => {
-    const list = [...filteredResources];
-    list.sort((a, b) => {
-      if (sort === "newest") {
-        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
-      } else if (sort === "oldest") {
-        return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
-      } else if (sort === "downloads") {
-        return (b.downloads || 0) - (a.downloads || 0);
-      } else if (sort === "name") {
-        return (a.title || "").toLowerCase().localeCompare((b.title || "").toLowerCase());
-      }
-      return 0;
-    });
-    return list;
-  }, [filteredResources, sort]);
 
   /* Handlers */
   const handleAddResource = async (payload) => {
@@ -282,8 +279,6 @@ const modalCategories = useMemo(() => {
         themes: Array.isArray(payload.themes) ? payload.themes : (payload.themes ? payload.themes.split(',').map(t => t.trim()).filter(Boolean) : []),
         isPublic: payload.isPublic !== undefined ? payload.isPublic : true,
         // Ensure exactly one is true (mutually exclusive)
-        isESG: payload.isESG === true ? true : false,
-        isCSR: payload.isESG === true ? false : true, // Default to CSR if ESG is not true
         ...(payload.url && { url: payload.url }),
       };
   
@@ -351,8 +346,6 @@ const modalCategories = useMemo(() => {
           themes: Array.isArray(resourceData.themes) ? resourceData.themes : (resourceData.themes ? resourceData.themes.split(',').map(t => t.trim()).filter(Boolean) : []),
           isPublic: resourceData.isPublic !== undefined ? resourceData.isPublic : true,
           // Ensure exactly one is true (mutually exclusive)
-          isESG: resourceData.isESG === true ? true : false,
-          isCSR: resourceData.isESG === true ? false : true,
           ...(resourceData.url && { url: resourceData.url }),
           ...(resourceData.file && { file: resourceData.file }),
         };
@@ -420,14 +413,15 @@ const modalCategories = useMemo(() => {
     setFilterType(type);
   };
 
-  const handleESGCSRFilter = (value) => {
-    setPagination((p) => ({ ...p, page: 1 }));
-    setFilterESGCSR(value);
-  };
 
   const handlePublicFilter = (value) => {
     setPagination((p) => ({ ...p, page: 1 }));
     setFilterPublic(value);
+  };
+
+  const handleThemeFilter = (theme) => {
+    setPagination((p) => ({ ...p, page: 1 }));
+    setFilterTheme(theme);
   };
 
   const handleResourceDownload = async (resource) => {
@@ -444,7 +438,11 @@ const modalCategories = useMemo(() => {
     }
   };
 
-  const types = ["all", "document", "video", "audio", "image", "link", "other"];
+  // Use backend enum for resource types
+  const types = useMemo(() => [
+    "all",
+    ...ResourcesService.getResourceTypes().map(t => t.value)
+  ], []);
 
   return (
     <motion.div
@@ -465,18 +463,19 @@ const modalCategories = useMemo(() => {
             setFilterCategory={handleCategoryFilter}
             filterType={filterType}
             setFilterType={handleTypeFilter}
-            filterESGCSR={filterESGCSR}
-            setFilterESGCSR={handleESGCSRFilter}
+            filterTheme={filterTheme}
+            setFilterTheme={handleThemeFilter}
             filterPublic={filterPublic}
             setFilterPublic={handlePublicFilter}
             sort={sort}
             setSort={setSort}
             categories={categories}
             types={types}
+            themes={themes}
             onAddResource={() => {
               setIsAddModalOpen(true);
             }}
-            totalResources={filteredResources.length}
+            totalResources={pagination.total}
           />
         </motion.div>
 
@@ -492,7 +491,7 @@ const modalCategories = useMemo(() => {
               {viewMode === "card" ? (
                 <ResourcesCardView
                   key="card-view"
-                  resources={sortedResources}
+                  resources={resources}
                   onViewResource={handleViewResource}
                   onEditResource={handleEditResource}
                   onDeleteResource={handleDeleteResource}
@@ -501,7 +500,7 @@ const modalCategories = useMemo(() => {
               ) : (
                 <ResourcesTableView
                   key="table-view"
-                  resources={sortedResources}
+                  resources={resources}
                   onViewResource={handleViewResource}
                   onEditResource={handleEditResource}
                   onDeleteResource={handleDeleteResource}

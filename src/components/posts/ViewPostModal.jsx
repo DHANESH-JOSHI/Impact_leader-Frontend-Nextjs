@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -14,7 +14,12 @@ import {
   Clock,
   Share2,
   Save,
+  Check,
+  Upload,
+  Video,
+  Trash2,
 } from "lucide-react";
+import { ThemesService } from "@/services/themesService";
 
 const modalVariants = {
   hidden: {
@@ -47,9 +52,55 @@ const backdropVariants = {
   exit: { opacity: 0 },
 };
 
-export default function ViewPostModal({ isOpen, onClose, post, onEdit }) {
+export default function ViewPostModal({ isOpen, onClose, post, onEdit, themes: themesProp = null }) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editFormData, setEditFormData] = useState({});
+  const [availableThemes, setAvailableThemes] = useState([]);
+  const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
+  const themeDropdownRef = useRef(null);
+  const [selectedMedia, setSelectedMedia] = useState([]);
+  const fileInputRef = useRef(null);
+
+  // Load themes only if not provided as prop, and only when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    if (themesProp && themesProp.length > 0) {
+      setAvailableThemes(themesProp);
+    } else if (availableThemes.length === 0) {
+      // Only load if themes prop is not provided and we don't have themes yet
+      loadThemes();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, themesProp]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target)) {
+        setIsThemeDropdownOpen(false);
+      }
+    };
+
+    if (isThemeDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isThemeDropdownOpen]);
+
+  const loadThemes = async () => {
+    try {
+      const result = await ThemesService.getAllThemes({ limit: 100, sortBy: "name", sortOrder: "asc" });
+      if (result.success && Array.isArray(result.data)) {
+        setAvailableThemes(result.data);
+      }
+    } catch (error) {
+      console.error("Failed to load themes:", error);
+    }
+  };
 
   // Initialize edit form data when entering edit mode
   const handleEditToggle = () => {
@@ -57,14 +108,28 @@ export default function ViewPostModal({ isOpen, onClose, post, onEdit }) {
       setEditFormData({
         title: post.title,
         content: post.content,
-        author: post.author,
         status: post.status || "draft",
         tags: Array.isArray(post.tags) ? post.tags.join(", ") : (post.tags || ""),
-        themes: Array.isArray(post.themes) ? post.themes.join(", ") : (post.themes || ""),
-        featured: post.isPinned || post.featured || false,
-        isESG: post.isESG || false,
-        isCSR: post.isCSR !== undefined ? post.isCSR : true,
+        // Normalize themes: extract names from theme objects or use strings directly
+        themes: Array.isArray(post.themes) 
+          ? post.themes.map(theme => {
+              if (typeof theme === 'string') return theme; // Already a name
+              if (theme && typeof theme === 'object') return theme.name || String(theme._id || theme.id || theme); // Extract name from object
+              return String(theme); // Fallback
+            }).filter(Boolean)
+          : [],
+        allowComments: post.allowComments !== false,
       });
+      // Load existing media if editing
+      if (post.media && Array.isArray(post.media)) {
+        setSelectedMedia(post.media.map(m => ({ 
+          url: typeof m === 'string' ? m : (m.url || m.path || ''), 
+          isExisting: true,
+          name: typeof m === 'string' ? 'Existing media' : (m.name || 'Existing media')
+        })));
+      } else {
+        setSelectedMedia([]);
+      }
     }
     setIsEditMode(!isEditMode);
   };
@@ -78,6 +143,42 @@ export default function ViewPostModal({ isOpen, onClose, post, onEdit }) {
     }));
   };
 
+  // Handle media file selection
+  const handleMediaSelect = (e) => {
+    const files = Array.from(e.target.files || []);
+    const validFiles = files.filter(file => {
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+      return isImage || isVideo;
+    });
+
+    const newMedia = validFiles.map(file => ({
+      file,
+      url: URL.createObjectURL(file),
+      isExisting: false,
+      name: file.name
+    }));
+
+    setSelectedMedia(prev => [...prev, ...newMedia]);
+    
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Remove media
+  const handleRemoveMedia = (index) => {
+    setSelectedMedia(prev => {
+      const newMedia = prev.filter((_, i) => i !== index);
+      // Revoke object URL if it was a new file
+      if (!prev[index].isExisting && prev[index].url.startsWith('blob:')) {
+        URL.revokeObjectURL(prev[index].url);
+      }
+      return newMedia;
+    });
+  };
+
   // Handle save changes
   const handleSaveChanges = () => {
     if (post) {
@@ -87,14 +188,12 @@ export default function ViewPostModal({ isOpen, onClose, post, onEdit }) {
         tags: editFormData.tags
           ? editFormData.tags.split(",").map((tag) => tag.trim()).filter((tag) => tag)
           : [],
-        themes: editFormData.themes
-          ? editFormData.themes.split(",").map((theme) => theme.trim()).filter((theme) => theme)
-          : [],
-        isPinned: editFormData.featured || false,
-        // Ensure exactly one is true (mutually exclusive)
-        isESG: editFormData.isESG === true ? true : false,
-        isCSR: editFormData.isESG === true ? false : true,
+        themes: Array.isArray(editFormData.themes) ? editFormData.themes : [],
         status: editFormData.status || "draft",
+        allowComments: editFormData.allowComments !== false,
+        // Include media files (only new files, not existing URLs)
+        media: selectedMedia.filter(m => !m.isExisting && m.file).map(m => m.file),
+        images: selectedMedia.filter(m => !m.isExisting && m.file).map(m => m.file),
       };
       onEdit(updatedPost);
       setIsEditMode(false);
@@ -103,8 +202,16 @@ export default function ViewPostModal({ isOpen, onClose, post, onEdit }) {
 
   // Handle modal close
   const handleClose = () => {
+    setIsThemeDropdownOpen(false);
     setIsEditMode(false);
     setEditFormData({});
+    // Clean up blob URLs
+    selectedMedia.forEach(media => {
+      if (!media.isExisting && media.url.startsWith('blob:')) {
+        URL.revokeObjectURL(media.url);
+      }
+    });
+    setSelectedMedia([]);
     onClose();
   };
 
@@ -246,58 +353,12 @@ export default function ViewPostModal({ isOpen, onClose, post, onEdit }) {
                     />
                   </motion.div>
 
-                  {/* Meta Information Grid */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  {/* Status and Allow Comments */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <motion.div
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.2 }}
-                    >
-                      <label
-                        className="block text-sm font-medium mb-2"
-                        style={{ color: "#040606" }}
-                      >
-                        <User className="inline h-4 w-4 mr-1" />
-                        Author
-                      </label>
-                      <input
-                        type="text"
-                        name="author"
-                        value={editFormData.author || ""}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                        style={{ focusRingColor: "#2691ce" }}
-                        placeholder="Author name..."
-                      />
-                    </motion.div>
-
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.3 }}
-                    >
-                      <label
-                        className="block text-sm font-medium mb-2"
-                        style={{ color: "#040606" }}
-                      >
-                        <Tag className="inline h-4 w-4 mr-1" />
-                        Category
-                      </label>
-                      <input
-                        type="text"
-                        name="category"
-                        value={editFormData.category || ""}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                        style={{ focusRingColor: "#2691ce" }}
-                        placeholder="Post category..."
-                      />
-                    </motion.div>
-
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.4 }}
                     >
                       <label
                         className="block text-sm font-medium mb-2"
@@ -317,107 +378,36 @@ export default function ViewPostModal({ isOpen, onClose, post, onEdit }) {
                         <option value="archived">Archived</option>
                       </select>
                     </motion.div>
-                  </div>
 
-                  {/* ESG/CSR Type Selection */}
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.45 }}
-                  >
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 }}
                     >
-                      Type *
-                    </label>
-                    <div className="flex gap-4">
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="esgcsr"
-                          checked={editFormData.isESG || false}
-                          onChange={() => setEditFormData(prev => ({ ...prev, isESG: true, isCSR: false }))}
-                          className="mr-2"
-                          style={{ accentColor: "#2691ce" }}
-                        />
-                        <span style={{ color: "#040606" }}>ESG</span>
+                      <label
+                        className="block text-sm font-medium mb-2"
+                        style={{ color: "#040606" }}
+                      >
+                        Comments
                       </label>
-                      <label className="flex items-center">
+                      <div className="flex items-center space-x-2 p-3 border border-gray-300 rounded-lg">
                         <input
-                          type="radio"
-                          name="esgcsr"
-                          checked={editFormData.isCSR !== undefined ? editFormData.isCSR : true}
-                          onChange={() => setEditFormData(prev => ({ ...prev, isESG: false, isCSR: true }))}
-                          className="mr-2"
-                          style={{ accentColor: "#2691ce" }}
+                          type="checkbox"
+                          name="allowComments"
+                          checked={editFormData.allowComments !== false}
+                          onChange={handleInputChange}
+                          className="w-4 h-4 rounded focus:ring-2"
+                          style={{
+                            color: "#2691ce",
+                            focusRingColor: "#2691ce",
+                          }}
                         />
-                        <span style={{ color: "#040606" }}>CSR</span>
-                      </label>
-                    </div>
-                  </motion.div>
-
-                  {/* Featured Post Toggle */}
-                  <motion.div
-                    className="rounded-lg p-4"
-                    style={{ backgroundColor: "#f8fafc" }}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.5 }}
-                  >
-                    <label className="flex items-center space-x-3">
-                      <input
-                        type="checkbox"
-                        name="featured"
-                        checked={editFormData.featured || false}
-                        onChange={handleInputChange}
-                        className="w-5 h-5 rounded focus:ring-2"
-                        style={{ color: "#2691ce", focusRingColor: "#2691ce" }}
-                      />
-                      <div className="flex items-center space-x-2">
-                        <Star className="h-5 w-5 text-yellow-500" />
-                        <span
-                          className="text-sm font-medium"
-                          style={{ color: "#040606" }}
-                        >
-                          Mark as Featured Post
+                        <span className="text-sm" style={{ color: "#646464" }}>
+                          Allow Comments
                         </span>
                       </div>
-                    </label>
-                    <p
-                      className="text-xs mt-2 ml-8"
-                      style={{ color: "#646464" }}
-                    >
-                      Featured posts appear prominently on your site
-                    </p>
-                  </motion.div>
-
-                  {/* Post Excerpt */}
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.6 }}
-                  >
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
-                    >
-                      Post Excerpt
-                    </label>
-                    <textarea
-                      name="excerpt"
-                      value={editFormData.excerpt || ""}
-                      onChange={handleInputChange}
-                      rows={4}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none"
-                      style={{ focusRingColor: "#2691ce" }}
-                      placeholder="Write a compelling excerpt that summarizes your post..."
-                    />
-                    <p className="text-xs mt-1" style={{ color: "#646464" }}>
-                      This excerpt will be shown in post previews and search
-                      results
-                    </p>
-                  </motion.div>
+                    </motion.div>
+                  </div>
 
                   {/* Full Content */}
                   <motion.div
@@ -476,29 +466,196 @@ export default function ViewPostModal({ isOpen, onClose, post, onEdit }) {
                     </p>
                   </motion.div>
 
-                  {/* Themes Input */}
+                  {/* Themes Multi-Select */}
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.85 }}
+                    className="relative"
+                    ref={themeDropdownRef}
                   >
                     <label
-                      className="block text-sm font-medium mb-2"
+                      className="flex items-center text-sm font-medium mb-2"
                       style={{ color: "#040606" }}
                     >
+                      <Tag className="w-4 h-4 mr-2" style={{ color: "#2691ce" }} />
                       Themes
                     </label>
-                    <input
-                      type="text"
-                      name="themes"
-                      value={editFormData.themes || ""}
-                      onChange={handleInputChange}
-                      placeholder="Enter themes separated by commas (e.g., sustainability, environment, governance)"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                      style={{ focusRingColor: "#2691ce" }}
-                    />
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all text-left flex items-center justify-between"
+                        style={{ focusRingColor: "#2691ce" }}
+                      >
+                        <span className={(Array.isArray(editFormData.themes) ? editFormData.themes.length : 0) > 0 ? "text-gray-900" : "text-gray-500"}>
+                          {(Array.isArray(editFormData.themes) ? editFormData.themes.length : 0) > 0 
+                            ? `${editFormData.themes.length} theme${editFormData.themes.length !== 1 ? 's' : ''} selected`
+                            : "Select themes..."}
+                        </span>
+                        <span className="text-gray-400">▼</span>
+                      </button>
+                      {isThemeDropdownOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                        >
+                          {availableThemes.length > 0 ? (
+                            availableThemes.map((theme) => {
+                              const isSelected = Array.isArray(editFormData.themes) && editFormData.themes.includes(theme.name);
+                              return (
+                                <div
+                                  key={theme._id || theme.id}
+                                  onClick={() => {
+                                    const currentThemes = Array.isArray(editFormData.themes) ? editFormData.themes : [];
+                                    if (isSelected) {
+                                      setEditFormData(prev => ({
+                                        ...prev,
+                                        themes: currentThemes.filter(t => t !== theme.name)
+                                      }));
+                                    } else {
+                                      setEditFormData(prev => ({
+                                        ...prev,
+                                        themes: [...currentThemes, theme.name]
+                                      }));
+                                    }
+                                  }}
+                                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center justify-between"
+                                >
+                                  <span>{theme.name}</span>
+                                  {isSelected && (
+                                    <Check className="w-4 h-4" style={{ color: "#2691ce" }} />
+                                  )}
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <div className="px-4 py-2 text-gray-500 text-sm">No themes available</div>
+                          )}
+                        </motion.div>
+                      )}
+                    </div>
+                    {Array.isArray(editFormData.themes) && editFormData.themes.length > 0 && (
+                      <motion.div
+                        className="flex flex-wrap gap-2 mt-2"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        {editFormData.themes.map((themeName, index) => (
+                          <motion.span
+                            key={themeName}
+                            className="px-3 py-1 text-sm rounded-full text-white cursor-pointer flex items-center gap-1"
+                            style={{ backgroundColor: "#10b981" }}
+                            onClick={() => {
+                              setEditFormData(prev => ({
+                                ...prev,
+                                themes: (Array.isArray(prev.themes) ? prev.themes : []).filter(t => t !== themeName)
+                              }));
+                            }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: index * 0.1 }}
+                          >
+                            {themeName}
+                            <span className="ml-1 text-xs">×</span>
+                          </motion.span>
+                        ))}
+                      </motion.div>
+                    )}
                     <p className="text-xs mt-1" style={{ color: "#646464" }}>
-                      CSR/ESG themes for categorization
+                      Select themes from the dropdown. Click on selected themes to remove them.
+                    </p>
+                  </motion.div>
+
+                  {/* Media Upload */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.9 }}
+                  >
+                    <label
+                      className="flex items-center text-sm font-medium mb-2"
+                      style={{ color: "#040606" }}
+                    >
+                      <Upload className="w-4 h-4 mr-2" style={{ color: "#2691ce" }} />
+                      Media (Images/Videos) - Optional
+                    </label>
+                    <div className="space-y-3">
+                      {/* File Input */}
+                      <div className="relative">
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleMediaSelect}
+                          accept="image/*,video/*"
+                          multiple
+                          className="hidden"
+                          id="media-upload-edit"
+                        />
+                        <label
+                          htmlFor="media-upload-edit"
+                          className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 transition-colors"
+                          style={{ 
+                            borderColor: "#2691ce",
+                            backgroundColor: "#f8fafc"
+                          }}
+                        >
+                          <Upload className="w-5 h-5 mr-2" style={{ color: "#2691ce" }} />
+                          <span className="text-sm" style={{ color: "#646464" }}>
+                            Click to upload images or videos
+                          </span>
+                        </label>
+                      </div>
+
+                      {/* Media Preview */}
+                      {selectedMedia.length > 0 && (
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
+                          {selectedMedia.map((media, index) => (
+                            <motion.div
+                              key={index}
+                              className="relative group"
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: index * 0.1 }}
+                            >
+                              {media.url && (
+                                <>
+                                  {media.url.match(/\.(jpg|jpeg|png|gif|webp)$/i) || 
+                                   (media.file && media.file.type.startsWith('image/')) ? (
+                                    <img
+                                      src={media.url}
+                                      alt={media.name || `Media ${index + 1}`}
+                                      className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-32 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
+                                      <Video className="w-8 h-8" style={{ color: "#2691ce" }} />
+                                    </div>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveMedia(index)}
+                                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                  {media.isExisting && (
+                                    <span className="absolute bottom-1 left-1 px-2 py-1 text-xs bg-blue-500 text-white rounded">
+                                      Existing
+                                    </span>
+                                  )}
+                                </>
+                              )}
+                            </motion.div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs mt-1" style={{ color: "#646464" }}>
+                      Upload images or videos to attach to your post. You can select multiple files.
                     </p>
                   </motion.div>
 
@@ -590,36 +747,13 @@ export default function ViewPostModal({ isOpen, onClose, post, onEdit }) {
                         <Calendar className="h-4 w-4" />
                         <span>{formatDate(post.publishDate)}</span>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Tag className="h-4 w-4" />
-                        <span>{post.category}</span>
-                      </div>
+                      {/* Category removed - Post model doesn't have category field */}
                       <div className="flex items-center space-x-2">
                         <Clock className="h-4 w-4" />
                         <span>
                           {calculateReadingTime(post.content)} min read
                         </span>
                       </div>
-                      {(post.isESG || post.isCSR) && (
-                        <div className="flex items-center space-x-2">
-                          {post.isESG && (
-                            <span
-                              className="px-2 py-1 text-xs font-medium rounded-full text-white"
-                              style={{ backgroundColor: "#10b981" }}
-                            >
-                              ESG
-                            </span>
-                          )}
-                          {post.isCSR && (
-                            <span
-                              className="px-2 py-1 text-xs font-medium rounded-full text-white"
-                              style={{ backgroundColor: "#2691ce" }}
-                            >
-                              CSR
-                            </span>
-                          )}
-                        </div>
-                      )}
                     </motion.div>
 
                     {/* Post Statistics */}

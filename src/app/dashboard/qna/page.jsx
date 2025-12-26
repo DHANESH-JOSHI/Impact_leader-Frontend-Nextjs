@@ -61,17 +61,25 @@ export default function QnaPage() {
 
   useEffect(() => {
     loadQnaData();
-  }, []);
+  }, [searchQuery, filterCategory, filterAnswered, sortBy, sortOrder, pagination.page]);
 
   const loadQnaData = async (params = {}) => {
     setLoading(true);
     try {
+      // Map filterAnswered to status: answered = closed, unanswered = open
+      let statusFilter = undefined;
+      if (filterAnswered === "answered") {
+        statusFilter = "closed";
+      } else if (filterAnswered === "unanswered") {
+        statusFilter = "open";
+      }
+
       const result = await QnAService.getQuestions({
         page: pagination.page,
         limit: pagination.limit,
         search: searchQuery || undefined,
-        category: filterCategory !== "all" ? filterCategory : undefined,
-        tags: undefined,
+        themes: filterCategory !== "all" ? filterCategory : undefined, // Backend expects 'themes', not 'category'
+        status: statusFilter,
         sortBy: sortBy,
         sortOrder: sortOrder,
         ...params,
@@ -148,51 +156,6 @@ export default function QnaPage() {
     }
   };
 
-  // yhn se sare filters aur search ka kaam hota hai
-  const filteredQnaData = qnaData.filter((item) => {
-    const matchesSearch =
-      item.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.answer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.tags.some((tag) =>
-        tag.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-
-    const matchesCategory =
-      filterCategory === "all" ||
-      item.category.toLowerCase() === filterCategory.toLowerCase();
-
-    const matchesAnswered =
-      filterAnswered === "all" ||
-      (filterAnswered === "answered" && item.isAnswered) ||
-      (filterAnswered === "unanswered" && !item.isAnswered);
-
-    return (
-      matchesSearch &&
-      matchesCategory &&
-      matchesAnswered
-    );
-  });
-
-  // sorting ka functionality yhn hai
-  const sortedQnaData = [...filteredQnaData].sort((a, b) => {
-    let aVal = a[sortBy];
-    let bVal = b[sortBy];
-
-    if (sortBy === "createdAt" || sortBy === "updatedAt") {
-      aVal = new Date(aVal);
-      bVal = new Date(bVal);
-    } else if (typeof aVal === "string") {
-      aVal = aVal.toLowerCase();
-      bVal = bVal.toLowerCase();
-    }
-
-    if (sortOrder === "asc") {
-      return aVal > bVal ? 1 : -1;
-    } else {
-      return aVal < bVal ? 1 : -1;
-    }
-  });
 
   // Naya question add karne ka function
   const handleAddQuestion = async (newQuestion) => {
@@ -346,7 +309,7 @@ export default function QnaPage() {
             onAddQuestion={() => {
               setIsAddModalOpen(true);
             }}
-            totalQuestions={filteredQnaData.length}
+            totalQuestions={pagination.total}
           />
         </motion.div>
 
@@ -356,7 +319,7 @@ export default function QnaPage() {
             {viewMode === "card" ? (
               <QnaCardView
                 key="card-view"
-                qnaData={sortedQnaData}
+                qnaData={qnaData}
                 onViewQna={handleViewQna}
                 onEditQna={handleEditQna}
                 onDeleteQna={handleDeleteQna}
@@ -364,7 +327,7 @@ export default function QnaPage() {
             ) : (
               <QnaTableView
                 key="table-view"
-                qnaData={sortedQnaData}
+                qnaData={qnaData}
                 onViewQna={handleViewQna}
                 onEditQna={handleEditQna}
                 onDeleteQna={handleDeleteQna}

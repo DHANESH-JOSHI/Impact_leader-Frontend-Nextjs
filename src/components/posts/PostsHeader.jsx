@@ -45,17 +45,15 @@ export default function PostsHeader({
   setViewMode,
   searchQuery,
   setSearchQuery,
-  filterCategory,
-  setFilterCategory,
   filterStatus,
   setFilterStatus,
-  filterESGCSR,
-  setFilterESGCSR,
+  filterTheme,
+  setFilterTheme,
   sortBy,
   setSortBy,
   sortOrder,
   setSortOrder,
-  categories,
+  themes,
   onAddPost,
   totalPosts,
 }) {
@@ -122,26 +120,6 @@ export default function PostsHeader({
           />
         </div>
 
-        {/* Category Filter */}
-        <div className="relative">
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[120px]"
-            style={{ focusRingColor: "#2691ce" }}
-          >
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category === "all" ? "All Categories" : category}
-              </option>
-            ))}
-          </select>
-          <Filter
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
-            style={{ color: "#646464" }}
-          />
-        </div>
-
         {/* Status Filter */}
         <div className="relative">
           <select
@@ -161,17 +139,20 @@ export default function PostsHeader({
           />
         </div>
 
-        {/* ESG/CSR Filter */}
+        {/* Theme Filter */}
         <div className="relative">
           <select
-            value={filterESGCSR}
-            onChange={(e) => setFilterESGCSR(e.target.value)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[120px]"
+            value={filterTheme}
+            onChange={(e) => setFilterTheme(e.target.value)}
+            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[140px]"
             style={{ focusRingColor: "#2691ce" }}
           >
-            <option value="all">All Types</option>
-            <option value="esg">ESG</option>
-            <option value="csr">CSR</option>
+            <option value="all">All Themes</option>
+            {themes && themes.length > 0 && themes.map((theme) => (
+              <option key={theme._id || theme.id} value={theme.name}>
+                {theme.name}
+              </option>
+            ))}
           </select>
           <Filter
             className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
@@ -187,11 +168,9 @@ export default function PostsHeader({
             className="appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all"
             style={{ focusRingColor: "#2691ce" }}
           >
-            <option value="publishDate">Date</option>
+            <option value="createdAt">Date</option>
             <option value="title">Title</option>
-            <option value="author">Author</option>
-            <option value="views">Views</option>
-            <option value="likes">Likes</option>
+            <option value="upvotes">Likes</option>
           </select>
 
           <motion.button

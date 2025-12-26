@@ -4,9 +4,7 @@ import React, { useState, useEffect } from "react";
 import {
   Bell,
   Plus,
-  Edit3,
   Trash2,
-  Upload,
   Eye,
   Save,
   X,
@@ -133,28 +131,12 @@ const NotificationForm = ({ notification, onSave, onCancel }) => {
     notification || {
       title: "",
       message: "",
-      type: "info",
-      image: null,
       targetUsers: "all",
-      scheduledAt: "",
-      expiresAt: "",
+      userIds: [],
+      themes: [],
     }
   );
 
-  // image upload handle krne ka function
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setFormData((prev) => ({
-          ...prev,
-          image: e.target.result,
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   // form submit handle krne ka function
   const handleSubmit = (e) => {
@@ -211,72 +193,6 @@ const NotificationForm = ({ notification, onSave, onCancel }) => {
             />
           </div>
 
-          {/* notification type select */}
-          <div>
-            <label
-              className="block text-sm font-medium mb-2"
-              style={{ color: "#646464" }}
-            >
-              Notification Type
-            </label>
-            <Select
-              value={formData.type}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, type: value }))
-              }
-            >
-              <option value="info">Info</option>
-              <option value="success">Success</option>
-              <option value="warning">Warning</option>
-              <option value="error">Error</option>
-              <option value="promotion">Promotion</option>
-            </Select>
-          </div>
-
-          {/* image upload section - optional */}
-          <div>
-            <label
-              className="block text-sm font-medium mb-2"
-              style={{ color: "#646464" }}
-            >
-              Image (Optional)
-            </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              {formData.image ? (
-                <div className="space-y-4">
-                  <img
-                    src={formData.image}
-                    alt="Preview"
-                    className="mx-auto max-h-32 rounded"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() =>
-                      setFormData((prev) => ({ ...prev, image: null }))
-                    }
-                  >
-                    Remove Image
-                  </Button>
-                </div>
-              ) : (
-                <div>
-                  <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <label className="cursor-pointer">
-                    <span className="text-sm text-gray-600">
-                      Click to upload or drag and drop
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
-              )}
-            </div>
-          </div>
 
           {/* target users select */}
           <div>
@@ -293,51 +209,52 @@ const NotificationForm = ({ notification, onSave, onCancel }) => {
               }
             >
               <option value="all">All Users</option>
-              <option value="active">Active Users</option>
-              <option value="new">New Users</option>
-              <option value="premium">Premium Users</option>
+              <option value="specific">Specific Users (by IDs)</option>
+              <option value="themes">Users by Themes</option>
             </Select>
           </div>
 
-          {/* scheduling section - optional */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* User IDs input - shown when targetUsers is 'specific' */}
+          {formData.targetUsers === 'specific' && (
             <div>
               <label
                 className="block text-sm font-medium mb-2"
                 style={{ color: "#646464" }}
               >
-                Schedule For (Optional)
+                User IDs (comma-separated)
               </label>
               <Input
-                type="datetime-local"
-                value={formData.scheduledAt}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    scheduledAt: e.target.value,
-                  }))
-                }
+                type="text"
+                value={Array.isArray(formData.userIds) ? formData.userIds.join(', ') : formData.userIds || ''}
+                onChange={(e) => {
+                  const ids = e.target.value.split(',').map(id => id.trim()).filter(id => id);
+                  setFormData((prev) => ({ ...prev, userIds: ids }));
+                }}
+                placeholder="Enter user IDs separated by commas"
               />
             </div>
+          )}
+
+          {/* Themes input - shown when targetUsers is 'themes' */}
+          {formData.targetUsers === 'themes' && (
             <div>
               <label
                 className="block text-sm font-medium mb-2"
                 style={{ color: "#646464" }}
               >
-                Expires At (Optional)
+                Theme IDs (comma-separated)
               </label>
               <Input
-                type="datetime-local"
-                value={formData.expiresAt}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    expiresAt: e.target.value,
-                  }))
-                }
+                type="text"
+                value={Array.isArray(formData.themes) ? formData.themes.join(', ') : formData.themes || ''}
+                onChange={(e) => {
+                  const themeIds = e.target.value.split(',').map(id => id.trim()).filter(id => id);
+                  setFormData((prev) => ({ ...prev, themes: themeIds }));
+                }}
+                placeholder="Enter theme IDs separated by commas"
               />
             </div>
-          </div>
+          )}
 
           {/* preview section */}
           <div>
@@ -348,10 +265,10 @@ const NotificationForm = ({ notification, onSave, onCancel }) => {
               Preview
             </label>
             <Alert
-              variant={formData.type}
+              variant="info"
               className="flex items-start space-x-3"
             >
-              {getNotificationIcon(formData.type)}
+              {getNotificationIcon("info")}
               <div className="flex-1">
                 <h4 className="font-medium">
                   {formData.title || "Notification Title"}
@@ -360,13 +277,6 @@ const NotificationForm = ({ notification, onSave, onCancel }) => {
                   {formData.message ||
                     "Notification message will appear here..."}
                 </p>
-                {formData.image && (
-                  <img
-                    src={formData.image}
-                    alt="Preview"
-                    className="mt-2 max-h-20 rounded"
-                  />
-                )}
               </div>
             </Alert>
           </div>
@@ -378,7 +288,7 @@ const NotificationForm = ({ notification, onSave, onCancel }) => {
             </Button>
             <Button variant="primary" type="submit">
               <Save className="h-4 w-4 mr-2" />
-              {notification ? "Update" : "Create"} Notification
+              Create Notification
             </Button>
           </div>
         </form>
@@ -403,7 +313,13 @@ export default function NotificationSettings() {
   const loadNotifications = async () => {
     setLoading(true);
     try {
-      const result = await NotificationsService.getNotifications({ limit: 100 });
+      // Load system announcements created by admin
+      // Note: Backend getNotifications returns notifications for current user as recipient
+      // For admin settings, we filter by type 'system_announcement' to show admin-created notifications
+      const result = await NotificationsService.getNotifications({ 
+        limit: 100,
+        type: 'system_announcement'
+      });
       if (result.success) {
         const notificationsData = Array.isArray(result.data) ? result.data : [];
         setNotifications(notificationsData);
@@ -426,11 +342,9 @@ export default function NotificationSettings() {
         message: notificationData.message,
         // Map targetUsers to sendToAll
         sendToAll: notificationData.targetUsers === 'all',
-        // If not 'all', we need to handle other cases (active, new, premium)
-        // For now, if not 'all', we'll send to all approved users
-        // TODO: Implement filtering by user status if needed
-        userIds: notificationData.userIds || [],
-        themes: notificationData.themes || [],
+        // userIds and themes are optional - only used when sendToAll is false
+        userIds: notificationData.targetUsers !== 'all' && notificationData.userIds ? notificationData.userIds : [],
+        themes: notificationData.targetUsers !== 'all' && notificationData.themes ? notificationData.themes : [],
       };
 
       // Note: Backend doesn't support editing notifications yet
@@ -438,7 +352,7 @@ export default function NotificationSettings() {
       const result = await NotificationsService.sendTargetedNotification(backendData);
       
       if (result.success) {
-        toast.success(editingNotification ? "Notification updated successfully" : "Notification created successfully");
+        toast.success("Notification created successfully");
         await loadNotifications();
         setShowForm(false);
         setEditingNotification(null);
@@ -452,8 +366,9 @@ export default function NotificationSettings() {
   };
 
   const handleEdit = (notification) => {
-    setEditingNotification(notification);
-    setShowForm(true);
+    // Backend doesn't support editing notifications yet
+    // For now, we'll just show a message
+    toast.error("Editing notifications is not yet supported. Please create a new notification.");
   };
 
   const handleDelete = async (id) => {
@@ -471,15 +386,16 @@ export default function NotificationSettings() {
     }
   };
 
-  // status badge colors
-  const getStatusBadge = (status) => {
+  // priority badge colors
+  const getPriorityBadge = (priority) => {
     const styles = {
-      active: "bg-green-100 text-green-800",
-      scheduled: "bg-blue-100 text-blue-800",
-      expired: "bg-gray-100 text-gray-800",
+      low: "bg-gray-100 text-gray-800",
+      normal: "bg-blue-100 text-blue-800",
+      high: "bg-yellow-100 text-yellow-800",
+      urgent: "bg-red-100 text-red-800",
     };
     return `px-2 py-1 rounded-full text-xs font-medium ${
-      styles[status] || styles.active
+      styles[priority] || styles.normal
     }`;
   };
 
@@ -522,33 +438,33 @@ export default function NotificationSettings() {
           <div className="flex items-center space-x-2">
             <CheckCircle className="h-5 w-5 text-green-600" />
             <span className="text-sm font-medium" style={{ color: "#646464" }}>
-              Active
+              Read
             </span>
           </div>
           <p className="text-2xl font-bold mt-2" style={{ color: "#040606" }}>
-            {notifications.filter((n) => n.status === "active").length}
+            {notifications.filter((n) => n.isRead).length}
           </p>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <div className="flex items-center space-x-2">
             <Info className="h-5 w-5 text-blue-600" />
             <span className="text-sm font-medium" style={{ color: "#646464" }}>
-              Scheduled
+              Unread
             </span>
           </div>
           <p className="text-2xl font-bold mt-2" style={{ color: "#040606" }}>
-            {notifications.filter((n) => n.status === "scheduled").length}
+            {notifications.filter((n) => !n.isRead).length}
           </p>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <div className="flex items-center space-x-2">
             <Eye className="h-5 w-5" style={{ color: "#646464" }} />
             <span className="text-sm font-medium" style={{ color: "#646464" }}>
-              Views
+              Category
             </span>
           </div>
           <p className="text-2xl font-bold mt-2" style={{ color: "#040606" }}>
-            1,234
+            {notifications.filter((n) => n.category === "admin").length}
           </p>
         </div>
       </div>
@@ -580,13 +496,19 @@ export default function NotificationSettings() {
                   className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider"
                   style={{ color: "#646464" }}
                 >
-                  Target
+                  Category
                 </th>
                 <th
                   className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider"
                   style={{ color: "#646464" }}
                 >
-                  Status
+                  Priority
+                </th>
+                <th
+                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                  style={{ color: "#646464" }}
+                >
+                  Read
                 </th>
                 <th
                   className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider"
@@ -604,7 +526,7 @@ export default function NotificationSettings() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {notifications.map((notification) => (
-                <tr key={notification.id} className="hover:bg-gray-50">
+                <tr key={notification._id || notification.id} className="hover:bg-gray-50">
                   <td className="px-4 py-4">
                     <div className="flex items-start space-x-3">
                       {getNotificationIcon(notification.type)}
@@ -623,7 +545,7 @@ export default function NotificationSettings() {
                       className="capitalize text-sm"
                       style={{ color: "#646464" }}
                     >
-                      {notification.type}
+                      {notification.type?.replace('_', ' ') || 'N/A'}
                     </span>
                   </td>
                   <td className="px-4 py-4">
@@ -631,12 +553,17 @@ export default function NotificationSettings() {
                       className="capitalize text-sm"
                       style={{ color: "#646464" }}
                     >
-                      {notification.targetUsers}
+                      {notification.category || 'N/A'}
                     </span>
                   </td>
                   <td className="px-4 py-4">
-                    <span className={getStatusBadge(notification.status)}>
-                      {notification.status}
+                    <span className={getPriorityBadge(notification.priority)}>
+                      {notification.priority || 'normal'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className={notification.isRead ? "text-green-600" : "text-gray-400"}>
+                      {notification.isRead ? "✓" : "○"}
                     </span>
                   </td>
                   <td
@@ -648,16 +575,9 @@ export default function NotificationSettings() {
                   <td className="px-4 py-4 text-right">
                     <div className="flex justify-end space-x-2">
                       <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(notification)}
-                      >
-                        <Edit3 className="h-4 w-4" />
-                      </Button>
-                      <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => handleDelete(notification.id)}
+                        onClick={() => handleDelete(notification._id || notification.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

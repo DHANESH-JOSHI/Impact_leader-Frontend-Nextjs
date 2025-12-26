@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { FiGrid, FiList, FiPlus, FiSearch, FiFilter } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
+import StoriesHeader from "@/components/stories/StoriesHeader";
 import StoryCard from "@/components/stories/StoryCard";
 import StoryTable from "@/components/stories/StoryTable";
 import AddStoryModal from "@/components/stories/AddStoryModal";
@@ -42,12 +42,15 @@ const getToken = () => getStoredAuth()?.value?.accessToken ?? null;
 
 export default function StoriesPage() {
 
-  const [categories, setCategories] = useState(["General", "Travel", "Lifestyle", "Work", "Technology"]);
+  // Stories don't have categories in backend - removed
   const [stories, setStories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState("cards");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterType, setFilterType] = useState("all");
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState("desc");
   const [selectedStory, setSelectedStory] = useState(null);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -72,38 +75,51 @@ export default function StoriesPage() {
     }
     loadStories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, pagination.page, pagination.limit]);
+  }, [token, pagination.page, pagination.limit, searchTerm, filterStatus, filterType, sortBy, sortOrder]);
 
   const loadStories = async (params = {}) => {
     setLoading(true);
     try {
-      const result = await StoriesService.getStoriesFeed({
+      // Map frontend filterStatus to backend status parameter
+      let backendStatus = undefined;
+      if (filterStatus === 'published' || filterStatus === 'approved') {
+        backendStatus = 'approved';
+      } else if (filterStatus === 'pending') {
+        backendStatus = 'pending';
+      } else if (filterStatus === 'rejected') {
+        backendStatus = 'rejected';
+      } else if (filterStatus === 'expired') {
+        backendStatus = 'expired';
+      }
+
+      // Use latest API with backend filtering
+      const result = await StoriesService.getStories({
         page: pagination.page,
         limit: pagination.limit,
+        search: searchTerm || undefined,
+        status: backendStatus,
+        type: filterType !== 'all' ? filterType : undefined,
+        sortBy: sortBy,
+        sortOrder: sortOrder,
         ...params,
       });
 
       if (result?.success && result.data) {
-        const groupedData = Array.isArray(result.data) ? result.data : [];
+        const storiesData = Array.isArray(result.data) ? result.data : [];
+        const transformed = storiesData.map(transformStory).filter(Boolean);
         
-        const allStories = groupedData.reduce((acc, group) => {
-          const groupStories = Array.isArray(group.stories) ? group.stories : [];
-          const authorInfo = group._id || {};
-          const storiesWithAuthor = groupStories.map(story => ({
-            ...story,
-            author: authorInfo
-          }));
-          return acc.concat(storiesWithAuthor);
-        }, []);
-
-        const transformed = allStories.map(transformStory).filter(Boolean);
-        
-        const totalFromGroups = groupedData.reduce((sum, group) => sum + (group.storyCount || 0), 0);
-        const total = result.pagination?.total || result.count || totalFromGroups || transformed.length;
-        const totalPages = result.pagination?.totalPages || Math.ceil(total / pagination.limit);
+        // Use pagination from backend if available, otherwise fallback to count
+        const paginationData = result.pagination || {};
+        const total = paginationData.total || result.count || transformed.length;
+        const totalPages = paginationData.totalPages || Math.ceil(total / pagination.limit);
 
         setStories(transformed);
-        setPagination((prev) => ({ ...prev, total, totalPages }));
+        setPagination((prev) => ({
+          ...prev,
+          total,
+          totalPages,
+          currentPage: paginationData.currentPage || prev.page,
+        }));
       } else {
         setStories([]);
         setPagination((prev) => ({ ...prev, total: 0, totalPages: 0 }));
@@ -185,25 +201,8 @@ export default function StoriesPage() {
     };
   };
 
-  const filteredStories = stories.filter(Boolean).filter((story) => {
-    const q = (searchTerm || "").toLowerCase();
-    const title = (story.title || "").toLowerCase();
-    const content = (story.content || "").toLowerCase();
-    const author = (story.author || "").toLowerCase();
-    const hasTag = Array.isArray(story.tags)
-      ? story.tags.some((t) => (t || "").toLowerCase().includes(q))
-      : false;
-
-    const matchesSearch =
-      !q ||
-      title.includes(q) ||
-      content.includes(q) ||
-      author.includes(q) ||
-      hasTag;
-    const matchesFilter =
-      filterStatus === "all" || story.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+  // Backend now handles all filtering, so we use stories directly
+  const filteredStories = stories.filter(Boolean);
 
   const handleAddStory = async (newStoryData) => {
     try {
@@ -363,109 +362,31 @@ export default function StoriesPage() {
 
   return (
     <motion.div
-      className="p-6 bg-gray-50 min-h-screen relative"
+      className="min-h-screen bg-gray-50 p-6 relative"
       variants={pageVariants}
       initial="hidden"
       animate="visible"
     >
-      <motion.div className="mb-8" variants={cardVariants}>
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold" style={{ color: "#040606" }}>
-              Stories Management
-            </h1>
-            <p style={{ color: "#646464" }} className="mt-1">
-              Manage all your stories
-            </p>
-          </div>
-
-          <motion.button
-            onClick={() => {
-              setIsAddModalOpen(true);
-            }}
-            className="px-4 py-2 rounded-lg flex items-center gap-2 text-white transition-colors"
-            style={{ backgroundColor: "#2691ce" }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <FiPlus className="w-5 h-5" />
-            Add New Story
-          </motion.button>
-        </div>
-
-        <motion.div
-          className="bg-white rounded-lg shadow-sm border p-4"
-          variants={cardVariants}
-        >
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="relative flex-1 max-w-md">
-              <FiSearch
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5"
-                style={{ color: "#646464" }}
-              />
-              <input
-                type="text"
-                placeholder="Search stories..."
-                value={searchTerm}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
-                style={{ focusRingColor: "#2691ce" }}
-              />
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <FiFilter
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
-                  style={{ color: "#646464" }}
-                />
-                <select
-                  value={filterStatus}
-                  onChange={(e) => handleStatusFilter(e.target.value)}
-                  className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent appearance-none bg-white"
-                  style={{ focusRingColor: "#2691ce" }}
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="published">Published</option>
-                  <option value="draft">Draft</option>
-                  <option value="scheduled">Scheduled</option>
-                </select>
-              </div>
-
-              <div className="flex border border-gray-300 rounded-lg overflow-hidden">
-                <motion.button
-                  onClick={() => handleViewModeChange("cards")}
-                  className={`p-2 ${viewMode === "cards"
-                      ? "text-white"
-                      : "bg-white hover:bg-gray-50"
-                    }`}
-                  style={{
-                    backgroundColor: viewMode === "cards" ? "#2691ce" : "white",
-                    color: viewMode === "cards" ? "white" : "#646464",
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <FiGrid className="w-5 h-5" />
-                </motion.button>
-                <motion.button
-                  onClick={() => handleViewModeChange("table")}
-                  className={`p-2 ${viewMode === "table"
-                      ? "text-white"
-                      : "bg-white hover:bg-gray-50"
-                    }`}
-                  style={{
-                    backgroundColor: viewMode === "table" ? "#2691ce" : "white",
-                    color: viewMode === "table" ? "white" : "#646464",
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <FiList className="w-5 h-5" />
-                </motion.button>
-              </div>
-            </div>
-          </div>
+      <div className="max-w-7xl mx-auto">
+        {/* Header Section */}
+        <motion.div variants={cardVariants}>
+          <StoriesHeader
+            viewMode={viewMode}
+            setViewMode={handleViewModeChange}
+            searchQuery={searchTerm}
+            setSearchQuery={handleSearchChange}
+            filterStatus={filterStatus}
+            setFilterStatus={handleStatusFilter}
+            filterType={filterType}
+            setFilterType={setFilterType}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            sortOrder={sortOrder}
+            setSortOrder={setSortOrder}
+            onAddStory={() => setIsAddModalOpen(true)}
+            totalStories={stories.length}
+          />
         </motion.div>
-      </motion.div>
 
       <motion.div className="mb-6" variants={cardVariants}>
         {loading ? (
@@ -517,7 +438,6 @@ export default function StoriesPage() {
           setIsAddModalOpen(false);
         }}
         onAdd={handleAddStory}
-        categories={categories} 
       />
 
       <EditStoryModal
@@ -538,6 +458,7 @@ export default function StoriesPage() {
         }}
         story={selectedStory}
       />
+      </div>
     </motion.div>
   );
 }

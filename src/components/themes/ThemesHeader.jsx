@@ -103,7 +103,7 @@ export default function ThemesHeader({
           />
           <input
             type="text"
-            placeholder="Search themes by name, description, or category..."
+            placeholder="Search themes by name or description..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
@@ -119,7 +119,6 @@ export default function ThemesHeader({
             style={{ focusRingColor: "#2691ce" }}
           >
             <option value="name">Name</option>
-            <option value="category">Category</option>
             <option value="createdAt">Created Date</option>
           </select>
 

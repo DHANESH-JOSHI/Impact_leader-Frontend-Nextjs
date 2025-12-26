@@ -42,8 +42,7 @@ export default function NotificationsPage() {
       const params = {
         page: pagination.page,
         limit: pagination.limit,
-        ...(filter === "unread" && { isRead: false }),
-        ...(filter === "read" && { isRead: true }),
+        ...(filter === "unread" && { unreadOnly: true }),
       };
 
       const result = await NotificationsService.getNotifications(params);

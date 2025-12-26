@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -12,8 +12,10 @@ import {
   Mail,
   Phone,
   Tag,
+  Check,
 } from "lucide-react";
 import { DirectoryService } from "@/services/directoryService";
+import { ThemesService } from "@/services/themesService";
 
 const modalVariants = {
   hidden: {
@@ -56,8 +58,6 @@ export default function AddDirectoryModal({
     description: "",
     category: "",
     organizationType: "",
-    isESG: false,
-    isCSR: false,
     website: "",
     logo: null,
     contactInfo: {
@@ -79,8 +79,47 @@ export default function AddDirectoryModal({
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [logoPreview, setLogoPreview] = useState(null);
+  const [availableThemes, setAvailableThemes] = useState([]);
+  const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
+  const themeDropdownRef = useRef(null);
 
   const organizationTypes = DirectoryService.getOrganizationTypes();
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target)) {
+        setIsThemeDropdownOpen(false);
+      }
+    };
+
+    if (isThemeDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isThemeDropdownOpen]);
+
+  // Load themes when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+    if (availableThemes.length === 0) {
+      loadThemes();
+    }
+  }, [isOpen]);
+
+  const loadThemes = async () => {
+    try {
+      const result = await ThemesService.getAllThemes({ limit: 100, sortBy: "name", sortOrder: "asc" });
+      if (result.success && Array.isArray(result.data)) {
+        setAvailableThemes(result.data);
+      }
+    } catch (error) {
+      console.error("Failed to load themes:", error);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -124,21 +163,6 @@ export default function AddDirectoryModal({
     }
   };
 
-  const handleESGCSRChange = (type) => {
-    if (type === "esg") {
-      setFormData((prev) => ({
-        ...prev,
-        isESG: true,
-        isCSR: false,
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        isESG: false,
-        isCSR: true,
-      }));
-    }
-  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -153,9 +177,6 @@ export default function AddDirectoryModal({
     }
     if (!formData.organizationType) {
       newErrors.organizationType = "Organization type is required";
-    }
-    if (!formData.isESG && !formData.isCSR) {
-      newErrors.esgCsr = "Either ESG or CSR must be selected";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -174,8 +195,6 @@ export default function AddDirectoryModal({
         description: "",
         category: "",
         organizationType: "",
-        isESG: false,
-        isCSR: false,
         website: "",
         logo: null,
         contactInfo: {
@@ -206,14 +225,12 @@ export default function AddDirectoryModal({
 
   const handleClose = () => {
     setFormData({
-      title: "",
-      description: "",
-      category: "",
-      organizationType: "",
-      isESG: false,
-      isCSR: false,
-      website: "",
-      logo: null,
+        title: "",
+        description: "",
+        category: "",
+        organizationType: "",
+        website: "",
+        logo: null,
       contactInfo: {
         email: "",
         phone: "",
@@ -356,37 +373,101 @@ export default function AddDirectoryModal({
                     )}
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: "#040606" }}>
-                      ESG/CSR <span className="text-red-500">*</span>
+                  <div className="relative" ref={themeDropdownRef}>
+                    <label
+                      className="flex items-center text-sm font-medium mb-2"
+                      style={{ color: "#040606" }}
+                    >
+                      <Tag className="w-4 h-4 mr-2" style={{ color: "#2691ce" }} />
+                      Themes (Optional)
                     </label>
-                    <div className="flex space-x-4">
-                      <label className="flex items-center space-x-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="esgCsr"
-                          checked={formData.isESG}
-                          onChange={() => handleESGCSRChange("esg")}
-                          className="w-4 h-4"
-                          style={{ accentColor: "#2691ce" }}
-                        />
-                        <span style={{ color: "#646464" }}>ESG</span>
-                      </label>
-                      <label className="flex items-center space-x-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="esgCsr"
-                          checked={formData.isCSR}
-                          onChange={() => handleESGCSRChange("csr")}
-                          className="w-4 h-4"
-                          style={{ accentColor: "#2691ce" }}
-                        />
-                        <span style={{ color: "#646464" }}>CSR</span>
-                      </label>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all text-left flex items-center justify-between"
+                        style={{ focusRingColor: "#2691ce" }}
+                        disabled={isSubmitting}
+                      >
+                        <span className={formData.themes.length > 0 ? "text-gray-900" : "text-gray-500"}>
+                          {formData.themes.length > 0 
+                            ? `${formData.themes.length} theme${formData.themes.length !== 1 ? 's' : ''} selected`
+                            : "Select themes..."}
+                        </span>
+                        <span className="text-gray-400">▼</span>
+                      </button>
+                      {isThemeDropdownOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                        >
+                          {availableThemes.length > 0 ? (
+                            availableThemes.map((theme) => {
+                              const isSelected = formData.themes.includes(theme.name);
+                              return (
+                                <div
+                                  key={theme._id || theme.id}
+                                  onClick={() => {
+                                    if (isSelected) {
+                                      setFormData(prev => ({
+                                        ...prev,
+                                        themes: prev.themes.filter(t => t !== theme.name)
+                                      }));
+                                    } else {
+                                      setFormData(prev => ({
+                                        ...prev,
+                                        themes: [...prev.themes, theme.name]
+                                      }));
+                                    }
+                                  }}
+                                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center justify-between"
+                                >
+                                  <span>{theme.name}</span>
+                                  {isSelected && (
+                                    <Check className="w-4 h-4" style={{ color: "#2691ce" }} />
+                                  )}
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <div className="px-4 py-2 text-gray-500 text-sm">No themes available</div>
+                          )}
+                        </motion.div>
+                      )}
                     </div>
-                    {errors.esgCsr && (
-                      <p className="text-sm text-red-500 mt-1">{errors.esgCsr}</p>
+                    {formData.themes.length > 0 && (
+                      <motion.div
+                        className="flex flex-wrap gap-2 mt-2"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        {formData.themes.map((themeName, index) => (
+                          <motion.span
+                            key={themeName}
+                            className="px-3 py-1 text-sm rounded-full text-white cursor-pointer flex items-center gap-1"
+                            style={{ backgroundColor: "#10b981" }}
+                            onClick={() => {
+                              setFormData(prev => ({
+                                ...prev,
+                                themes: prev.themes.filter(t => t !== themeName)
+                              }));
+                            }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: index * 0.1 }}
+                          >
+                            {themeName}
+                            <span className="ml-1 text-xs">×</span>
+                          </motion.span>
+                        ))}
+                      </motion.div>
                     )}
+                    <p className="text-xs mt-1" style={{ color: "#646464" }}>
+                      Select themes from the dropdown. Click on selected themes to remove them.
+                    </p>
                   </div>
                 </div>
 

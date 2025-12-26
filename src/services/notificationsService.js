@@ -45,9 +45,15 @@ export class NotificationsService {
       const response = await apiClient.get(NOTIFICATIONS.UNREAD_COUNT);
       const backendResponse = response.data || {};
 
+      // Backend returns { success: true, data: { unreadCount: number } }
+      const unreadCount = backendResponse.data?.unreadCount || 
+                         backendResponse.unreadCount || 
+                         backendResponse.count || 
+                         0;
+
       return {
         success: response.success && backendResponse.success !== false,
-        data: backendResponse.data || backendResponse.count || 0,
+        data: typeof unreadCount === 'number' ? unreadCount : 0,
         message: backendResponse.message || response.message
       };
     } catch (error) {
@@ -63,8 +69,8 @@ export class NotificationsService {
 
   static async markAsRead(notificationId) {
     try {
-      const endpoint = NOTIFICATIONS.MARK_READ ? NOTIFICATIONS.MARK_READ(notificationId) : `/notifications/${notificationId}/mark-read`;
-      const response = await apiClient.post(endpoint, {});
+      const endpoint = NOTIFICATIONS.READ ? NOTIFICATIONS.READ(notificationId) : `/notifications/${notificationId}/read`;
+      const response = await apiClient.put(endpoint, {});
       const backendResponse = response.data || {};
 
       return {
@@ -85,7 +91,7 @@ export class NotificationsService {
   static async markAllAsRead() {
     try {
       const endpoint = NOTIFICATIONS.MARK_ALL_READ;
-      const response = await apiClient.post(endpoint, {});
+      const response = await apiClient.put(endpoint, {});
       const backendResponse = response.data || {};
 
       return {

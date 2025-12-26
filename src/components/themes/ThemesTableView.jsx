@@ -9,6 +9,8 @@ import {
   ChevronUp,
   ChevronDown,
   Palette,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 
 const tableVariants = {
@@ -146,20 +148,10 @@ export default function ThemesTableView({
                 </div>
               </th>
               <th
-                className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer"
-                style={{ color: "#646464" }}
-                onClick={() => handleSort("category")}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>Category</span>
-                  <SortIcon columnKey="category" />
-                </div>
-              </th>
-              <th
                 className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider"
                 style={{ color: "#646464" }}
               >
-                Tags
+                Status
               </th>
               <th
                 className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer"
@@ -208,31 +200,25 @@ export default function ThemesTableView({
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="text-sm" style={{ color: "#646464" }}>
-                    {theme.category || "N/A"}
+                  <span
+                    className={`inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium ${
+                      theme.isActive !== false
+                        ? "bg-green-100 text-green-800"
+                        : "bg-gray-100 text-gray-800"
+                    }`}
+                  >
+                    {theme.isActive !== false ? (
+                      <>
+                        <CheckCircle className="h-3 w-3" />
+                        <span>Active</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-3 w-3" />
+                        <span>Inactive</span>
+                      </>
+                    )}
                   </span>
-                </td>
-                <td className="px-6 py-4">
-                  {theme.tags && theme.tags.length > 0 ? (
-                    <div className="flex flex-wrap gap-1">
-                      {theme.tags.slice(0, 2).map((tag, index) => (
-                        <span
-                          key={index}
-                          className="px-2 py-1 text-xs rounded-md"
-                          style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                      {theme.tags.length > 2 && (
-                        <span className="text-xs" style={{ color: "#646464" }}>
-                          +{theme.tags.length - 2}
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-sm" style={{ color: "#646464" }}>N/A</span>
-                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center space-x-1 text-sm">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -12,6 +12,7 @@ import {
   Volume2,
   Image,
   Tag,
+  Check,
 } from "lucide-react";
 
 const modalVariants = {
@@ -62,11 +63,9 @@ export default function AddResourceModal({
     duration: 0,
     category: categories[0] || "",
     tags: "",
-    themes: "",
+    themes: [],
     author: "",
     isPublic: true,
-    isESG: false,
-    isCSR: true, // Default to CSR
     url: "",
     featured: false,
   });
@@ -74,6 +73,9 @@ export default function AddResourceModal({
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [availableThemes, setAvailableThemes] = useState([]);
+  const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
+  const themeDropdownRef = useRef(null);
 
   useEffect(() => {
     if (initialResource) {
@@ -90,11 +92,16 @@ export default function AddResourceModal({
         duration: initialResource.duration || 0,
         category: initialResource.category || categories[0] || "",
         tags: Array.isArray(initialResource.tags) ? initialResource.tags.join(", ") : (initialResource.tags || ""),
-        themes: Array.isArray(initialResource.themes) ? initialResource.themes.join(", ") : (initialResource.themes || ""),
+        // Normalize themes: extract names from theme objects or use strings directly
+        themes: Array.isArray(initialResource.themes) 
+          ? initialResource.themes.map(theme => {
+              if (typeof theme === 'string') return theme; // Already a name
+              if (theme && typeof theme === 'object') return theme.name || String(theme._id || theme.id || theme); // Extract name from object
+              return String(theme); // Fallback
+            }).filter(Boolean)
+          : [],
         author: initialResource.author || "",
         isPublic: initialResource.isPublic !== undefined ? initialResource.isPublic : true,
-        isESG: initialResource.isESG || false,
-        isCSR: initialResource.isCSR !== undefined ? initialResource.isCSR : true,
         url: initialResource.url || "",
         featured: initialResource.featured || false,
       });
@@ -109,11 +116,9 @@ export default function AddResourceModal({
         duration: 0,
         category: categories[0] || "",
         tags: "",
-        themes: "",
+        themes: [],
         author: "",
         isPublic: true,
-        isESG: false,
-        isCSR: true,
         url: "",
         featured: false,
       });
@@ -178,10 +183,6 @@ export default function AddResourceModal({
     }
 
     // Validate ESG/CSR - exactly one must be true
-    if (formData.isESG === formData.isCSR) {
-      newErrors.esgcsr = "Please select either ESG or CSR (exactly one must be selected)";
-    }
-
     // For link type, URL is required. For other types, file or URL is required
     if (formData.type === "link") {
       if (!formData.url?.trim()) {
@@ -211,17 +212,11 @@ export default function AddResourceModal({
         description: formData.description,
         type: formData.type,
         category: formData.category,
-        tags: formData.tags
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter((tag) => tag),
-        themes: formData.themes
-          .split(",")
-          .map((theme) => theme.trim())
-          .filter((theme) => theme),
+        tags: typeof formData.tags === 'string' 
+          ? formData.tags.split(",").map((tag) => tag.trim()).filter((tag) => tag)
+          : (Array.isArray(formData.tags) ? formData.tags : []),
+        themes: Array.isArray(formData.themes) ? formData.themes : [],
         isPublic: formData.isPublic,
-        isESG: formData.isESG,
-        isCSR: formData.isCSR,
         ...(formData.url && { url: formData.url }),
         // Only include file if a new file is selected (for upload)
         // Don't send fileUrl - backend keeps existing file if no new file is uploaded
@@ -248,11 +243,9 @@ export default function AddResourceModal({
         duration: 0,
         category: categories[0] || "",
         tags: "",
-        themes: "",
+        themes: [],
         author: "",
         isPublic: true,
-        isESG: false,
-        isCSR: true,
         url: "",
         featured: false,
       });
@@ -273,6 +266,7 @@ export default function AddResourceModal({
   };
   const handleClose = () => {
     if (!isSubmitting) {
+      setIsThemeDropdownOpen(false);
       setFormData({
         title: "",
         description: "",
@@ -283,11 +277,9 @@ export default function AddResourceModal({
         duration: 0,
         category: categories[0] || "",
         tags: "",
-        themes: "",
+        themes: [],
         author: "",
         isPublic: true,
-        isESG: false,
-        isCSR: true,
         url: "",
         featured: false,
       });
@@ -591,51 +583,6 @@ export default function AddResourceModal({
                     )}
                   </motion.div>
 
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.6 }}
-                  >
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
-                    >
-                      Resource Type *
-                    </label>
-                    <div className="flex gap-4">
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="esgcsr"
-                          checked={formData.isESG}
-                          onChange={() => setFormData(prev => ({ ...prev, isESG: true, isCSR: false }))}
-                          className="mr-2"
-                          disabled={isSubmitting}
-                        />
-                        <span style={{ color: "#040606" }}>ESG</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="esgcsr"
-                          checked={formData.isCSR}
-                          onChange={() => setFormData(prev => ({ ...prev, isESG: false, isCSR: true }))}
-                          className="mr-2"
-                          disabled={isSubmitting}
-                        />
-                        <span style={{ color: "#040606" }}>CSR</span>
-                      </label>
-                    </div>
-                    {errors.esgcsr && (
-                      <motion.p
-                        className="text-red-500 text-sm mt-1"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                      >
-                        {errors.esgcsr}
-                      </motion.p>
-                    )}
-                  </motion.div>
                 </div>
 
                 {/* Resource Type and Public/Private */}
@@ -728,30 +675,107 @@ export default function AddResourceModal({
                   </motion.div>
                 )}
 
-                {/* Themes */}
+                {/* Themes Multi-Select */}
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.8 }}
+                  className="relative"
+                  ref={themeDropdownRef}
                 >
                   <label
-                    className="block text-sm font-medium mb-2"
+                    className="flex items-center text-sm font-medium mb-2"
                     style={{ color: "#040606" }}
                   >
+                    <Tag className="w-4 h-4 mr-2" style={{ color: "#2691ce" }} />
                     Themes (Optional)
                   </label>
-                  <input
-                    type="text"
-                    name="themes"
-                    value={formData.themes}
-                    onChange={handleInputChange}
-                    placeholder="Enter themes separated by commas (e.g., sustainability, education, healthcare)"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                    style={{ focusRingColor: "#2691ce" }}
-                    disabled={isSubmitting}
-                  />
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all text-left flex items-center justify-between"
+                      style={{ focusRingColor: "#2691ce" }}
+                      disabled={isSubmitting}
+                    >
+                      <span className={formData.themes.length > 0 ? "text-gray-900" : "text-gray-500"}>
+                        {formData.themes.length > 0 
+                          ? `${formData.themes.length} theme${formData.themes.length !== 1 ? 's' : ''} selected`
+                          : "Select themes..."}
+                      </span>
+                      <span className="text-gray-400">▼</span>
+                    </button>
+                    {isThemeDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                      >
+                        {availableThemes.length > 0 ? (
+                          availableThemes.map((theme) => {
+                            const isSelected = formData.themes.includes(theme.name);
+                            return (
+                              <div
+                                key={theme._id || theme.id}
+                                onClick={() => {
+                                  if (isSelected) {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      themes: prev.themes.filter(t => t !== theme.name)
+                                    }));
+                                  } else {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      themes: [...prev.themes, theme.name]
+                                    }));
+                                  }
+                                }}
+                                className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center justify-between"
+                              >
+                                <span>{theme.name}</span>
+                                {isSelected && (
+                                  <Check className="w-4 h-4" style={{ color: "#2691ce" }} />
+                                )}
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="px-4 py-2 text-gray-500 text-sm">No themes available</div>
+                        )}
+                      </motion.div>
+                    )}
+                  </div>
+                  {formData.themes.length > 0 && (
+                    <motion.div
+                      className="flex flex-wrap gap-2 mt-2"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      {formData.themes.map((themeName, index) => (
+                        <motion.span
+                          key={themeName}
+                          className="px-3 py-1 text-sm rounded-full text-white cursor-pointer flex items-center gap-1"
+                          style={{ backgroundColor: "#10b981" }}
+                          onClick={() => {
+                            setFormData(prev => ({
+                              ...prev,
+                              themes: prev.themes.filter(t => t !== themeName)
+                            }));
+                          }}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: index * 0.1 }}
+                        >
+                          {themeName}
+                          <span className="ml-1 text-xs">×</span>
+                        </motion.span>
+                      ))}
+                    </motion.div>
+                  )}
                   <p className="text-xs mt-1" style={{ color: "#646464" }}>
-                    Separate multiple themes with commas
+                    Select themes from the dropdown. Click on selected themes to remove them.
                   </p>
                 </motion.div>
 

@@ -191,17 +191,7 @@ export default function PostsTableView({
                   <SortIcon columnKey="author" />
                 </div>
               </th>
-              <th
-                className="text-left px-6 py-4 text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
-                style={{ color: "#040606" }}
-                onClick={() => handleSort("category")}
-              >
-                <div className="flex items-center space-x-1">
-                  <Tag className="h-4 w-4" />
-                  <span>Category</span>
-                  <SortIcon columnKey="category" />
-                </div>
-              </th>
+              {/* Category column removed - Post model doesn't have category field */}
               <th
                 className="text-left px-6 py-4 text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
                 style={{ color: "#040606" }}
@@ -211,12 +201,6 @@ export default function PostsTableView({
                   <span>Status</span>
                   <SortIcon columnKey="status" />
                 </div>
-              </th>
-              <th
-                className="text-left px-6 py-4 text-sm font-semibold"
-                style={{ color: "#040606" }}
-              >
-                Type
               </th>
               <th
                 className="text-left px-6 py-4 text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
@@ -344,15 +328,7 @@ export default function PostsTableView({
                   </div>
                 </td>
 
-                {/* Category Column */}
-                <td className="px-6 py-4">
-                  <span
-                    className="inline-flex px-3 py-1 text-xs font-medium rounded-full"
-                    style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
-                  >
-                    {post.category}
-                  </span>
-                </td>
+                {/* Category column removed - Post model doesn't have category field */}
 
                 {/* Status Column */}
                 <td className="px-6 py-4">
@@ -374,32 +350,6 @@ export default function PostsTableView({
                   </div>
                 </td>
 
-                {/* Type Column (ESG/CSR) */}
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    {post.isESG && (
-                      <span
-                        className="inline-flex px-3 py-1 text-xs font-medium rounded-full text-white"
-                        style={{ backgroundColor: "#10b981" }}
-                      >
-                        ESG
-                      </span>
-                    )}
-                    {post.isCSR && (
-                      <span
-                        className="inline-flex px-3 py-1 text-xs font-medium rounded-full text-white"
-                        style={{ backgroundColor: "#2691ce" }}
-                      >
-                        CSR
-                      </span>
-                    )}
-                    {!post.isESG && !post.isCSR && (
-                      <span className="text-xs" style={{ color: "#646464" }}>
-                        -
-                      </span>
-                    )}
-                  </div>
-                </td>
 
                 {/* Date Column */}
                 <td className="px-6 py-4">
