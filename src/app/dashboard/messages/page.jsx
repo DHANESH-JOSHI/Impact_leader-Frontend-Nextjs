@@ -94,11 +94,35 @@ export default function MessagesPage() {
   };
 
   const getConversationName = (conversation) => {
-    if (conversation.name) return conversation.name;
+    // For group conversations
+    if (conversation.chatType === 'group' || conversation.groupName) {
+      return conversation.groupName || "Group Chat";
+    }
+    // For 1-to-1 conversations
+    if (conversation.participant) {
+      const { firstName, lastName, companyName } = conversation.participant;
+      if (firstName || lastName) {
+        return `${firstName || ''} ${lastName || ''}`.trim() || companyName || "User";
+      }
+    }
+    // Fallback
     if (conversation.participants && conversation.participants.length > 0) {
-      return conversation.participants.map(p => p.name || p.email).join(", ");
+      return conversation.participants.map(p => {
+        const name = p.firstName && p.lastName 
+          ? `${p.firstName} ${p.lastName}`.trim()
+          : (p.name || p.email || "User");
+        return name;
+      }).join(", ");
     }
     return "Conversation";
+  };
+
+  const getSenderName = (sender) => {
+    if (!sender) return "Unknown";
+    if (sender.firstName || sender.lastName) {
+      return `${sender.firstName || ''} ${sender.lastName || ''}`.trim() || sender.email || "Unknown";
+    }
+    return sender.name || sender.email || "Unknown";
   };
 
   return (
@@ -186,18 +210,47 @@ export default function MessagesPage() {
                   >
                     <div className="flex items-center space-x-3">
                       <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center"
+                        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: "#eff6ff" }}
                       >
-                        <Users className="h-5 w-5" style={{ color: "#2691ce" }} />
+                        {conversation.participant?.profileImage ? (
+                          <img
+                            src={conversation.participant.profileImage}
+                            alt={getConversationName(conversation)}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <Users className="h-5 w-5" style={{ color: "#2691ce" }} />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate" style={{ color: "#040606" }}>
-                          {getConversationName(conversation)}
-                        </p>
-                        {conversation.lastMessage && (
-                          <p className="text-sm truncate" style={{ color: "#646464" }}>
-                            {conversation.lastMessage.content || conversation.lastMessage.message}
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="font-medium truncate" style={{ color: "#040606" }}>
+                            {getConversationName(conversation)}
+                          </p>
+                          {conversation.unreadCount > 0 && (
+                            <span
+                              className="ml-2 px-2 py-0.5 text-xs font-medium rounded-full flex-shrink-0"
+                              style={{ backgroundColor: "#2691ce", color: "white" }}
+                            >
+                              {conversation.unreadCount}
+                            </span>
+                          )}
+                        </div>
+                        {conversation.lastMessage ? (
+                          <div className="flex items-start space-x-1">
+                            {conversation.chatType === 'group' && conversation.lastMessage.sender && (
+                              <span className="text-sm font-medium flex-shrink-0" style={{ color: "#646464" }}>
+                                {getSenderName(conversation.lastMessage.sender)}:
+                              </span>
+                            )}
+                            <p className="text-sm truncate flex-1" style={{ color: "#646464" }}>
+                              {conversation.lastMessage.content || conversation.lastMessage.message || "No message"}
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-sm italic" style={{ color: "#9ca3af" }}>
+                            No messages yet
                           </p>
                         )}
                       </div>
@@ -215,6 +268,17 @@ export default function MessagesPage() {
                   <h2 className="font-semibold" style={{ color: "#040606" }}>
                     {getConversationName(selectedConversation)}
                   </h2>
+                  {selectedConversation.participant && (
+                    <p className="text-xs mt-1" style={{ color: "#646464" }}>
+                      {selectedConversation.participant.companyName && `${selectedConversation.participant.companyName} • `}
+                      {selectedConversation.participant.designation || ""}
+                    </p>
+                  )}
+                  {selectedConversation.chatType === 'group' && selectedConversation.memberCount && (
+                    <p className="text-xs mt-1" style={{ color: "#646464" }}>
+                      {selectedConversation.memberCount} {selectedConversation.memberCount === 1 ? 'member' : 'members'}
+                    </p>
+                  )}
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                   {messages.length === 0 ? (
@@ -229,7 +293,7 @@ export default function MessagesPage() {
                       >
                         <div className="flex items-center space-x-2">
                           <span className="text-xs font-medium" style={{ color: "#646464" }}>
-                            {message.sender?.name || message.sender?.email || "Unknown"}
+                            {getSenderName(message.sender)}
                           </span>
                           <span className="text-xs" style={{ color: "#646464" }}>
                             {formatDate(message.createdAt)}
