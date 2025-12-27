@@ -42,8 +42,8 @@ export default function QnaPage() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState("card");
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterCategory, setFilterCategory] = useState("all");
-  const [filterAnswered, setFilterAnswered] = useState("all");
+  const [filterTheme, setFilterTheme] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
   const [pagination, setPagination] = useState({

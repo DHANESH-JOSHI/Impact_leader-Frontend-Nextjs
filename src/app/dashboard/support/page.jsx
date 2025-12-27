@@ -176,6 +176,11 @@ export default function SupportPage() {
     await fetchTickets();
   };
 
+  const handleTicketRefresh = async () => {
+    // Refresh tickets without showing toast (for status updates, replies, etc.)
+    await fetchTickets();
+  };
+
 
   return (
     <motion.div
@@ -245,7 +250,7 @@ export default function SupportPage() {
           setSelectedTicket(null);
         }}
         ticket={selectedTicket}
-        onSuccess={handleTicketSuccess}
+        onSuccess={handleTicketRefresh}
       />
 
       <DeleteConfirmModal

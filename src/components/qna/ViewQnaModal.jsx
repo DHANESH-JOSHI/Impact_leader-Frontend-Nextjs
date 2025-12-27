@@ -62,15 +62,12 @@ export default function ViewQnaModal({ isOpen, onClose, qna, onEdit }) {
   const handleEditToggle = () => {
     if (!isEditMode && qna) {
       setEditFormData({
-        question: qna.question,
-        answer: qna.answer,
-        author: qna.author,
-        category: qna.category,
-        status: qna.status,
-        priority: qna.priority,
-        difficulty: qna.difficulty,
-        tags: qna.tags ? qna.tags.join(", ") : "",
-        featured: qna.featured,
+        title: qna.title || qna.question || "",
+        content: qna.content || "",
+        themes: Array.isArray(qna.themes) ? qna.themes : [],
+        tags: Array.isArray(qna.tags) ? qna.tags : [],
+        status: qna.status || "open",
+        priority: qna.priority || "medium",
       });
     }
     setIsEditMode(!isEditMode);
@@ -252,20 +249,20 @@ export default function ViewQnaModal({ isOpen, onClose, qna, onEdit }) {
                       className="block text-sm font-medium mb-2"
                       style={{ color: "#040606" }}
                     >
-                      Question
+                      Title
                     </label>
                     <textarea
-                      name="question"
-                      value={editFormData.question || ""}
+                      name="title"
+                      value={editFormData.title || ""}
                       onChange={handleInputChange}
                       rows={3}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none text-lg font-semibold"
                       style={{ focusRingColor: "#2691ce" }}
-                      placeholder="Enter the question..."
+                      placeholder="Enter the question title..."
                     />
                   </motion.div>
 
-                  {/* Answer Edit */}
+                  {/* Content Edit */}
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -275,23 +272,20 @@ export default function ViewQnaModal({ isOpen, onClose, qna, onEdit }) {
                       className="block text-sm font-medium mb-2"
                       style={{ color: "#040606" }}
                     >
-                      Answer
+                      Content
                     </label>
                     <textarea
-                      name="answer"
-                      value={editFormData.answer || ""}
+                      name="content"
+                      value={editFormData.content || ""}
                       onChange={handleInputChange}
                       rows={8}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none"
                       style={{ focusRingColor: "#2691ce" }}
-                      placeholder="Provide a comprehensive answer..."
+                      placeholder="Enter the question content..."
                     />
-                    <p className="text-xs mt-1" style={{ color: "#646464" }}>
-                      Leave empty if this question is not answered yet
-                    </p>
                   </motion.div>
 
-                  {/* Meta Information Grid */}
+                  {/* Settings Grid */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <motion.div
                       initial={{ opacity: 0, x: -20 }}
@@ -302,50 +296,25 @@ export default function ViewQnaModal({ isOpen, onClose, qna, onEdit }) {
                         className="block text-sm font-medium mb-2"
                         style={{ color: "#040606" }}
                       >
-                        <User className="inline h-4 w-4 mr-1" />
-                        Author
+                        Status
                       </label>
-                      <input
-                        type="text"
-                        name="author"
-                        value={editFormData.author || ""}
+                      <select
+                        name="status"
+                        value={editFormData.status || ""}
                         onChange={handleInputChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
                         style={{ focusRingColor: "#2691ce" }}
-                        placeholder="Author name..."
-                      />
+                      >
+                        <option value="open">Open</option>
+                        <option value="answered">Answered</option>
+                        <option value="closed">Closed</option>
+                      </select>
                     </motion.div>
 
                     <motion.div
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.4 }}
-                    >
-                      <label
-                        className="block text-sm font-medium mb-2"
-                        style={{ color: "#040606" }}
-                      >
-                        <Tag className="inline h-4 w-4 mr-1" />
-                        Category
-                      </label>
-                      <input
-                        type="text"
-                        name="category"
-                        value={editFormData.category || ""}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                        style={{ focusRingColor: "#2691ce" }}
-                        placeholder="Question category..."
-                      />
-                    </motion.div>
-                  </div>
-
-                  {/* Settings Grid */}
-                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.5 }}
                     >
                       <label
                         className="block text-sm font-medium mb-2"
@@ -364,79 +333,6 @@ export default function ViewQnaModal({ isOpen, onClose, qna, onEdit }) {
                         <option value="medium">Medium</option>
                         <option value="high">High</option>
                       </select>
-                    </motion.div>
-
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.6 }}
-                    >
-                      <label
-                        className="block text-sm font-medium mb-2"
-                        style={{ color: "#040606" }}
-                      >
-                        Difficulty
-                      </label>
-                      <select
-                        name="difficulty"
-                        value={editFormData.difficulty || ""}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                        style={{ focusRingColor: "#2691ce" }}
-                      >
-                        <option value="easy">Easy</option>
-                        <option value="medium">Medium</option>
-                        <option value="hard">Hard</option>
-                      </select>
-                    </motion.div>
-
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.7 }}
-                    >
-                      <label
-                        className="block text-sm font-medium mb-2"
-                        style={{ color: "#040606" }}
-                      >
-                        Status
-                      </label>
-                      <select
-                        name="status"
-                        value={editFormData.status || ""}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                        style={{ focusRingColor: "#2691ce" }}
-                      >
-                        <option value="draft">Draft</option>
-                        <option value="published">Published</option>
-                        <option value="archived">Archived</option>
-                      </select>
-                    </motion.div>
-
-                    <motion.div
-                      className="flex items-end"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.8 }}
-                    >
-                      <label className="flex items-center space-x-2 p-3 border border-gray-300 rounded-lg w-full">
-                        <input
-                          type="checkbox"
-                          name="featured"
-                          checked={editFormData.featured || false}
-                          onChange={handleInputChange}
-                          className="w-4 h-4 rounded focus:ring-2"
-                          style={{
-                            color: "#2691ce",
-                            focusRingColor: "#2691ce",
-                          }}
-                        />
-                        <Star className="h-4 w-4 text-yellow-500" />
-                        <span className="text-sm" style={{ color: "#646464" }}>
-                          Featured
-                        </span>
-                      </label>
                     </motion.div>
                   </div>
 
@@ -485,21 +381,8 @@ export default function ViewQnaModal({ isOpen, onClose, qna, onEdit }) {
                               className="text-2xl font-bold leading-tight"
                               style={{ color: "#040606" }}
                             >
-                              {qna.question}
+                              {qna.title || qna.question || "Untitled Question"}
                             </h1>
-                            {qna.featured && (
-                              <motion.div
-                                className="flex items-center space-x-1 px-3 py-1 bg-yellow-100 rounded-full"
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ delay: 0.3, type: "spring" }}
-                              >
-                                <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                                <span className="text-xs font-medium text-yellow-600">
-                                  Featured
-                                </span>
-                              </motion.div>
-                            )}
                           </div>
 
                           {/* Badges Row */}
@@ -521,15 +404,6 @@ export default function ViewQnaModal({ isOpen, onClose, qna, onEdit }) {
                                 {qna.priority.charAt(0).toUpperCase() +
                                   qna.priority.slice(1)}{" "}
                                 Priority
-                              </span>
-                            )}
-                            {qna.difficulty && (
-                              <span
-                                className="px-3 py-1 text-sm font-medium rounded-full"
-                                style={getDifficultyStyle(qna.difficulty)}
-                              >
-                                {qna.difficulty.charAt(0).toUpperCase() +
-                                  qna.difficulty.slice(1)}
                               </span>
                             )}
                           </div>
@@ -591,16 +465,38 @@ export default function ViewQnaModal({ isOpen, onClose, qna, onEdit }) {
                           )}
                         </div>
 
-                        {qna.isAnswered ? (
+                        {qna.isAnswered && qna.answers && qna.answers.length > 0 ? (
                           <div
                             className="prose prose-lg max-w-none"
                             style={{ color: "#040606", lineHeight: "1.7" }}
                           >
-                            {qna.answer.split("\n").map((paragraph, index) => (
-                              <p key={index} className="mb-4">
-                                {paragraph}
-                              </p>
-                            ))}
+                            {qna.answers.map((answer, answerIndex) => {
+                              const answerContent = typeof answer === 'string' 
+                                ? answer 
+                                : (answer?.content || answer || "");
+                              const isAccepted = answer?.isAccepted || false;
+                              
+                              return (
+                                <div 
+                                  key={answerIndex} 
+                                  className={`mb-4 p-3 rounded-lg ${isAccepted ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200'}`}
+                                >
+                                  {isAccepted && (
+                                    <div className="flex items-center space-x-2 mb-2">
+                                      <CheckCircle className="h-4 w-4 text-green-600" />
+                                      <span className="text-xs font-medium text-green-700">Accepted Answer</span>
+                                    </div>
+                                  )}
+                                  {(typeof answerContent === 'string' ? answerContent : String(answerContent || ""))
+                                    .split("\n")
+                                    .map((paragraph, index) => (
+                                      <p key={index} className="mb-2 last:mb-0">
+                                        {paragraph || "\u00A0"}
+                                      </p>
+                                    ))}
+                                </div>
+                              );
+                            })}
                           </div>
                         ) : (
                           <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">

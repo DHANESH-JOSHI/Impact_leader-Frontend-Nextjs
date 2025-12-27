@@ -85,6 +85,7 @@ export default function QnaCardView({
   };
 
   const truncateText = (text, maxLength = 100) => {
+    if (!text || typeof text !== 'string') return '';
     if (text.length <= maxLength) return text;
     return text.slice(0, maxLength) + "...";
   };
@@ -145,19 +146,22 @@ export default function QnaCardView({
                 </div>
 
                 {/* Answer Preview */}
-                {qna.isAnswered ? (
+                {qna.isAnswered && qna.answers && qna.answers.length > 0 ? (
                   <div className="mb-3">
                     <div className="flex items-center space-x-1 mb-2">
                       <CheckCircle className="h-4 w-4 text-green-500" />
                       <span className="text-xs font-medium text-green-600">
-                        Answered
+                        Answered ({qna.answerCount || qna.answers.length})
                       </span>
                     </div>
                     <p
                       className="text-sm leading-relaxed line-clamp-2"
                       style={{ color: "#646464" }}
                     >
-                      {truncateText(qna.answer, 80)}
+                      {truncateText(
+                        (qna.acceptedAnswer?.content || qna.answers[0]?.content || qna.answers[0] || ""),
+                        80
+                      )}
                     </p>
                   </div>
                 ) : (
