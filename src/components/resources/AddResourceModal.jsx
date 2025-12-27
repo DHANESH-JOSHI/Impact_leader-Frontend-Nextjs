@@ -14,6 +14,7 @@ import {
   Tag,
   Check,
 } from "lucide-react";
+import { ThemesService } from "@/services/themesService";
 
 const modalVariants = {
   hidden: {
@@ -74,7 +75,30 @@ export default function AddResourceModal({
   const [selectedFile, setSelectedFile] = useState(null);
   const [availableThemes, setAvailableThemes] = useState([]);
   const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
+  const [themesLoading, setThemesLoading] = useState(false);
   const themeDropdownRef = useRef(null);
+
+  // Load themes from backend
+  useEffect(() => {
+    if (isOpen && availableThemes.length === 0 && !themesLoading) {
+      loadThemes();
+    }
+  }, [isOpen]);
+
+  const loadThemes = async () => {
+    if (themesLoading || availableThemes.length > 0) return; // Prevent duplicate requests
+    setThemesLoading(true);
+    try {
+      const result = await ThemesService.getAllThemes({ limit: 100, sortBy: "name", sortOrder: "asc" });
+      if (result.success && Array.isArray(result.data)) {
+        setAvailableThemes(result.data);
+      }
+    } catch (error) {
+      console.error("Failed to load themes:", error);
+    } finally {
+      setThemesLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (initialResource) {

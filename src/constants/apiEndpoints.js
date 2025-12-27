@@ -155,7 +155,7 @@ export const API_ENDPOINTS = {
     CONVERSATION_BY_ID: (id) => `/messages/conversations/${id}`,
     SEND: '/messages/send',
     READ: (id) => `/messages/${id}/read`,
-    DELETE: (id) => `/messages/${id}/delete`,
+    DELETE: (id) => `/messages/${id}`,
     UPLOAD: '/messages/upload',
     BLOCKED_USERS: '/messages/blocked-users',
     UNREAD_COUNT: '/messages/unread/count',

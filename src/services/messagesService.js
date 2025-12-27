@@ -54,6 +54,7 @@ export class MessagesService {
       return {
         success: response.success,
         data: backendResponse.data || backendResponse,
+        otherUser: backendResponse.otherUser,
         pagination: backendResponse.pagination,
         message: backendResponse.message || response.message,
       };
@@ -114,7 +115,7 @@ export class MessagesService {
 
   static async markMessageAsRead(messageId) {
     try {
-      const response = await apiClient.post(MESSAGES.READ(messageId), {});
+      const response = await apiClient.put(MESSAGES.READ(messageId), {});
       const backendResponse = response.data || {};
 
       return {
