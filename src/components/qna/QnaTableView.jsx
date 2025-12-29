@@ -114,6 +114,7 @@ export default function QnaTableView({
   };
 
   const truncateText = (text, maxLength = 60) => {
+    if (!text || typeof text !== 'string') return '';
     if (text.length <= maxLength) return text;
     return text.slice(0, maxLength) + "...";
   };

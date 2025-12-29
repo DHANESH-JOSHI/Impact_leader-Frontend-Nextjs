@@ -5,13 +5,11 @@ import { motion } from "framer-motion";
 import {
   Plus,
   Search,
-  Filter,
   Grid3X3,
   List,
-  SortAsc,
-  SortDesc,
   Building2,
 } from "lucide-react";
+import CustomDropdown from "@/components/core/CustomDropdown";
 
 const headerVariants = {
   hidden: { opacity: 0, y: -20 },
@@ -60,6 +58,11 @@ export default function DirectoryHeader({
   onAddEntry,
   totalEntries,
 }) {
+  // Prepare theme options for dropdown
+  const themeOptions = themes && themes.length > 0
+    ? [{ name: "all", label: "All Themes" }, ...themes]
+    : [{ name: "all", label: "All Themes" }];
+
   return (
     <motion.div
       className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6"
@@ -120,45 +123,30 @@ export default function DirectoryHeader({
           />
         </div>
 
-        <div className="relative">
-          <select
-            value={filterOrganization}
-            onChange={(e) => setFilterOrganization(e.target.value)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[160px]"
-            style={{ focusRingColor: "#2691ce" }}
-          >
-            {organizationTypes.map((org) => (
-              <option key={org.value} value={org.value}>
-                {org.label}
-              </option>
-            ))}
-          </select>
-          <Filter
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
-            style={{ color: "#646464" }}
-          />
-        </div>
+        <CustomDropdown
+          value={filterOrganization || "all"}
+          onChange={setFilterOrganization}
+          options={organizationTypes}
+          placeholder="All Types"
+          minWidth="160px"
+          maxHeight="200px"
+          getOptionLabel={(option) => option.label}
+          getOptionValue={(option) => option.value}
+          getOptionKey={(option, index) => option.value || index}
+        />
 
         {themes && themes.length > 0 && (
-          <div className="relative">
-            <select
-              value={filterTheme}
-              onChange={(e) => setFilterTheme(e.target.value)}
-              className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[160px]"
-              style={{ focusRingColor: "#2691ce" }}
-            >
-              <option value="all">All Themes</option>
-              {themes.map((theme) => (
-                <option key={theme.value} value={theme.value}>
-                  {theme.label}
-                </option>
-              ))}
-            </select>
-            <Filter
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
-              style={{ color: "#646464" }}
-            />
-          </div>
+          <CustomDropdown
+            value={filterTheme || "all"}
+            onChange={setFilterTheme}
+            options={themeOptions}
+            placeholder="All Themes"
+            minWidth="160px"
+            maxHeight="200px"
+            getOptionLabel={(option) => option.label || option.name}
+            getOptionValue={(option) => option.name}
+            getOptionKey={(option, index) => option._id || option.id || index}
+          />
         )}
 
         <div className="relative">
@@ -172,27 +160,26 @@ export default function DirectoryHeader({
           />
         </div>
 
-        <div className="relative">
-          <select
-            value={`${sortBy}-${sortOrder}`}
-            onChange={(e) => {
-              const [by, order] = e.target.value.split('-');
-              setSortBy(by);
-              setSortOrder(order);
-            }}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[160px]"
-            style={{ focusRingColor: "#2691ce" }}
-          >
-            <option value="createdAt-desc">Newest First</option>
-            <option value="createdAt-asc">Oldest First</option>
-            <option value="title-asc">Name (A-Z)</option>
-            <option value="title-desc">Name (Z-A)</option>
-          </select>
-          <SortAsc
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
-            style={{ color: "#646464" }}
-          />
-        </div>
+        <CustomDropdown
+          value={`${sortBy}-${sortOrder}`}
+          onChange={(value) => {
+            const [by, order] = value.split('-');
+            setSortBy(by);
+            setSortOrder(order);
+          }}
+          options={[
+            { value: "createdAt-desc", label: "Newest First" },
+            { value: "createdAt-asc", label: "Oldest First" },
+            { value: "title-asc", label: "Name (A-Z)" },
+            { value: "title-desc", label: "Name (Z-A)" },
+          ]}
+          placeholder="Sort by..."
+          minWidth="160px"
+          maxHeight="200px"
+          getOptionLabel={(option) => option.label}
+          getOptionValue={(option) => option.value}
+          getOptionKey={(option, index) => option.value || index}
+        />
       </motion.div>
 
       <motion.div

@@ -10,6 +10,7 @@ import AddDirectoryModal from "@/components/directory/AddDirectoryModal";
 import ViewDirectoryModal from "@/components/directory/ViewDirectoryModal";
 import DeleteConfirmModal from "@/components/core/DeleteConfirmModal";
 import { DirectoryService } from "@/services/directoryService";
+import { ThemesService } from "@/services/themesService";
 
 const pageVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -57,6 +58,7 @@ export default function DirectoryPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [themesLoading, setThemesLoading] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -76,22 +78,17 @@ export default function DirectoryPage() {
   }, []);
 
   const loadThemes = async () => {
+    if (themesLoading || themes.length > 0) return; // Prevent duplicate requests
+    setThemesLoading(true);
     try {
-      // Get unique themes from directory entries
-      const result = await DirectoryService.browseDirectory({ limit: 1000 });
+      const result = await ThemesService.getAllThemes({ limit: 100, sortBy: "name", sortOrder: "asc" });
       if (result.success && Array.isArray(result.data)) {
-        const allThemes = new Set();
-        result.data.forEach(entry => {
-          if (Array.isArray(entry.themes)) {
-            entry.themes.forEach(theme => {
-              if (theme) allThemes.add(theme);
-            });
-          }
-        });
-        setThemes(Array.from(allThemes).sort().map(theme => ({ value: theme, label: theme })));
+        setThemes(result.data);
       }
     } catch (error) {
       console.error("Failed to load themes:", error);
+    } finally {
+      setThemesLoading(false);
     }
   };
 

@@ -5,13 +5,11 @@ import { motion } from "framer-motion";
 import {
   Plus,
   Search,
-  Filter,
   Grid3X3,
   List,
   BookOpen,
-  SortAsc,
-  SortDesc,
 } from "lucide-react";
+import CustomDropdown from "@/components/core/CustomDropdown";
 
 const headerVariants = {
   hidden: { opacity: 0, y: -20 },
@@ -80,6 +78,11 @@ export default function StoriesHeader({
     })),
   ];
 
+  // Prepare theme options for dropdown
+  const themeOptions = themes && themes.length > 0
+    ? [{ name: "all", label: "All Themes" }, ...themes]
+    : [{ name: "all", label: "All Themes" }];
+
   return (
     <motion.div
       className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6"
@@ -144,90 +147,69 @@ export default function StoriesHeader({
         </div>
 
         {/* Status Filter */}
-        <div className="relative">
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[140px]"
-            style={{ focusRingColor: "#2691ce" }}
-          >
-            {statusOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <Filter
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
-            style={{ color: "#646464" }}
-          />
-        </div>
+        <CustomDropdown
+          value={filterStatus || "all"}
+          onChange={setFilterStatus}
+          options={statusOptions}
+          placeholder="All Statuses"
+          minWidth="140px"
+          maxHeight="200px"
+          getOptionLabel={(option) => option.label}
+          getOptionValue={(option) => option.value}
+          getOptionKey={(option, index) => option.value || index}
+        />
 
         {/* Type Filter */}
-        <div className="relative">
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[120px]"
-            style={{ focusRingColor: "#2691ce" }}
-          >
-            {typeOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <Filter
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
-            style={{ color: "#646464" }}
-          />
-        </div>
+        <CustomDropdown
+          value={filterType || "all"}
+          onChange={setFilterType}
+          options={typeOptions}
+          placeholder="All Types"
+          minWidth="120px"
+          maxHeight="200px"
+          getOptionLabel={(option) => option.label}
+          getOptionValue={(option) => option.value}
+          getOptionKey={(option, index) => option.value || index}
+        />
 
         {/* Theme Filter */}
-        <div className="relative">
-          <select
-            value={filterTheme}
-            onChange={(e) => setFilterTheme(e.target.value)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[140px]"
-            style={{ focusRingColor: "#2691ce" }}
-          >
-            <option value="all">All Themes</option>
-            {themes && themes.length > 0 && themes.map((theme) => (
-              <option key={theme._id || theme.id} value={theme.name}>
-                {theme.name}
-              </option>
-            ))}
-          </select>
-          <Filter
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
-            style={{ color: "#646464" }}
+        {themes && themes.length > 0 && (
+          <CustomDropdown
+            value={filterTheme || "all"}
+            onChange={setFilterTheme}
+            options={themeOptions}
+            placeholder="All Themes"
+            minWidth="140px"
+            maxHeight="200px"
+            getOptionLabel={(option) => option.label || option.name}
+            getOptionValue={(option) => option.name}
+            getOptionKey={(option, index) => option._id || option.id || index}
           />
-        </div>
+        )}
 
         {/* Sort Filter */}
-        <div className="relative">
-          <select
-            value={`${sortBy}-${sortOrder}`}
-            onChange={(e) => {
-              const [by, order] = e.target.value.split('-');
-              setSortBy(by);
-              setSortOrder(order);
-            }}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[160px]"
-            style={{ focusRingColor: "#2691ce" }}
-          >
-            <option value="createdAt-desc">Newest First</option>
-            <option value="createdAt-asc">Oldest First</option>
-            <option value="viewCount-desc">Most Views</option>
-            <option value="viewCount-asc">Least Views</option>
-            <option value="expiresAt-asc">Expiring Soon</option>
-            <option value="expiresAt-desc">Expiring Later</option>
-          </select>
-          <SortAsc
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
-            style={{ color: "#646464" }}
-          />
-        </div>
+        <CustomDropdown
+          value={`${sortBy}-${sortOrder}`}
+          onChange={(value) => {
+            const [by, order] = value.split('-');
+            setSortBy(by);
+            setSortOrder(order);
+          }}
+          options={[
+            { value: "createdAt-desc", label: "Newest First" },
+            { value: "createdAt-asc", label: "Oldest First" },
+            { value: "viewCount-desc", label: "Most Views" },
+            { value: "viewCount-asc", label: "Least Views" },
+            { value: "expiresAt-asc", label: "Expiring Soon" },
+            { value: "expiresAt-desc", label: "Expiring Later" },
+          ]}
+          placeholder="Sort by..."
+          minWidth="160px"
+          maxHeight="200px"
+          getOptionLabel={(option) => option.label}
+          getOptionValue={(option) => option.value}
+          getOptionKey={(option, index) => option.value || index}
+        />
       </motion.div>
 
       {/* Stats and View Toggle */}
