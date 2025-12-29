@@ -98,9 +98,8 @@ export default function MessagesPage() {
       const result = await MessagesService.getConversationMessages(conversationId);
       if (result.success) {
         const messagesData = Array.isArray(result.data) ? result.data : [];
-        // Filter out deleted messages (in case backend returns soft-deleted messages)
-        const activeMessages = messagesData.filter(msg => !msg.isDeleted && !msg.deletedBySender);
-        setMessages(activeMessages);
+        // Keep all messages including deleted ones (they will be displayed with "This message was deleted")
+        setMessages(messagesData);
         // Store otherUser from API response to help determine message alignment
         // The otherUser is in result.data.otherUser or result.otherUser
         if (result.data?.otherUser) {
@@ -229,19 +228,21 @@ export default function MessagesPage() {
       const result = await MessagesService.deleteMessage(messageId);
       
       if (result.success) {
-        // Remove message from local state immediately for better UX
+        // Mark message as deleted in local state (like WhatsApp)
         setMessages(prevMessages => 
-          prevMessages.filter(msg => (msg._id || msg.id) !== messageId)
+          prevMessages.map(msg => {
+            const msgId = msg._id || msg.id;
+            if (msgId === messageId) {
+              return { ...msg, isDeleted: true, deletedBySender: true };
+            }
+            return msg;
+          })
         );
         
         toast.success("Message deleted successfully");
         
-        // Reload messages to ensure consistency with backend
-        const conversationId = selectedConversation?._id || selectedConversation?.id;
-        if (conversationId) {
-          await loadMessages(conversationId);
-          await loadConversations();
-        }
+        // Reload conversations to update lastMessage
+        await loadConversations();
         
         setIsDeleteModalOpen(false);
         setMessageToDelete(null);
@@ -494,7 +495,11 @@ export default function MessagesPage() {
                               </span>
                             )}
                             <p className="text-sm truncate flex-1" style={{ color: "#646464" }}>
-                              {conversation.lastMessage.content || conversation.lastMessage.message || "No message"}
+                              {(conversation.lastMessage.isDeleted || conversation.lastMessage.deletedBySender) ? (
+                                <span className="italic" style={{ color: "#9ca3af" }}>This message was deleted</span>
+                              ) : (
+                                conversation.lastMessage.content || conversation.lastMessage.message || "No message"
+                              )}
                             </p>
                           </div>
                         ) : (
@@ -594,47 +599,59 @@ export default function MessagesPage() {
                                     : 'rounded-bl-none'
                                 }`}
                                 style={{ 
-                                  backgroundColor: isCurrentUser ? "#2691ce" : "#eff6ff",
-                                  color: isCurrentUser ? "white" : "#040606"
+                                  backgroundColor: (message.isDeleted || message.deletedBySender) 
+                                    ? (isCurrentUser ? "#d1d5db" : "#f3f4f6")
+                                    : (isCurrentUser ? "#2691ce" : "#eff6ff"),
+                                  color: (message.isDeleted || message.deletedBySender)
+                                    ? "#9ca3af"
+                                    : (isCurrentUser ? "white" : "#040606")
                                 }}
                               >
-                                {message.attachment && message.attachment.url && (
-                                  <div className="mb-2">
-                                    {message.type === 'image' ? (
-                                      <img
-                                        src={message.attachment.url}
-                                        alt={message.attachment.originalName || "Image"}
-                                        className="max-w-full h-auto rounded-lg"
-                                        style={{ maxHeight: "300px" }}
-                                      />
-                                    ) : message.type === 'file' && message.attachment.mimeType?.startsWith('video/') ? (
-                                      <video
-                                        src={message.attachment.url}
-                                        controls
-                                        className="max-w-full h-auto rounded-lg"
-                                        style={{ maxHeight: "300px" }}
-                                      >
-                                        Your browser does not support the video tag.
-                                      </video>
-                                    ) : (
-                                      <a
-                                        href={message.attachment.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center space-x-2 p-2 bg-white/20 rounded hover:bg-white/30 transition-colors"
-                                      >
-                                        <Paperclip className="h-4 w-4" />
-                                        <span className="text-sm truncate">
-                                          {message.attachment.originalName || "Download file"}
-                                        </span>
-                                      </a>
-                                    )}
-                                  </div>
-                                )}
-                                {(message.content || message.message) && (
-                                  <p className="text-sm break-words" style={{ color: isCurrentUser ? "white" : "#040606" }}>
-                                    {message.content || message.message}
+                                {(message.isDeleted || message.deletedBySender) ? (
+                                  <p className="text-sm italic" style={{ color: "#9ca3af" }}>
+                                    This message was deleted
                                   </p>
+                                ) : (
+                                  <>
+                                    {message.attachment && message.attachment.url && (
+                                      <div className="mb-2">
+                                        {message.type === 'image' ? (
+                                          <img
+                                            src={message.attachment.url}
+                                            alt={message.attachment.originalName || "Image"}
+                                            className="max-w-full h-auto rounded-lg"
+                                            style={{ maxHeight: "300px" }}
+                                          />
+                                        ) : message.type === 'file' && message.attachment.mimeType?.startsWith('video/') ? (
+                                          <video
+                                            src={message.attachment.url}
+                                            controls
+                                            className="max-w-full h-auto rounded-lg"
+                                            style={{ maxHeight: "300px" }}
+                                          >
+                                            Your browser does not support the video tag.
+                                          </video>
+                                        ) : (
+                                          <a
+                                            href={message.attachment.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center space-x-2 p-2 bg-white/20 rounded hover:bg-white/30 transition-colors"
+                                          >
+                                            <Paperclip className="h-4 w-4" />
+                                            <span className="text-sm truncate">
+                                              {message.attachment.originalName || "Download file"}
+                                            </span>
+                                          </a>
+                                        )}
+                                      </div>
+                                    )}
+                                    {(message.content || message.message) && (
+                                      <p className="text-sm break-words" style={{ color: isCurrentUser ? "white" : "#040606" }}>
+                                        {message.content || message.message}
+                                      </p>
+                                    )}
+                                  </>
                                 )}
                               </div>
                               {/* Message Actions Menu - Positioned absolutely */}
@@ -644,7 +661,7 @@ export default function MessagesPage() {
                                     ? 'left-0 -translate-x-full pr-2' 
                                     : 'right-0 translate-x-full pl-2'
                                 }`}>
-                                  {!message.isRead && !isCurrentUser && (
+                                  {!message.isRead && !isCurrentUser && !message.isDeleted && !message.deletedBySender && (
                                     <motion.button
                                       onClick={() => handleMarkAsRead(message._id || message.id)}
                                       className="p-1.5 rounded hover:bg-gray-200 transition-colors bg-white shadow-sm border border-gray-200"
@@ -655,7 +672,7 @@ export default function MessagesPage() {
                                       <Check className="h-4 w-4" style={{ color: "#2691ce" }} />
                                     </motion.button>
                                   )}
-                                  {isCurrentUser && (
+                                  {isCurrentUser && !message.isDeleted && !message.deletedBySender && (
                                     <motion.button
                                       onClick={() => {
                                         setMessageToDelete(message);
