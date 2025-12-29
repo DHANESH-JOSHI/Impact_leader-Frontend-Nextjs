@@ -478,11 +478,11 @@ export default function ApprovalsPage() {
       animate="visible"
     >
       {/* Toasts */}
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div>
         {/* Header / Controls */}
         <motion.div
           variants={cardVariants}
-          className="bg-white border rounded-xl p-4 shadow-sm"
+          className="mb-8 bg-white border rounded-xl p-4 shadow-sm"
         >
           <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between">
             <div className="flex items-center gap-2">

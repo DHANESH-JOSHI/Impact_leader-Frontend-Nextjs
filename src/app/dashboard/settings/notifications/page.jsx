@@ -400,7 +400,7 @@ export default function NotificationSettings() {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-6">
       {/* page header */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -422,7 +422,7 @@ export default function NotificationSettings() {
       </div>
 
       {/* stats cards section */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <div className="flex items-center space-x-2">
             <Bell className="h-5 w-5" style={{ color: "#2691ce" }} />

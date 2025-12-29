@@ -286,7 +286,7 @@ export default function BusinessSettingsPage() {
       initial="hidden"
       animate="visible"
     >
-      <div className="max-w-6xl mx-auto">
+      <div>
         {/* Header */}
         <motion.div className="mb-8" variants={cardVariants}>
           <div className="flex items-center justify-between">

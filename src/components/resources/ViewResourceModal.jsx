@@ -14,7 +14,6 @@ import {
   Star,
   Clock,
   Share2,
-  Save,
   Download,
   Play,
   Pause,
@@ -62,60 +61,22 @@ export default function ViewResourceModal({
   resource,
   onEdit,
 }) {
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editFormData, setEditFormData] = useState({});
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const mediaRef = useRef(null);
 
-  // Initialize edit form data when entering edit mode
-  const handleEditToggle = () => {
-    if (!isEditMode && resource) {
-      setEditFormData({
-        title: resource.title,
-        description: resource.description,
-        author: resource.author,
-        category: resource.category,
-        status: resource.status,
-        tags: resource.tags ? resource.tags.join(", ") : "",
-        featured: resource.featured,
-      });
-    }
-    setIsEditMode(!isEditMode);
-  };
-
-  // Handle input changes in edit mode
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setEditFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
-
-  // Handle save changes
-  const handleSaveChanges = () => {
+  // Handle edit - close view modal and open edit modal
+  const handleEdit = () => {
     if (resource) {
-      const updatedResource = {
-        ...resource,
-        ...editFormData,
-        tags: editFormData.tags
-          ? editFormData.tags.split(",")
-              .map((tag) => tag.trim())
-              .filter((tag) => tag)
-          : resource.tags,
-      };
-      onEdit(updatedResource);
-      setIsEditMode(false);
+      onClose();
+      onEdit(resource);
     }
   };
 
   // Handle modal close
   const handleClose = () => {
-    setIsEditMode(false);
-    setEditFormData({});
     setIsPlaying(false);
     if (mediaRef.current) {
       mediaRef.current.pause();
@@ -241,43 +202,35 @@ export default function ViewResourceModal({
                   className="p-2 rounded-lg"
                   style={{ backgroundColor: "#eff6ff" }}
                 >
-                  {isEditMode ? (
-                    <Edit className="h-6 w-6" style={{ color: "#2691ce" }} />
-                  ) : (
-                    <FolderOpen
-                      className="h-6 w-6"
-                      style={{ color: "#2691ce" }}
-                    />
-                  )}
+                  <FolderOpen
+                    className="h-6 w-6"
+                    style={{ color: "#2691ce" }}
+                  />
                 </div>
                 <div>
                   <h2
                     className="text-xl font-semibold"
                     style={{ color: "#040606" }}
                   >
-                    {isEditMode ? "Edit Resource" : "View Resource"}
+                    View Resource
                   </h2>
                   <p className="text-sm" style={{ color: "#646464" }}>
-                    {isEditMode
-                      ? "Make changes to your resource"
-                      : "Resource details and preview"}
+                    Resource details and preview
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-2">
-                {!isEditMode && (
-                  <motion.button
-                    onClick={handleEditToggle}
-                    className="flex items-center space-x-2 px-4 py-2 text-white rounded-lg font-medium hover:shadow-md transition-all"
-                    style={{ backgroundColor: "#2691ce" }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <Edit className="h-4 w-4" />
-                    <span>Edit Resource</span>
-                  </motion.button>
-                )}
+                <motion.button
+                  onClick={handleEdit}
+                  className="flex items-center space-x-2 px-4 py-2 text-white rounded-lg font-medium hover:shadow-md transition-all"
+                  style={{ backgroundColor: "#2691ce" }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Edit className="h-4 w-4" />
+                  <span>Edit Resource</span>
+                </motion.button>
 
                 <motion.button
                   onClick={handleClose}
@@ -292,192 +245,7 @@ export default function ViewResourceModal({
 
             {/* Modal Content */}
             <div className="max-h-[calc(90vh-140px)] overflow-y-auto">
-              {isEditMode ? (
-                /* Edit Mode Interface */
-                <div className="p-6 space-y-6">
-                  {/* Resource Title Edit */}
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 }}
-                  >
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
-                    >
-                      Resource Title
-                    </label>
-                    <input
-                      type="text"
-                      name="title"
-                      value={editFormData.title || ""}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all text-lg font-semibold"
-                      style={{ focusRingColor: "#2691ce" }}
-                      placeholder="Enter resource title..."
-                    />
-                  </motion.div>
-
-                  {/* Meta Information Grid */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.2 }}
-                    >
-                      <label
-                        className="block text-sm font-medium mb-2"
-                        style={{ color: "#040606" }}
-                      >
-                        <User className="inline h-4 w-4 mr-1" />
-                        Author
-                      </label>
-                      <input
-                        type="text"
-                        name="author"
-                        value={editFormData.author || ""}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                        style={{ focusRingColor: "#2691ce" }}
-                        placeholder="Author name..."
-                      />
-                    </motion.div>
-
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.3 }}
-                    >
-                      <label
-                        className="block text-sm font-medium mb-2"
-                        style={{ color: "#040606" }}
-                      >
-                        <Tag className="inline h-4 w-4 mr-1" />
-                        Category
-                      </label>
-                      <input
-                        type="text"
-                        name="category"
-                        value={editFormData.category || ""}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                        style={{ focusRingColor: "#2691ce" }}
-                        placeholder="Resource category..."
-                      />
-                    </motion.div>
-
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.4 }}
-                    >
-                      <label
-                        className="block text-sm font-medium mb-2"
-                        style={{ color: "#040606" }}
-                      >
-                        Status
-                      </label>
-                      <select
-                        name="status"
-                        value={editFormData.status || ""}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                        style={{ focusRingColor: "#2691ce" }}
-                      >
-                        <option value="draft">Draft</option>
-                        <option value="published">Published</option>
-                        <option value="archived">Archived</option>
-                      </select>
-                    </motion.div>
-                  </div>
-
-                  {/* Featured Resource Toggle */}
-                  <motion.div
-                    className="rounded-lg p-4"
-                    style={{ backgroundColor: "#f8fafc" }}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.5 }}
-                  >
-                    <label className="flex items-center space-x-3">
-                      <input
-                        type="checkbox"
-                        name="featured"
-                        checked={editFormData.featured || false}
-                        onChange={handleInputChange}
-                        className="w-5 h-5 rounded focus:ring-2"
-                        style={{ color: "#2691ce", focusRingColor: "#2691ce" }}
-                      />
-                      <div className="flex items-center space-x-2">
-                        <Star className="h-5 w-5 text-yellow-500" />
-                        <span
-                          className="text-sm font-medium"
-                          style={{ color: "#040606" }}
-                        >
-                          Mark as Featured Resource
-                        </span>
-                      </div>
-                    </label>
-                    <p
-                      className="text-xs mt-2 ml-8"
-                      style={{ color: "#646464" }}
-                    >
-                      Featured resources appear prominently in listings
-                    </p>
-                  </motion.div>
-
-                  {/* Resource Description */}
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.6 }}
-                  >
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
-                    >
-                      Description
-                    </label>
-                    <textarea
-                      name="description"
-                      value={editFormData.description || ""}
-                      onChange={handleInputChange}
-                      rows={4}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none"
-                      style={{ focusRingColor: "#2691ce" }}
-                      placeholder="Describe your resource..."
-                    />
-                  </motion.div>
-
-                  {/* Tags Input */}
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.7 }}
-                  >
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
-                    >
-                      Tags
-                    </label>
-                    <input
-                      type="text"
-                      name="tags"
-                      value={editFormData.tags || ""}
-                      onChange={handleInputChange}
-                      placeholder="Enter tags separated by commas (e.g., tutorial, music, education)"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                      style={{ focusRingColor: "#2691ce" }}
-                    />
-                    <p className="text-xs mt-1" style={{ color: "#646464" }}>
-                      Separate multiple tags with commas for better
-                      discoverability
-                    </p>
-                  </motion.div>
-                </div>
-              ) : (
-                /* View Mode Display */
+              {/* View Mode Display */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
                   {/* Media Preview Column */}
                   <div className="lg:col-span-1">
@@ -1153,36 +921,7 @@ export default function ViewResourceModal({
                     )}
                   </div>
                 </div>
-              )}
             </div>
-
-            {/* Modal Footer - Only shows in edit mode */}
-            {isEditMode && (
-              <div
-                className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200"
-                style={{ backgroundColor: "#f8fafc" }}
-              >
-                <motion.button
-                  onClick={handleEditToggle}
-                  className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                  style={{ color: "#646464" }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  Cancel Changes
-                </motion.button>
-                <motion.button
-                  onClick={handleSaveChanges}
-                  className="flex items-center space-x-2 px-6 py-2 text-white rounded-lg font-medium hover:shadow-md transition-all"
-                  style={{ backgroundColor: "#2691ce" }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Save className="h-4 w-4" />
-                  <span>Save Changes</span>
-                </motion.button>
-              </div>
-            )}
           </motion.div>
         </motion.div>
       )}

@@ -293,9 +293,9 @@ export default function QnaPage() {
       initial="hidden"
       animate="visible"
     >
-      <div className="max-w-7xl mx-auto">
+      <div>
         {/* top header section ka code */}
-        <motion.div variants={cardVariants}>
+        <motion.div className="mb-8" variants={cardVariants}>
           <QnaHeader
             viewMode={viewMode}
             setViewMode={handleViewModeChange}

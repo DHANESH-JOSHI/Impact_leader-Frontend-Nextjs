@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -43,6 +43,7 @@ export default function AddThemeModal({
   isOpen,
   onClose,
   onSubmit,
+  initialTheme = null,
 }) {
   const [formData, setFormData] = useState({
     name: "",
@@ -51,6 +52,24 @@ export default function AddThemeModal({
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Populate form when initialTheme is provided (edit mode)
+  useEffect(() => {
+    if (initialTheme) {
+      setFormData({
+        name: initialTheme.name || "",
+        description: initialTheme.description || "",
+        isActive: initialTheme.isActive !== undefined ? initialTheme.isActive : true,
+      });
+    } else {
+      setFormData({
+        name: "",
+        description: "",
+        isActive: true,
+      });
+    }
+    setErrors({});
+  }, [initialTheme, isOpen]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -86,7 +105,11 @@ export default function AddThemeModal({
 
     setIsSubmitting(true);
     try {
-      await onSubmit(formData);
+      const themeData = { ...formData };
+      if (initialTheme) {
+        themeData.id = initialTheme.id;
+      }
+      await onSubmit(themeData);
       setFormData({
         name: "",
         description: "",
@@ -134,10 +157,10 @@ export default function AddThemeModal({
             <div className="p-6 border-b border-gray-200 flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold" style={{ color: "#040606" }}>
-                  Add Theme
+                  {initialTheme ? "Edit Theme" : "Add Theme"}
                 </h2>
                 <p className="text-sm mt-1" style={{ color: "#646464" }}>
-                  Create a new theme
+                  {initialTheme ? "Update theme information" : "Create a new theme"}
                 </p>
               </div>
               <motion.button
@@ -234,12 +257,12 @@ export default function AddThemeModal({
                     {isSubmitting ? (
                       <>
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Creating...</span>
+                        <span>{initialTheme ? "Updating..." : "Creating..."}</span>
                       </>
                     ) : (
                       <>
                         <Save className="h-4 w-4" />
-                        <span>Create Theme</span>
+                        <span>{initialTheme ? "Update Theme" : "Create Theme"}</span>
                       </>
                     )}
                   </motion.button>

@@ -314,10 +314,11 @@ export default function ResourcesCardView({
 
           {/* Action Buttons */}
           <div className="p-3 bg-white border-t border-gray-100 mt-auto">
-            <div className="flex items-center justify-between space-x-2">
+            <div className="flex items-center justify-end space-x-2">
               <motion.button
                 onClick={() => onViewResource(resource)}
-                className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+                className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
                 variants={buttonVariants}
                 whileHover="hover"
                 whileTap="tap"
@@ -325,34 +326,27 @@ export default function ResourcesCardView({
                 <Eye className="h-4 w-4" />
                 <span>View</span>
               </motion.button>
-
               <motion.button
                 onClick={() => onEditResource(resource)}
-                className="p-2 text-gray-600 hover:text-white rounded-lg transition-colors"
-                style={{ backgroundColor: "transparent" }}
+                className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ backgroundColor: "#f0fdf4", color: "#16a34a" }}
                 variants={buttonVariants}
                 whileHover="hover"
                 whileTap="tap"
-                onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = "#2691ce";
-                  e.target.style.color = "white";
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = "transparent";
-                  e.target.style.color = "#6b7280";
-                }}
               >
                 <Edit className="h-4 w-4" />
+                <span>Edit</span>
               </motion.button>
-
               <motion.button
                 onClick={() => onDeleteResource(resource.id)}
-                className="p-2 text-gray-600 hover:text-white hover:bg-red-500 rounded-lg transition-colors"
+                className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ backgroundColor: "#fef2f2", color: "#ef4444" }}
                 variants={buttonVariants}
                 whileHover="hover"
                 whileTap="tap"
               >
                 <Trash2 className="h-4 w-4" />
+                <span>Delete</span>
               </motion.button>
             </div>
           </div>

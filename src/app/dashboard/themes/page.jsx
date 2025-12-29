@@ -55,6 +55,7 @@ export default function ThemesPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [editingTheme, setEditingTheme] = useState(null);
 
   useEffect(() => {
     loadThemes();
@@ -109,42 +110,41 @@ export default function ThemesPage() {
   const handleAddTheme = async (themeData) => {
     try {
       setLoading(true);
-      const result = await ThemesService.createTheme(themeData);
-
-      if (result.success) {
-        toast.success("Theme created successfully");
-        setIsAddModalOpen(false);
-        await loadThemes();
+      let result;
+      
+      if (themeData.id) {
+        // Update existing theme
+        result = await ThemesService.updateTheme(themeData.id, themeData);
+        if (result.success) {
+          toast.success("Theme updated successfully");
+          setIsAddModalOpen(false);
+          setEditingTheme(null);
+          await loadThemes();
+        } else {
+          toast.error(result.message || "Failed to update theme");
+        }
       } else {
-        toast.error(result.message || "Failed to create theme");
+        // Create new theme
+        result = await ThemesService.createTheme(themeData);
+        if (result.success) {
+          toast.success("Theme created successfully");
+          setIsAddModalOpen(false);
+          await loadThemes();
+        } else {
+          toast.error(result.message || "Failed to create theme");
+        }
       }
     } catch (error) {
-      console.error("Failed to create theme:", error);
-      toast.error(error.message || "Failed to create theme");
+      console.error("Failed to save theme:", error);
+      toast.error(error.message || "Failed to save theme");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleUpdateTheme = async (themeId, themeData) => {
-    try {
-      setLoading(true);
-      const result = await ThemesService.updateTheme(themeId, themeData);
-
-      if (result.success) {
-        toast.success("Theme updated successfully");
-        setIsViewModalOpen(false);
-        setSelectedTheme(null);
-        await loadThemes();
-      } else {
-        toast.error(result.message || "Failed to update theme");
-      }
-    } catch (error) {
-      console.error("Failed to update theme:", error);
-      toast.error(error.message || "Failed to update theme");
-    } finally {
-      setLoading(false);
-    }
+  const handleEditTheme = (theme) => {
+    setEditingTheme(theme);
+    setIsAddModalOpen(true);
   };
 
   const handleDeleteTheme = async (themeId) => {
@@ -234,6 +234,7 @@ export default function ThemesPage() {
           <ThemesCardView
             themes={filteredThemes}
             onViewTheme={handleViewTheme}
+            onEditTheme={handleEditTheme}
             onDeleteTheme={(theme) => {
               setSelectedTheme(theme);
               setIsDeleteModalOpen(true);
@@ -243,6 +244,7 @@ export default function ThemesPage() {
           <ThemesTableView
             themes={filteredThemes}
             onViewTheme={handleViewTheme}
+            onEditTheme={handleEditTheme}
             onDeleteTheme={(theme) => {
               setSelectedTheme(theme);
               setIsDeleteModalOpen(true);
@@ -280,8 +282,12 @@ export default function ThemesPage() {
 
       <AddThemeModal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setEditingTheme(null);
+        }}
         onSubmit={handleAddTheme}
+        initialTheme={editingTheme}
       />
 
       <ViewThemeModal
@@ -291,7 +297,7 @@ export default function ThemesPage() {
           setSelectedTheme(null);
         }}
         theme={selectedTheme}
-        onUpdate={handleUpdateTheme}
+        onEdit={handleEditTheme}
       />
 
       <DeleteConfirmModal

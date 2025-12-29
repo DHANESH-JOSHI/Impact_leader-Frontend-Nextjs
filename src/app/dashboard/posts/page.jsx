@@ -334,9 +334,9 @@ export default function PostsPage() {
       initial="hidden"
       animate="visible"
     >
-      <div className="max-w-7xl mx-auto">
+      <div >
         {/* Header Section */}
-        <motion.div variants={cardVariants}>
+        <motion.div className="mb-8" variants={cardVariants}>
           <PostsHeader
             viewMode={viewMode}
             setViewMode={handleViewModeChange}

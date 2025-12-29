@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Eye,
+  Edit,
   Trash2,
   Calendar,
   Building2,
@@ -52,6 +53,7 @@ const buttonVariants = {
 export default function DirectoryTableView({
   entries,
   onViewEntry,
+  onEditEntry,
   onDeleteEntry,
 }) {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
@@ -300,6 +302,19 @@ export default function DirectoryTableView({
                     >
                       <Eye className="h-4 w-4" />
                     </motion.button>
+                    {onEditEntry && (
+                      <motion.button
+                        onClick={() => onEditEntry(entry)}
+                        className="p-2 rounded-lg transition-colors"
+                        style={{ backgroundColor: "#f0fdf4", color: "#16a34a" }}
+                        variants={buttonVariants}
+                        whileHover="hover"
+                        whileTap="tap"
+                        title="Edit"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </motion.button>
+                    )}
                     <motion.button
                       onClick={() => onDeleteEntry(entry)}
                       className="p-2 rounded-lg transition-colors"

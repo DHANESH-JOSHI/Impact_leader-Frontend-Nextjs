@@ -378,39 +378,40 @@ export default function PostsTableView({
                 </td>
 
                 {/* Actions Column */}
-                <td className="px-6 py-4">
-                  <div className="flex items-center justify-center space-x-2">
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <div className="flex items-center justify-end space-x-2">
                     <motion.button
                       onClick={() => onViewPost(post)}
                       className="p-2 rounded-lg transition-colors"
-                      style={{ color: "#2691ce" }}
-                      whileHover={{ backgroundColor: "#eff6ff", scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
+                      style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
+                      variants={buttonVariants}
+                      whileHover="hover"
+                      whileTap="tap"
                       title="View Post"
                     >
                       <Eye className="h-4 w-4" />
                     </motion.button>
-
                     <motion.button
                       onClick={() => onEditPost(post)}
-                      className="p-2 hover:bg-yellow-50 rounded-lg transition-colors"
+                      className="p-2 rounded-lg transition-colors"
+                      style={{ backgroundColor: "#f0fdf4", color: "#16a34a" }}
                       variants={buttonVariants}
                       whileHover="hover"
                       whileTap="tap"
                       title="Edit Post"
                     >
-                      <Edit className="h-4 w-4 text-yellow-600" />
+                      <Edit className="h-4 w-4" />
                     </motion.button>
-
                     <motion.button
                       onClick={() => onDeletePost(post.id)}
-                      className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                      className="p-2 rounded-lg transition-colors"
+                      style={{ backgroundColor: "#fef2f2", color: "#ef4444" }}
                       variants={buttonVariants}
                       whileHover="hover"
                       whileTap="tap"
                       title="Delete Post"
                     >
-                      <Trash2 className="h-4 w-4 text-red-500" />
+                      <Trash2 className="h-4 w-4" />
                     </motion.button>
                   </div>
                 </td>

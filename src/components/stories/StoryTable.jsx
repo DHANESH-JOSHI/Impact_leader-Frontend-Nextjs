@@ -1,16 +1,16 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  FiEye,
-  FiEdit2,
-  FiTrash2,
-  FiHeart,
-  FiUser,
-  FiClock,
-  FiChevronUp,
-  FiChevronDown,
-  FiTag,
-} from "react-icons/fi";
+  Eye,
+  Edit,
+  Trash2,
+  Heart,
+  User,
+  Clock,
+  ChevronUp,
+  ChevronDown,
+  Tag,
+} from "lucide-react";
 
 const tableVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -33,6 +33,11 @@ const rowVariants = {
       duration: 0.3,
     },
   },
+};
+
+const buttonVariants = {
+  hover: { scale: 1.1 },
+  tap: { scale: 0.9 },
 };
 
 export default function StoryTable({ stories, onView, onEdit, onDelete }) {
@@ -85,12 +90,12 @@ export default function StoryTable({ stories, onView, onEdit, onDelete }) {
 
   const SortIcon = ({ columnKey }) => {
     if (sortConfig.key !== columnKey) {
-      return <FiChevronUp className="w-4 h-4" style={{ color: "#646464" }} />;
+      return <ChevronUp className="w-4 h-4" style={{ color: "#646464" }} />;
     }
     return sortConfig.direction === "asc" ? (
-      <FiChevronUp className="w-4 h-4" style={{ color: "#2691ce" }} />
+      <ChevronUp className="w-4 h-4" style={{ color: "#2691ce" }} />
     ) : (
-      <FiChevronDown className="w-4 h-4" style={{ color: "#2691ce" }} />
+      <ChevronDown className="w-4 h-4" style={{ color: "#2691ce" }} />
     );
   };
 
@@ -224,7 +229,7 @@ export default function StoryTable({ stories, onView, onEdit, onDelete }) {
                     className="flex items-center text-sm"
                     style={{ color: "#040606" }}
                   >
-                    <FiUser
+                    <User
                       className="w-4 h-4 mr-2"
                       style={{ color: "#646464" }}
                     />
@@ -260,21 +265,21 @@ export default function StoryTable({ stories, onView, onEdit, onDelete }) {
                 >
                   <div className="flex items-center gap-4">
                     <div className="flex items-center">
-                      <FiEye
+                      <Eye
                         className="w-4 h-4 mr-1"
                         style={{ color: "#646464" }}
                       />
                       {story.views}
                     </div>
                     <div className="flex items-center">
-                      <FiHeart
+                      <Heart
                         className="w-4 h-4 mr-1"
                         style={{ color: "#646464" }}
                       />
                       {story.likes}
                     </div>
                     <div className="flex items-center">
-                      <FiClock
+                      <Clock
                         className="w-4 h-4 mr-1"
                         style={{ color: "#646464" }}
                       />
@@ -293,31 +298,39 @@ export default function StoryTable({ stories, onView, onEdit, onDelete }) {
 
                 {/* Actions */}
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div className="flex items-center justify-end gap-2">
+                  <div className="flex items-center justify-end space-x-2">
                     <motion.button
                       onClick={() => onView(story)}
-                      className="p-1 rounded transition-colors"
-                      style={{ color: "#2691ce" }}
-                      whileHover={{ backgroundColor: "#eff6ff", scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
+                      className="p-2 rounded-lg transition-colors"
+                      style={{ backgroundColor: "#eff6ff", color: "#2691ce" }}
+                      variants={buttonVariants}
+                      whileHover="hover"
+                      whileTap="tap"
+                      title="View"
                     >
-                      <FiEye className="w-4 h-4" />
+                      <Eye className="h-4 w-4" />
                     </motion.button>
                     <motion.button
                       onClick={() => onEdit(story)}
-                      className="text-green-600 hover:text-green-900 p-1 hover:bg-green-50 rounded transition-colors"
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
+                      className="p-2 rounded-lg transition-colors"
+                      style={{ backgroundColor: "#f0fdf4", color: "#16a34a" }}
+                      variants={buttonVariants}
+                      whileHover="hover"
+                      whileTap="tap"
+                      title="Edit"
                     >
-                      <FiEdit2 className="w-4 h-4" />
+                      <Edit className="h-4 w-4" />
                     </motion.button>
                     <motion.button
                       onClick={() => onDelete(story.id)}
-                      className="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded transition-colors"
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
+                      className="p-2 rounded-lg transition-colors"
+                      style={{ backgroundColor: "#fef2f2", color: "#ef4444" }}
+                      variants={buttonVariants}
+                      whileHover="hover"
+                      whileTap="tap"
+                      title="Delete"
                     >
-                      <FiTrash2 className="w-4 h-4" />
+                      <Trash2 className="h-4 w-4" />
                     </motion.button>
                   </div>
                 </td>

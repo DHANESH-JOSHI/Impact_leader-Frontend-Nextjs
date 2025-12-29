@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Eye,
+  Edit,
   Trash2,
   Calendar,
   ChevronUp,
@@ -52,6 +53,7 @@ const buttonVariants = {
 export default function ThemesTableView({
   themes,
   onViewTheme,
+  onEditTheme,
   onDeleteTheme,
 }) {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
@@ -241,6 +243,19 @@ export default function ThemesTableView({
                     >
                       <Eye className="h-4 w-4" />
                     </motion.button>
+                    {onEditTheme && (
+                      <motion.button
+                        onClick={() => onEditTheme(theme)}
+                        className="p-2 rounded-lg transition-colors"
+                        style={{ backgroundColor: "#f0fdf4", color: "#16a34a" }}
+                        variants={buttonVariants}
+                        whileHover="hover"
+                        whileTap="tap"
+                        title="Edit"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </motion.button>
+                    )}
                     <motion.button
                       onClick={() => onDeleteTheme(theme)}
                       className="p-2 rounded-lg transition-colors"

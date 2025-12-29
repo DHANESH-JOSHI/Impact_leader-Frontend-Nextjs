@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
   Palette,
   Calendar,
   Edit,
-  Save,
   CheckCircle,
   XCircle,
 } from "lucide-react";
@@ -47,70 +46,15 @@ export default function ViewThemeModal({
   isOpen,
   onClose,
   theme,
-  onUpdate,
+  onEdit,
 }) {
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editFormData, setEditFormData] = useState({
-    name: "",
-    description: "",
-    isActive: true,
-  });
-  const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   if (!theme) return null;
 
-  // Initialize edit form when entering edit mode
-  const handleEditToggle = () => {
-    if (!isEditMode) {
-      setEditFormData({
-        name: theme.name || "",
-        description: theme.description || "",
-        isActive: theme.isActive !== undefined ? theme.isActive : true,
-      });
-    }
-    setIsEditMode(!isEditMode);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setEditFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-    if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    if (!editFormData.name.trim()) {
-      newErrors.name = "Name is required";
-    } else if (editFormData.name.length > 100) {
-      newErrors.name = "Name cannot exceed 100 characters";
-    }
-    if (editFormData.description && editFormData.description.length > 500) {
-      newErrors.description = "Description cannot exceed 500 characters";
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSave = async () => {
-    if (!validateForm()) return;
-
-    setIsSubmitting(true);
-    try {
-      await onUpdate(theme.id, editFormData);
-      setIsEditMode(false);
-    } catch (error) {
-      console.error("Update error:", error);
-    } finally {
-      setIsSubmitting(false);
+  // Handle edit - close view modal and open edit modal
+  const handleEdit = () => {
+    if (theme && onEdit) {
+      onClose();
+      onEdit(theme);
     }
   };
 
@@ -174,60 +118,29 @@ export default function ViewThemeModal({
                     <Palette className="h-8 w-8" style={{ color: "#2691ce" }} />
                   </div>
                   <div className="flex-1">
-                    {isEditMode ? (
-                      <input
-                        type="text"
-                        name="name"
-                        value={editFormData.name}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent text-xl font-bold"
-                        style={{ focusRingColor: "#2691ce" }}
-                        maxLength={100}
-                      />
-                    ) : (
-                      <h3 className="text-xl font-bold mb-2" style={{ color: "#040606" }}>
-                        {theme.name || "Untitled Theme"}
-                      </h3>
-                    )}
-                    {errors.name && (
-                      <p className="text-sm text-red-500 mt-1">{errors.name}</p>
-                    )}
+                    <h3 className="text-xl font-bold mb-2" style={{ color: "#040606" }}>
+                      {theme.name || "Untitled Theme"}
+                    </h3>
                     <div className="flex items-center space-x-2 mt-2">
-                      {isEditMode ? (
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            name="isActive"
-                            checked={editFormData.isActive}
-                            onChange={handleInputChange}
-                            className="w-4 h-4 rounded focus:ring-2"
-                            style={{ accentColor: "#2691ce" }}
-                          />
-                          <span className="text-sm" style={{ color: "#646464" }}>
-                            Active
-                          </span>
-                        </label>
-                      ) : (
-                        <span
-                          className={`inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium ${
-                            theme.isActive !== false
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {theme.isActive !== false ? (
-                            <>
-                              <CheckCircle className="h-3 w-3" />
-                              <span>Active</span>
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="h-3 w-3" />
-                              <span>Inactive</span>
-                            </>
-                          )}
-                        </span>
-                      )}
+                      <span
+                        className={`inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium ${
+                          theme.isActive !== false
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {theme.isActive !== false ? (
+                          <>
+                            <CheckCircle className="h-3 w-3" />
+                            <span>Active</span>
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="h-3 w-3" />
+                            <span>Inactive</span>
+                          </>
+                        )}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -236,30 +149,9 @@ export default function ViewThemeModal({
                   <h4 className="text-sm font-medium mb-2" style={{ color: "#040606" }}>
                     Description
                   </h4>
-                  {isEditMode ? (
-                    <>
-                      <textarea
-                        name="description"
-                        value={editFormData.description}
-                        onChange={handleInputChange}
-                        rows={4}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
-                        style={{ focusRingColor: "#2691ce" }}
-                        placeholder="Theme description (optional)"
-                        maxLength={500}
-                      />
-                      <p className="text-xs mt-1" style={{ color: "#646464" }}>
-                        {editFormData.description.length}/500 characters
-                      </p>
-                      {errors.description && (
-                        <p className="text-sm text-red-500 mt-1">{errors.description}</p>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-sm" style={{ color: "#646464" }}>
-                      {theme.description || "No description provided"}
-                    </p>
-                  )}
+                  <p className="text-sm" style={{ color: "#646464" }}>
+                    {theme.description || "No description provided"}
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
@@ -288,65 +180,28 @@ export default function ViewThemeModal({
             </div>
 
             <div className="p-6 border-t border-gray-200 flex items-center justify-end space-x-3">
-              {isEditMode ? (
-                <>
-                  <motion.button
-                    type="button"
-                    onClick={handleEditToggle}
-                    className="px-6 py-2 border border-gray-300 rounded-lg transition-colors hover:bg-gray-50"
-                    style={{ color: "#646464" }}
-                    disabled={isSubmitting}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    Cancel
-                  </motion.button>
-                  <motion.button
-                    type="button"
-                    onClick={handleSave}
-                    disabled={isSubmitting}
-                    className="px-6 py-2 rounded-lg font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-                    style={{ backgroundColor: "#2691ce" }}
-                    whileHover={!isSubmitting ? { backgroundColor: "#1e7bb8" } : {}}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Saving...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4" />
-                        <span>Save Changes</span>
-                      </>
-                    )}
-                  </motion.button>
-                </>
-              ) : (
-                <>
-                  <motion.button
-                    type="button"
-                    onClick={handleEditToggle}
-                    className="px-6 py-2 border border-gray-300 rounded-lg transition-colors hover:bg-gray-50 flex items-center space-x-2"
-                    style={{ color: "#646464" }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <Edit className="h-4 w-4" />
-                    <span>Edit</span>
-                  </motion.button>
-                  <motion.button
-                    onClick={onClose}
-                    className="px-6 py-2 border border-gray-300 rounded-lg transition-colors hover:bg-gray-50"
-                    style={{ color: "#646464" }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    Close
-                  </motion.button>
-                </>
+              {onEdit && (
+                <motion.button
+                  type="button"
+                  onClick={handleEdit}
+                  className="px-6 py-2 border border-gray-300 rounded-lg transition-colors hover:bg-gray-50 flex items-center space-x-2"
+                  style={{ color: "#646464" }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Edit className="h-4 w-4" />
+                  <span>Edit</span>
+                </motion.button>
               )}
+              <motion.button
+                onClick={onClose}
+                className="px-6 py-2 border border-gray-300 rounded-lg transition-colors hover:bg-gray-50"
+                style={{ color: "#646464" }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Close
+              </motion.button>
             </div>
           </motion.div>
         </motion.div>

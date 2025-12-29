@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -13,7 +13,6 @@ import {
   Star,
   Clock,
   Share2,
-  Save,
   MessageSquare,
   CheckCircle,
   AlertCircle,
@@ -55,53 +54,16 @@ const backdropVariants = {
 };
 
 export default function ViewQnaModal({ isOpen, onClose, qna, onEdit }) {
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editFormData, setEditFormData] = useState({});
-
-  // Initialize edit form data when entering edit mode
-  const handleEditToggle = () => {
-    if (!isEditMode && qna) {
-      setEditFormData({
-        title: qna.title || qna.question || "",
-        content: qna.content || "",
-        themes: Array.isArray(qna.themes) ? qna.themes : [],
-        tags: Array.isArray(qna.tags) ? qna.tags : [],
-        status: qna.status || "open",
-        priority: qna.priority || "medium",
-      });
-    }
-    setIsEditMode(!isEditMode);
-  };
-
-  // Handle input changes in edit mode
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setEditFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
-
-  // Handle save changes
-  const handleSaveChanges = () => {
+  // Handle edit - close view modal and open edit modal
+  const handleEdit = () => {
     if (qna) {
-      const updatedQna = {
-        ...qna,
-        ...editFormData,
-        tags: editFormData.tags
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter((tag) => tag),
-      };
-      onEdit(updatedQna);
-      setIsEditMode(false);
+      onClose();
+      onEdit(qna);
     }
   };
 
   // Handle modal close
   const handleClose = () => {
-    setIsEditMode(false);
-    setEditFormData({});
     onClose();
   };
 
@@ -185,43 +147,35 @@ export default function ViewQnaModal({ isOpen, onClose, qna, onEdit }) {
                   className="p-2 rounded-lg"
                   style={{ backgroundColor: "#eff6ff" }}
                 >
-                  {isEditMode ? (
-                    <Edit className="h-6 w-6" style={{ color: "#2691ce" }} />
-                  ) : (
-                    <HelpCircle
-                      className="h-6 w-6"
-                      style={{ color: "#2691ce" }}
-                    />
-                  )}
+                  <HelpCircle
+                    className="h-6 w-6"
+                    style={{ color: "#2691ce" }}
+                  />
                 </div>
                 <div>
                   <h2
                     className="text-xl font-semibold"
                     style={{ color: "#040606" }}
                   >
-                    {isEditMode ? "Edit Q&A" : "View Q&A"}
+                    View Q&A
                   </h2>
                   <p className="text-sm" style={{ color: "#646464" }}>
-                    {isEditMode
-                      ? "Make changes to this Q&A"
-                      : "Question and answer details"}
+                    Question and answer details
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-2">
-                {!isEditMode && (
-                  <motion.button
-                    onClick={handleEditToggle}
-                    className="flex items-center space-x-2 px-4 py-2 text-white rounded-lg font-medium hover:shadow-md transition-all"
-                    style={{ backgroundColor: "#2691ce" }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <Edit className="h-4 w-4" />
-                    <span>Edit Q&A</span>
-                  </motion.button>
-                )}
+                <motion.button
+                  onClick={handleEdit}
+                  className="flex items-center space-x-2 px-4 py-2 text-white rounded-lg font-medium hover:shadow-md transition-all"
+                  style={{ backgroundColor: "#2691ce" }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Edit className="h-4 w-4" />
+                  <span>Edit Q&A</span>
+                </motion.button>
 
                 <motion.button
                   onClick={handleClose}
@@ -236,135 +190,7 @@ export default function ViewQnaModal({ isOpen, onClose, qna, onEdit }) {
 
             {/* Modal Content */}
             <div className="max-h-[calc(90vh-180px)] overflow-y-auto">
-              {isEditMode ? (
-                /* Edit Mode Interface */
-                <div className="p-6 space-y-6">
-                  {/* Question Edit */}
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 }}
-                  >
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
-                    >
-                      Title
-                    </label>
-                    <textarea
-                      name="title"
-                      value={editFormData.title || ""}
-                      onChange={handleInputChange}
-                      rows={3}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none text-lg font-semibold"
-                      style={{ focusRingColor: "#2691ce" }}
-                      placeholder="Enter the question title..."
-                    />
-                  </motion.div>
-
-                  {/* Content Edit */}
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 }}
-                  >
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
-                    >
-                      Content
-                    </label>
-                    <textarea
-                      name="content"
-                      value={editFormData.content || ""}
-                      onChange={handleInputChange}
-                      rows={8}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all resize-none"
-                      style={{ focusRingColor: "#2691ce" }}
-                      placeholder="Enter the question content..."
-                    />
-                  </motion.div>
-
-                  {/* Settings Grid */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.3 }}
-                    >
-                      <label
-                        className="block text-sm font-medium mb-2"
-                        style={{ color: "#040606" }}
-                      >
-                        Status
-                      </label>
-                      <select
-                        name="status"
-                        value={editFormData.status || ""}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                        style={{ focusRingColor: "#2691ce" }}
-                      >
-                        <option value="open">Open</option>
-                        <option value="answered">Answered</option>
-                        <option value="closed">Closed</option>
-                      </select>
-                    </motion.div>
-
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.4 }}
-                    >
-                      <label
-                        className="block text-sm font-medium mb-2"
-                        style={{ color: "#040606" }}
-                      >
-                        Priority
-                      </label>
-                      <select
-                        name="priority"
-                        value={editFormData.priority || ""}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                        style={{ focusRingColor: "#2691ce" }}
-                      >
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                      </select>
-                    </motion.div>
-                  </div>
-
-                  {/* Tags Input */}
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.9 }}
-                  >
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: "#040606" }}
-                    >
-                      Tags
-                    </label>
-                    <input
-                      type="text"
-                      name="tags"
-                      value={editFormData.tags || ""}
-                      onChange={handleInputChange}
-                      placeholder="Enter tags separated by commas"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                      style={{ focusRingColor: "#2691ce" }}
-                    />
-                    <p className="text-xs mt-1" style={{ color: "#646464" }}>
-                      Separate multiple tags with commas for better
-                      discoverability
-                    </p>
-                  </motion.div>
-                </div>
-              ) : (
-                /* View Mode Display */
+              {/* View Mode Display */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
                   {/* Main Content Column */}
                   <div className="lg:col-span-2 space-y-6">
@@ -739,36 +565,7 @@ export default function ViewQnaModal({ isOpen, onClose, qna, onEdit }) {
                     </div>
                   </div>
                 </div>
-              )}
             </div>
-
-            {/* Modal Footer - Only shows in edit mode */}
-            {isEditMode && (
-              <div
-                className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200"
-                style={{ backgroundColor: "#f8fafc" }}
-              >
-                <motion.button
-                  onClick={handleEditToggle}
-                  className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                  style={{ color: "#646464" }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  Cancel Changes
-                </motion.button>
-                <motion.button
-                  onClick={handleSaveChanges}
-                  className="flex items-center space-x-2 px-6 py-2 text-white rounded-lg font-medium hover:shadow-md transition-all"
-                  style={{ backgroundColor: "#2691ce" }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Save className="h-4 w-4" />
-                  <span>Save Changes</span>
-                </motion.button>
-              </div>
-            )}
           </motion.div>
         </motion.div>
       )}
