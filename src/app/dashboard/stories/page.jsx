@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import StoriesHeader from "@/components/stories/StoriesHeader";
 import StoryCard from "@/components/stories/StoryCard";
@@ -11,6 +11,7 @@ import EditStoryModal from "@/components/stories/EditStoryModal";
 import ViewStoryModal from "@/components/stories/ViewStoryModal";
 import DeleteConfirmModal from "@/components/core/DeleteConfirmModal";
 import { StoriesService } from "@/services/storiesService";
+import { ThemesService } from "@/services/themesService";
 
 const pageVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -50,8 +51,11 @@ export default function StoriesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterType, setFilterType] = useState("all");
+  const [filterTheme, setFilterTheme] = useState("all");
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
+  const [themes, setThemes] = useState([]);
+  const [themesLoading, setThemesLoading] = useState(false);
   const [selectedStory, setSelectedStory] = useState(null);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -71,6 +75,28 @@ export default function StoriesPage() {
     []
   );
 
+  // Load themes from backend
+  useEffect(() => {
+    if (themes.length === 0 && !themesLoading) {
+      loadThemes();
+    }
+  }, []);
+
+  const loadThemes = async () => {
+    if (themesLoading || themes.length > 0) return;
+    setThemesLoading(true);
+    try {
+      const result = await ThemesService.getAllThemes({ limit: 100, sortBy: "name", sortOrder: "asc" });
+      if (result.success && Array.isArray(result.data)) {
+        setThemes(result.data);
+      }
+    } catch (error) {
+      console.error("Failed to load themes:", error);
+    } finally {
+      setThemesLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!token) {
       setLoading(false);
@@ -78,7 +104,7 @@ export default function StoriesPage() {
     }
     loadStories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, pagination.page, pagination.limit, searchTerm, filterStatus, filterType, sortBy, sortOrder]);
+  }, [token, pagination.page, pagination.limit, searchTerm, filterStatus, filterType, filterTheme, sortBy, sortOrder]);
 
   const loadStories = async (params = {}) => {
     setLoading(true);
@@ -102,6 +128,7 @@ export default function StoriesPage() {
         search: searchTerm || undefined,
         status: backendStatus,
         type: filterType !== 'all' ? filterType : undefined,
+        themes: filterTheme !== 'all' ? filterTheme : undefined,
         sortBy: sortBy,
         sortOrder: sortOrder,
         ...params,
@@ -192,6 +219,14 @@ export default function StoriesPage() {
             : 0,
       likes: story?.likes || 0,
       tags: Array.isArray(story?.tags) ? story.tags : [],
+      // Normalize themes: extract names from theme objects or use strings directly
+      themes: Array.isArray(story?.themes) 
+        ? story.themes.map(theme => {
+            if (typeof theme === 'string') return theme;
+            if (theme && typeof theme === 'object') return theme.name || String(theme._id || theme.id || theme);
+            return String(theme);
+          }).filter(Boolean)
+        : [],
       createdAt: story?.createdAt || null,
       updatedAt: story?.updatedAt || null,
       duration: durationHours,
@@ -219,6 +254,7 @@ export default function StoriesPage() {
         caption: newStoryData.caption || "",
         duration: newStoryData.duration || (24 * 60 * 60 * 1000), // Default 24 hours in milliseconds
         tags: Array.isArray(newStoryData.tags) ? newStoryData.tags : (newStoryData.tags ? newStoryData.tags.split(',').map(t => t.trim()).filter(Boolean) : []),
+        themes: Array.isArray(newStoryData.themes) ? newStoryData.themes : [],
         backgroundColor: newStoryData.backgroundColor || "#000000",
         textColor: newStoryData.textColor || "#FFFFFF",
         fontFamily: newStoryData.fontFamily || "Arial",
@@ -293,6 +329,7 @@ export default function StoriesPage() {
         fontFamily: updatedStoryData.fontFamily,
         duration: durationMs, // Send in milliseconds
         tags: Array.isArray(updatedStoryData.tags) ? updatedStoryData.tags : (updatedStoryData.tags ? updatedStoryData.tags.split(',').map(t => t.trim()).filter(Boolean) : []),
+        themes: Array.isArray(updatedStoryData.themes) ? updatedStoryData.themes : [],
         isActive: updatedStoryData.isActive !== false,
       };
 
@@ -397,10 +434,13 @@ export default function StoriesPage() {
             setFilterStatus={handleStatusFilter}
             filterType={filterType}
             setFilterType={setFilterType}
+            filterTheme={filterTheme}
+            setFilterTheme={setFilterTheme}
             sortBy={sortBy}
             setSortBy={setSortBy}
             sortOrder={sortOrder}
             setSortOrder={setSortOrder}
+            themes={themes}
             onAddStory={() => setIsAddModalOpen(true)}
             totalStories={stories.length}
           />

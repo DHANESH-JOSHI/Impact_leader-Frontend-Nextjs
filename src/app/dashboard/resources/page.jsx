@@ -54,7 +54,6 @@ export default function ResourcesPage() {
 
   const [viewMode, setViewMode] = useState("card");
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterCategory, setFilterCategory] = useState("all");
   const [filterType, setFilterType] = useState("all");
   const [filterTheme, setFilterTheme] = useState("all");
   const [filterPublic, setFilterPublic] = useState("all"); // all, public, private
@@ -75,25 +74,6 @@ export default function ResourcesPage() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedResource, setSelectedResource] = useState(null);
-
-  const [categories, setCategories] = useState(["all"]);
-
-  // Load categories from backend
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const result = await ResourcesService.getResourceCategories();
-        if (result?.success && Array.isArray(result.data)) {
-          setCategories(["all", ...result.data.filter(Boolean)]);
-        }
-      } catch (error) {
-        console.error("Failed to load categories:", error);
-        // Fallback to empty array with "all"
-        setCategories(["all"]);
-      }
-    };
-    loadCategories();
-  }, []);
 
   // Load themes from backend
   useEffect(() => {
@@ -129,7 +109,6 @@ export default function ResourcesPage() {
   }, [
     pagination.page,
     pagination.limit,
-    filterCategory,
     filterType,
     filterTheme,
     filterPublic,
@@ -144,7 +123,6 @@ export default function ResourcesPage() {
         page: pagination.page,
         limit: pagination.limit,
         search: searchQuery || undefined,
-        category: filterCategory !== "all" ? filterCategory : undefined,
         type: filterType !== "all" ? filterType : undefined,
         isPublic: filterPublic === "public" ? true : filterPublic === "private" ? false : undefined,
         themes: filterTheme !== "all" ? filterTheme : undefined,
@@ -400,11 +378,6 @@ export default function ResourcesPage() {
     setSearchQuery(q);
   };
 
-  const handleCategoryFilter = (category) => {
-    setPagination((p) => ({ ...p, page: 1 }));
-    setFilterCategory(category);
-  };
-
   const handleTypeFilter = (type) => {
     setPagination((p) => ({ ...p, page: 1 }));
     setFilterType(type);
@@ -456,8 +429,6 @@ export default function ResourcesPage() {
             setViewMode={handleViewModeChange}
             searchQuery={searchQuery}
             setSearchQuery={handleSearchChange}
-            filterCategory={filterCategory}
-            setFilterCategory={handleCategoryFilter}
             filterType={filterType}
             setFilterType={handleTypeFilter}
             filterTheme={filterTheme}
@@ -466,7 +437,6 @@ export default function ResourcesPage() {
             setFilterPublic={handlePublicFilter}
             sort={sort}
             setSort={setSort}
-            categories={categories}
             types={types}
             themes={themes}
             onAddResource={() => {

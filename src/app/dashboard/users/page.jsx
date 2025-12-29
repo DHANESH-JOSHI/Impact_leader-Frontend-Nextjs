@@ -12,6 +12,7 @@ import EditUserModal from "@/components/impact-leaders/users/EditUserModal";
 import DeleteConfirmModal from "@/components/core/DeleteConfirmModal";
 import { UsersService } from "@/services/usersService";
 import { AdminService } from "@/services/adminService";
+import { authStorage } from "@/lib/storage";
 
 const pageVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -102,26 +103,36 @@ export default function UsersPage() {
         const usersData = Array.isArray(result.data) ? result.data : [];
         const paginationData = result.pagination || {};
 
-        const transformed = usersData.map((user) => ({
-          id: user._id || user.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          name: user.name || `${user.firstName || ""} ${user.lastName || ""}`.trim(),
-          email: user.email,
-          companyName: user.companyName,
-          designation: user.designation,
-          organizationType: user.organizationType,
-          role: user.role,
-          isActive: user.isActive !== false,
-          createdAt: user.createdAt,
-          profileImage: user.profileImage,
-          bio: user.bio,
-          phone: user.phone,
-          location: user.location,
-          themes: user.themes,
-          socialLinks: user.socialLinks,
-          ...user,
-        }));
+        // Get current logged-in user to filter them out
+        const currentUser = authStorage.getCurrentUser();
+        const currentUserId = currentUser?._id || currentUser?.id;
+
+        const transformed = usersData
+          .map((user) => ({
+            id: user._id || user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            name: user.name || `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+            email: user.email,
+            companyName: user.companyName,
+            designation: user.designation,
+            organizationType: user.organizationType,
+            role: user.role,
+            isActive: user.isActive !== false,
+            createdAt: user.createdAt,
+            profileImage: user.profileImage,
+            bio: user.bio,
+            phone: user.phone,
+            location: user.location,
+            themes: user.themes,
+            socialLinks: user.socialLinks,
+            ...user,
+          }))
+          // Filter out the logged-in admin user
+          .filter((user) => {
+            const userId = user.id || user._id;
+            return userId !== currentUserId;
+          });
 
         setUsers(transformed);
         setPagination((prev) => ({
@@ -192,6 +203,11 @@ export default function UsersPage() {
   };
 
   const handleEditUser = (user) => {
+    // Prevent editing admin users
+    if (user.role === 'admin') {
+      toast.error("You cannot edit another admin user");
+      return;
+    }
     setSelectedUser(user);
     setIsViewModalOpen(false);
     setIsEditModalOpen(true);
@@ -200,6 +216,13 @@ export default function UsersPage() {
   const handleUpdateUser = async (userData) => {
     try {
       setLoading(true);
+      
+      // Prevent updating admin users
+      if (selectedUser?.role === 'admin') {
+        toast.error("You cannot update another admin user");
+        return;
+      }
+      
       const result = await AdminService.updateUser(selectedUser.id, userData);
 
       if (result.success) {
@@ -212,7 +235,8 @@ export default function UsersPage() {
       }
     } catch (error) {
       console.error("Failed to update user:", error);
-      toast.error(error.message || "Failed to update user");
+      const errorMessage = error.response?.data?.message || error.message || "Failed to update user";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

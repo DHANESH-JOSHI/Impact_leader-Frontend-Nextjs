@@ -76,11 +76,11 @@ const menuItems = [
   //   icon: Calendar,
   //   href: "/dashboard/meetings",
   // },
-  {
-    title: "Support",
-    icon: Headphones,
-    href: "/dashboard/support",
-  },
+  // {
+  //   title: "Support",
+  //   icon: Headphones,
+  //   href: "/dashboard/support",
+  // },
   {
     title: "Themes",
     icon: Palette,

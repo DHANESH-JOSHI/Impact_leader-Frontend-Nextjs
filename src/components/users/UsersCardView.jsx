@@ -204,7 +204,7 @@ export default function UsersCardView({
                 <span>View</span>
               </motion.button>
 
-              {onEditUser && (
+              {onEditUser && user.role !== 'admin' && (
                 <motion.button
                   onClick={() => onEditUser(user)}
                   className="p-2 text-gray-600 hover:text-white rounded-lg transition-colors"

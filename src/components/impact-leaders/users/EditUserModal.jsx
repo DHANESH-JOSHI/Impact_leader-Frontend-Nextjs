@@ -26,7 +26,6 @@ import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from "framer-motion";
 import { UsersService } from '@/services/usersService';
 import { AdminService } from '@/services/adminService';
-import { USER_ROLE_ENUM } from '@/constants/backendEnums';
 
 const ModalWrapper = ({ isOpen, onClose, children, title }) => {
   if (!isOpen) return null;
@@ -228,6 +227,7 @@ export default function EditUserModal({ isOpen, onClose, user, onUpdate }) {
 
     try {
       // Prepare update data - only include fields that are allowed
+      // Note: role is excluded as it cannot be updated through this endpoint
       const updateData = {
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
@@ -235,7 +235,6 @@ export default function EditUserModal({ isOpen, onClose, user, onUpdate }) {
         companyName: formData.companyName.trim(),
         designation: formData.designation.trim(),
         themes: Array.isArray(selectedThemes) ? selectedThemes : [],
-        role: formData.role,
         isActive: formData.isActive,
         isApproved: formData.isApproved,
         isEmailVerified: formData.isEmailVerified,
@@ -367,10 +366,6 @@ export default function EditUserModal({ isOpen, onClose, user, onUpdate }) {
 
   const organizationTypes = UsersService.getOrganizationTypes();
   const themes = UsersService.getUserThemes();
-  const roles = USER_ROLE_ENUM.map(role => ({
-    value: role,
-    label: role.charAt(0).toUpperCase() + role.slice(1)
-  }));
 
   return (
     <ModalWrapper isOpen={isOpen} onClose={onClose} title="Edit User">
@@ -636,27 +631,6 @@ export default function EditUserModal({ isOpen, onClose, user, onUpdate }) {
                 <Globe className="h-5 w-5 mr-2" />
                 Account Settings
               </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="role">Role *</Label>
-                  <Select
-                    value={formData.role}
-                    onValueChange={(value) => handleInputChange('role', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {roles.map(role => (
-                        <SelectItem key={role.value} value={role.value}>
-                          {role.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
 
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">

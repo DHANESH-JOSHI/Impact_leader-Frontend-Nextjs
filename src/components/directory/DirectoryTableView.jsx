@@ -148,12 +148,12 @@ export default function DirectoryTableView({
                   <SortIcon columnKey="title" />
                 </div>
               </th>
-              <th
+              {/* <th
                 className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider"
                 style={{ color: "#646464" }}
               >
                 Category
-              </th>
+              </th> */}
               <th
                 className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer"
                 style={{ color: "#646464" }}
@@ -230,11 +230,11 @@ export default function DirectoryTableView({
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                {/* <td className="px-6 py-4 whitespace-nowrap">
                   <span className="text-sm" style={{ color: "#646464" }}>
                     {entry.category || "N/A"}
                   </span>
-                </td>
+                </td> */}
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className="text-sm capitalize" style={{ color: "#646464" }}>
                     {entry.organizationType || "N/A"}

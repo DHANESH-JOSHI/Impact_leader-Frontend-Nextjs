@@ -138,11 +138,11 @@ export default function ViewDirectoryModal({
                     <h3 className="text-xl font-bold mb-2" style={{ color: "#040606" }}>
                       {entry.title || "Untitled Entry"}
                     </h3>
-                    {entry.category && (
+                    {/* {entry.category && (
                       <p className="text-sm mb-2" style={{ color: "#646464" }}>
                         {entry.category}
                       </p>
-                    )}
+                    )} */}
                     <div className="flex flex-wrap gap-2">
                       {entry.organizationType && (
                         <span

@@ -57,7 +57,7 @@ export default function AddDirectoryModal({
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    category: "",
+    // category: "",
     organizationType: "",
     website: "",
     logo: null,
@@ -117,7 +117,7 @@ export default function AddDirectoryModal({
       setFormData({
         title: initialDirectory.title || "",
         description: initialDirectory.description || "",
-        category: initialDirectory.category || "",
+        // category: initialDirectory.category || "",
         organizationType: initialDirectory.organizationType || "",
         website: initialDirectory.website || "",
         logo: initialDirectory.logo || null,
@@ -152,7 +152,6 @@ export default function AddDirectoryModal({
       setFormData({
         title: "",
         description: "",
-        category: "",
         organizationType: "",
         website: "",
         logo: null,
@@ -238,9 +237,9 @@ export default function AddDirectoryModal({
     if (!formData.description.trim()) {
       newErrors.description = "Description is required";
     }
-    if (!formData.category.trim()) {
-      newErrors.category = "Category is required";
-    }
+    // if (!formData.category.trim()) {
+    //   newErrors.category = "Category is required";
+    // }
     if (!formData.organizationType) {
       newErrors.organizationType = "Organization type is required";
     }
@@ -259,7 +258,6 @@ export default function AddDirectoryModal({
       setFormData({
         title: "",
         description: "",
-        category: "",
         organizationType: "",
         website: "",
         logo: null,
@@ -293,7 +291,6 @@ export default function AddDirectoryModal({
     setFormData({
         title: "",
         description: "",
-        category: "",
         organizationType: "",
         website: "",
         logo: null,
@@ -378,7 +375,7 @@ export default function AddDirectoryModal({
                     )}
                   </div>
 
-                  <div>
+                  {/* <div>
                     <label className="block text-sm font-medium mb-2" style={{ color: "#040606" }}>
                       Category <span className="text-red-500">*</span>
                     </label>
@@ -394,7 +391,7 @@ export default function AddDirectoryModal({
                     {errors.category && (
                       <p className="text-sm text-red-500 mt-1">{errors.category}</p>
                     )}
-                  </div>
+                  </div> */}
                 </div>
 
                 <div>

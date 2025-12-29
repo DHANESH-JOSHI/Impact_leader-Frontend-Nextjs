@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiX,
@@ -11,7 +11,9 @@ import {
   FiFileText,
   FiSave,
   FiTag,
+  FiCheck,
 } from "react-icons/fi";
+import { ThemesService } from "@/services/themesService";
 
 const modalVariants = {
   hidden: {
@@ -55,6 +57,7 @@ export default function EditStoryModal({ isOpen, onClose, story, onEdit }) {
     duration: 24,
     isActive: false,
     tags: [],
+    themes: [],
     // Additional story fields
     type: "text",
     caption: "",
@@ -74,6 +77,49 @@ export default function EditStoryModal({ isOpen, onClose, story, onEdit }) {
   const [mediaFile, setMediaFile] = useState(null); // Store the actual File object
   const [errors, setErrors] = useState({});
   const [tagInput, setTagInput] = useState("");
+  const [availableThemes, setAvailableThemes] = useState([]);
+  const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
+  const [themesLoading, setThemesLoading] = useState(false);
+  const themeDropdownRef = useRef(null);
+
+  // Load themes when modal opens
+  useEffect(() => {
+    if (isOpen && availableThemes.length === 0 && !themesLoading) {
+      loadThemes();
+    }
+  }, [isOpen]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target)) {
+        setIsThemeDropdownOpen(false);
+      }
+    };
+
+    if (isThemeDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isThemeDropdownOpen]);
+
+  const loadThemes = async () => {
+    if (themesLoading || availableThemes.length > 0) return;
+    setThemesLoading(true);
+    try {
+      const result = await ThemesService.getAllThemes({ limit: 100, sortBy: "name", sortOrder: "asc" });
+      if (result.success && Array.isArray(result.data)) {
+        setAvailableThemes(result.data);
+      }
+    } catch (error) {
+      console.error("Failed to load themes:", error);
+    } finally {
+      setThemesLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!isOpen) {
@@ -81,6 +127,7 @@ export default function EditStoryModal({ isOpen, onClose, story, onEdit }) {
       setFormData(getInitialFormData());
       setImagePreview("");
       setMediaFile(null);
+      setIsThemeDropdownOpen(false);
       return;
     }
 
@@ -103,6 +150,14 @@ export default function EditStoryModal({ isOpen, onClose, story, onEdit }) {
         duration: Number(durationHours) || 24,
         isActive: Boolean(story.isActive !== false),
         tags: Array.isArray(story.tags) ? story.tags : [],
+        // Normalize themes: extract names from theme objects or use strings directly
+        themes: Array.isArray(story.themes) 
+          ? story.themes.map(theme => {
+              if (typeof theme === 'string') return theme;
+              if (theme && typeof theme === 'object') return theme.name || String(theme._id || theme.id || theme);
+              return String(theme);
+            }).filter(Boolean)
+          : [],
         // Additional story fields
         type: String(story.type || "text"),
         caption: String(story.caption || story.title || ""),
@@ -255,6 +310,7 @@ export default function EditStoryModal({ isOpen, onClose, story, onEdit }) {
     setErrors({});
     setTagInput("");
     setMediaFile(null);
+    setIsThemeDropdownOpen(false);
     onClose();
   };
 
@@ -466,6 +522,110 @@ export default function EditStoryModal({ isOpen, onClose, story, onEdit }) {
                           transition={{ delay: index * 0.1 }}
                         >
                           {tag} ×
+                        </motion.span>
+                      ))}
+                    </motion.div>
+                  )}
+                </motion.div>
+
+                {/* Themes Multi-Select */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.45 }}
+                  className="relative"
+                  ref={themeDropdownRef}
+                >
+                  <label
+                    className="flex items-center text-sm font-medium mb-2"
+                    style={{ color: "#040606" }}
+                  >
+                    <FiTag
+                      className="w-4 h-4 mr-2"
+                      style={{ color: "#2691ce" }}
+                    />
+                    Themes (Optional)
+                  </label>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all text-left flex items-center justify-between"
+                      style={{ focusRingColor: "#2691ce" }}
+                    >
+                      <span className={formData.themes.length > 0 ? "text-gray-900" : "text-gray-500"}>
+                        {formData.themes.length > 0 
+                          ? `${formData.themes.length} theme${formData.themes.length !== 1 ? 's' : ''} selected`
+                          : "Select themes..."}
+                      </span>
+                      <span className="text-gray-400">▼</span>
+                    </button>
+                    {isThemeDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                      >
+                        {themesLoading ? (
+                          <div className="px-4 py-2 text-gray-500 text-sm">Loading themes...</div>
+                        ) : availableThemes.length > 0 ? (
+                          availableThemes.map((theme) => {
+                            const isSelected = formData.themes.includes(theme.name);
+                            return (
+                              <div
+                                key={theme._id || theme.id}
+                                onClick={() => {
+                                  if (isSelected) {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      themes: prev.themes.filter(t => t !== theme.name)
+                                    }));
+                                  } else {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      themes: [...prev.themes, theme.name]
+                                    }));
+                                  }
+                                }}
+                                className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center justify-between"
+                              >
+                                <span>{theme.name}</span>
+                                {isSelected && (
+                                  <FiCheck className="w-4 h-4" style={{ color: "#2691ce" }} />
+                                )}
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="px-4 py-2 text-gray-500 text-sm">No themes available</div>
+                        )}
+                      </motion.div>
+                    )}
+                  </div>
+                  {formData.themes.length > 0 && (
+                    <motion.div
+                      className="flex flex-wrap gap-2 mt-2"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      {formData.themes.map((themeName, index) => (
+                        <motion.span
+                          key={themeName}
+                          className="px-3 py-1 text-sm rounded-full text-white cursor-pointer"
+                          style={{ backgroundColor: "#10b981" }}
+                          onClick={() => {
+                            setFormData(prev => ({
+                              ...prev,
+                              themes: prev.themes.filter(t => t !== themeName)
+                            }));
+                          }}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: index * 0.1 }}
+                        >
+                          {themeName} ×
                         </motion.span>
                       ))}
                     </motion.div>

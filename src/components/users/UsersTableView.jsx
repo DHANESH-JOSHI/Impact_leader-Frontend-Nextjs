@@ -303,7 +303,7 @@ export default function UsersTableView({
                       <Eye className="h-4 w-4" />
                     </motion.button>
 
-                    {onEditUser && (
+                    {onEditUser && user.role !== 'admin' && (
                       <motion.button
                         onClick={() => onEditUser(user)}
                         className="p-2 hover:bg-yellow-50 rounded-lg transition-colors"

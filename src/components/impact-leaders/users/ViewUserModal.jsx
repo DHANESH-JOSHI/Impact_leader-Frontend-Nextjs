@@ -407,40 +407,6 @@ export default function ViewUserModal({ isOpen, onClose, user, onEdit }) {
                 </CardContent>
               </Card>
             </div>
-
-            {/* Technical Information */}
-            <Card className="bg-gray-50">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center">
-                  <Globe className="h-5 w-5 mr-2" />
-                  Technical Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-600">User ID:</span>
-                    <span className="ml-2 font-mono text-xs">{user.id || user._id}</span>
-                  </div>
-                  {user.referralCode && (
-                    <div>
-                      <span className="text-gray-600">Referral Code:</span>
-                      <span className="ml-2 font-mono">{user.referralCode}</span>
-                    </div>
-                  )}
-                  <div>
-                    <span className="text-gray-600">Email Verified:</span>
-                    <Badge variant={user.isEmailVerified ? "default" : "secondary"} className="ml-2">
-                      {user.isEmailVerified ? "Yes" : "No"}
-                    </Badge>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Registration Source:</span>
-                    <span className="ml-2 font-medium capitalize">{user.registrationSource}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
             </CardContent>
           </div>
         </Card>

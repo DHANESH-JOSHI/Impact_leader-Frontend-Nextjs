@@ -45,8 +45,6 @@ export default function DirectoryHeader({
   setViewMode,
   searchQuery,
   setSearchQuery,
-  filterCategory,
-  setFilterCategory,
   filterOrganization,
   setFilterOrganization,
   filterTheme,
@@ -58,7 +56,6 @@ export default function DirectoryHeader({
   sortOrder,
   setSortOrder,
   organizationTypes,
-  categories,
   themes,
   onAddEntry,
   totalEntries,
@@ -115,7 +112,7 @@ export default function DirectoryHeader({
           />
           <input
             type="text"
-            placeholder="Search entries by title, description, or category..."
+            placeholder="Search entries by title, description..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
@@ -141,28 +138,6 @@ export default function DirectoryHeader({
             style={{ color: "#646464" }}
           />
         </div>
-
-        {categories && categories.length > 0 && (
-          <div className="relative">
-            <select
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[160px]"
-              style={{ focusRingColor: "#2691ce" }}
-            >
-              <option value="all">All Categories</option>
-              {categories.map((cat) => (
-                <option key={cat.value} value={cat.value}>
-                  {cat.label}
-                </option>
-              ))}
-            </select>
-            <Filter
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
-              style={{ color: "#646464" }}
-            />
-          </div>
-        )}
 
         {themes && themes.length > 0 && (
           <div className="relative">

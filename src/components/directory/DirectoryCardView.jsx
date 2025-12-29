@@ -132,11 +132,11 @@ export default function DirectoryCardView({
                   <h3 className="font-semibold text-lg line-clamp-1" style={{ color: "#040606" }}>
                     {entry.title || "Untitled Entry"}
                   </h3>
-                  {entry.category && (
+                  {/* {entry.category && (
                     <p className="text-sm truncate" style={{ color: "#646464" }}>
                       {entry.category}
                     </p>
-                  )}
+                  )} */}
                 </div>
               </div>
             </div>

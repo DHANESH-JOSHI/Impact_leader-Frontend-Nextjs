@@ -51,10 +51,13 @@ export default function StoriesHeader({
   setFilterStatus,
   filterType,
   setFilterType,
+  filterTheme,
+  setFilterTheme,
   sortBy,
   setSortBy,
   sortOrder,
   setSortOrder,
+  themes,
   onAddStory,
   totalStories,
 }) {
@@ -171,6 +174,27 @@ export default function StoriesHeader({
             {typeOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
+              </option>
+            ))}
+          </select>
+          <Filter
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
+            style={{ color: "#646464" }}
+          />
+        </div>
+
+        {/* Theme Filter */}
+        <div className="relative">
+          <select
+            value={filterTheme}
+            onChange={(e) => setFilterTheme(e.target.value)}
+            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[140px]"
+            style={{ focusRingColor: "#2691ce" }}
+          >
+            <option value="all">All Themes</option>
+            {themes && themes.length > 0 && themes.map((theme) => (
+              <option key={theme._id || theme.id} value={theme.name}>
+                {theme.name}
               </option>
             ))}
           </select>

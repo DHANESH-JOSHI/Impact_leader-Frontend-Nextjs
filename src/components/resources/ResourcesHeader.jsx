@@ -43,8 +43,6 @@ export default function ResourcesHeader({
   setViewMode,
   searchQuery,
   setSearchQuery,
-  filterCategory,
-  setFilterCategory,
   filterType,
   setFilterType,
   filterTheme,
@@ -53,7 +51,6 @@ export default function ResourcesHeader({
   setFilterPublic,
   sort,
   setSort,
-  categories,
   types,
   themes,
   onAddResource,
@@ -119,26 +116,6 @@ export default function ResourcesHeader({
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
             style={{ focusRingColor: "#2691ce" }}
-          />
-        </div>
-
-        {/* Category Filter */}
-        <div className="relative">
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[120px]"
-            style={{ focusRingColor: "#2691ce" }}
-          >
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category === "all" ? "All Categories" : category}
-              </option>
-            ))}
-          </select>
-          <Filter
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
-            style={{ color: "#646464" }}
           />
         </div>
 

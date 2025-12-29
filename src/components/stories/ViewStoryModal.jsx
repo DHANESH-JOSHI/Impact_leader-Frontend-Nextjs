@@ -326,6 +326,41 @@ export default function ViewStoryModal({ isOpen, onClose, story, onEdit }) {
                     </motion.div>
                   )}
 
+                  {/* Themes */}
+                  {story.themes && story.themes.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.45 }}
+                    >
+                      <h3
+                        className="text-lg font-semibold mb-3"
+                        style={{ color: "#040606" }}
+                      >
+                        Themes
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {story.themes.map((theme, index) => {
+                          const themeName = typeof theme === 'string' ? theme : (theme.name || theme);
+                          return (
+                            <motion.span
+                              key={themeName}
+                              className="px-3 py-1 text-sm rounded-full text-white"
+                              style={{ backgroundColor: "#10b981" }}
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: 0.45 + index * 0.1 }}
+                              whileHover={{ scale: 1.1 }}
+                            >
+                              <FiTag className="w-3 h-3 inline mr-1" />
+                              {themeName}
+                            </motion.span>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+
                   {/* Content */}
                   {(story.textContent || story.content) && (
                     <motion.div

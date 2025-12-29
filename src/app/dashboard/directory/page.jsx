@@ -41,7 +41,6 @@ export default function DirectoryPage() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState("card");
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterCategory, setFilterCategory] = useState("all");
   const [filterOrganization, setFilterOrganization] = useState("all");
   const [filterTheme, setFilterTheme] = useState("all");
   const [filterLocation, setFilterLocation] = useState("");
@@ -67,15 +66,13 @@ export default function DirectoryPage() {
   ], []);
 
   const [themes, setThemes] = useState([]);
-  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     loadEntries();
-  }, [pagination.page, pagination.limit, filterCategory, filterOrganization, filterTheme, filterLocation, searchQuery, sortBy, sortOrder]);
+  }, [pagination.page, pagination.limit, filterOrganization, filterTheme, filterLocation, searchQuery, sortBy, sortOrder]);
 
   useEffect(() => {
     loadThemes();
-    loadCategories();
   }, []);
 
   const loadThemes = async () => {
@@ -95,17 +92,6 @@ export default function DirectoryPage() {
       }
     } catch (error) {
       console.error("Failed to load themes:", error);
-    }
-  };
-
-  const loadCategories = async () => {
-    try {
-      const result = await DirectoryService.getCategories();
-      if (result.success && Array.isArray(result.data)) {
-        setCategories(result.data.map(cat => ({ value: cat, label: cat })));
-      }
-    } catch (error) {
-      console.error("Failed to load categories:", error);
     }
   };
 
@@ -134,7 +120,6 @@ export default function DirectoryPage() {
         sortOrder: backendSortOrder,
         ...(searchQuery && { search: searchQuery }),
         ...(filterOrganization !== "all" && { organizationType: filterOrganization }),
-        ...(filterCategory !== "all" && { category: filterCategory }),
         ...(filterTheme !== "all" && { themes: filterTheme }),
         ...(filterLocation && { location: filterLocation }),
       };
@@ -149,7 +134,7 @@ export default function DirectoryPage() {
           id: entry._id || entry.id,
           title: entry.title,
           description: entry.description,
-          category: entry.category,
+          // category: entry.category,
           organizationType: entry.organizationType,
           logo: entry.logo,
           contactInfo: entry.contactInfo || {},
@@ -311,8 +296,6 @@ export default function DirectoryPage() {
           setViewMode={setViewMode}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          filterCategory={filterCategory}
-          setFilterCategory={setFilterCategory}
           filterOrganization={filterOrganization}
           setFilterOrganization={setFilterOrganization}
           filterTheme={filterTheme}
@@ -324,7 +307,6 @@ export default function DirectoryPage() {
           sortOrder={sortOrder}
           setSortOrder={setSortOrder}
           organizationTypes={organizationTypes}
-          categories={categories}
           themes={themes}
           onAddEntry={() => setIsAddModalOpen(true)}
           totalEntries={pagination.total}

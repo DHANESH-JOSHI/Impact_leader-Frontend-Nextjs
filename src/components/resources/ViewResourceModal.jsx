@@ -102,9 +102,10 @@ export default function ViewResourceModal({
         ...resource,
         ...editFormData,
         tags: editFormData.tags
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter((tag) => tag),
+          ? editFormData.tags.split(",")
+              .map((tag) => tag.trim())
+              .filter((tag) => tag)
+          : resource.tags,
       };
       onEdit(updatedResource);
       setIsEditMode(false);
@@ -863,10 +864,12 @@ export default function ViewResourceModal({
                           <Calendar className="h-4 w-4" />
                           <span>{formatDate(resource.createdAt)}</span>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <Tag className="h-4 w-4" />
-                          <span>{resource.category}</span>
-                        </div>
+                        {resource.category && (
+                          <div className="flex items-center space-x-2">
+                            <Tag className="h-4 w-4" />
+                            <span>{resource.category}</span>
+                          </div>
+                        )}
                         <div className="flex items-center space-x-2">
                           {getTypeIcon(resource.type)}
                           <span>
@@ -1091,7 +1094,7 @@ export default function ViewResourceModal({
                         >
                           Themes
                         </h3>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="w-full flex flex-wrap gap-2">
                           {resource.themes.map((theme, index) => {
                             const themeName = typeof theme === 'string' ? theme : (theme?.name || String(theme?._id || theme?.id || theme || ''));
                             return (

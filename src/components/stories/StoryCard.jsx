@@ -149,6 +149,38 @@ export default function StoryCard({ stories, onView, onEdit, onDelete }) {
               </motion.div>
             )}
 
+            {/* Themes */}
+            {story.themes && story.themes.length > 0 && (
+              <motion.div
+                className="flex flex-wrap gap-1 mb-3"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.45 }}
+              >
+                {story.themes.slice(0, 3).map((theme, themeIndex) => {
+                  const themeName = typeof theme === 'string' ? theme : (theme.name || theme);
+                  return (
+                    <motion.span
+                      key={themeName}
+                      className="px-2 py-1 text-xs rounded-full text-white"
+                      style={{ backgroundColor: "#10b981" }}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.45 + themeIndex * 0.1 }}
+                      whileHover={{ scale: 1.1 }}
+                    >
+                      {themeName}
+                    </motion.span>
+                  );
+                })}
+                {story.themes.length > 3 && (
+                  <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">
+                    +{story.themes.length - 3}
+                  </span>
+                )}
+              </motion.div>
+            )}
+
             {/* Author Info */}
             <div
               className="flex items-center text-sm mb-3"
