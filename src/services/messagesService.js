@@ -170,9 +170,16 @@ export class MessagesService {
     }
   }
 
-  static async deleteConversation(conversationId) {
+  static async deleteConversation(conversationId, secondUserId = null) {
     try {
-      const response = await apiClient.delete(MESSAGES.CONVERSATION_BY_ID(conversationId));
+      const params = {};
+      if (secondUserId) {
+        params.secondUserId = secondUserId;
+      }
+      
+      const response = await apiClient.delete(MESSAGES.CONVERSATION_BY_ID(conversationId), {
+        params
+      });
       const backendResponse = response.data || {};
 
       return {

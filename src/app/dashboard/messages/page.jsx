@@ -37,6 +37,9 @@ export default function MessagesPage() {
   const [messageMenuOpen, setMessageMenuOpen] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
+  const [conversationToDelete, setConversationToDelete] = useState(null);
+  const [isDeleteConversationModalOpen, setIsDeleteConversationModalOpen] = useState(false);
+  const [deletingConversation, setDeletingConversation] = useState(false);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 20,
@@ -273,6 +276,61 @@ export default function MessagesPage() {
     }
   };
 
+  const handleDeleteConversation = async () => {
+    if (!conversationToDelete) return;
+    
+    setDeletingConversation(true);
+    try {
+      const conversationId = conversationToDelete._id || conversationToDelete.id;
+      const isGroup = conversationToDelete.chatType === 'group' || conversationToDelete.groupName;
+      
+      // For 1-to-1 conversations, we need the second user ID
+      // The conversationId is typically the other user's ID (participant)
+      // We need to pass the current user's ID as secondUserId
+      let secondUserId = null;
+      if (!isGroup && currentUser) {
+        const currentUserId = currentUser._id || currentUser.id || currentUser.userId;
+        
+        // For 1-to-1: conversationId is one user, secondUserId should be the other user
+        // Since conversationId is the participant (other user), secondUserId should be current user
+        if (currentUserId && String(conversationId) !== String(currentUserId)) {
+          secondUserId = currentUserId;
+        } else if (conversationToDelete.participant) {
+          // Fallback: use participant ID if available
+          const participantId = conversationToDelete.participant._id || conversationToDelete.participant.id;
+          if (participantId && String(participantId) !== String(currentUserId)) {
+            secondUserId = participantId;
+          }
+        }
+      }
+      
+      const result = await MessagesService.deleteConversation(conversationId, secondUserId);
+      
+      if (result.success) {
+        toast.success("Conversation deleted successfully");
+        
+        // Clear selected conversation if it was the deleted one
+        if (selectedConversation?._id === conversationId || selectedConversation?.id === conversationId) {
+          setSelectedConversation(null);
+          setMessages([]);
+        }
+        
+        // Reload conversations list
+        await loadConversations();
+        
+        setIsDeleteConversationModalOpen(false);
+        setConversationToDelete(null);
+      } else {
+        toast.error(result.message || "Failed to delete conversation");
+      }
+    } catch (error) {
+      console.error("Failed to delete conversation:", error);
+      toast.error(error.message || "Failed to delete conversation");
+    } finally {
+      setDeletingConversation(false);
+    }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -455,20 +513,36 @@ export default function MessagesPage() {
           <div className="lg:col-span-2">
             {selectedConversation ? (
               <div className="bg-white rounded-lg shadow-sm border h-[600px] flex flex-col">
-                <div className="p-4 border-b border-gray-200">
-                  <h2 className="font-semibold" style={{ color: "#040606" }}>
-                    {getConversationName(selectedConversation)}
-                  </h2>
-                  {selectedConversation.participant && (
-                    <p className="text-xs mt-1" style={{ color: "#646464" }}>
-                      {selectedConversation.participant.companyName && `${selectedConversation.participant.companyName} • `}
-                      {selectedConversation.participant.designation || ""}
-                    </p>
-                  )}
-                  {selectedConversation.chatType === 'group' && selectedConversation.memberCount && (
-                    <p className="text-xs mt-1" style={{ color: "#646464" }}>
-                      {selectedConversation.memberCount} {selectedConversation.memberCount === 1 ? 'member' : 'members'}
-                    </p>
+                <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                  <div>
+                    <h2 className="font-semibold" style={{ color: "#040606" }}>
+                      {getConversationName(selectedConversation)}
+                    </h2>
+                    {selectedConversation.participant && (
+                      <p className="text-xs mt-1" style={{ color: "#646464" }}>
+                        {selectedConversation.participant.companyName && `${selectedConversation.participant.companyName} • `}
+                        {selectedConversation.participant.designation || ""}
+                      </p>
+                    )}
+                    {selectedConversation.chatType === 'group' && selectedConversation.memberCount && (
+                      <p className="text-xs mt-1" style={{ color: "#646464" }}>
+                        {selectedConversation.memberCount} {selectedConversation.memberCount === 1 ? 'member' : 'members'}
+                      </p>
+                    )}
+                  </div>
+                  {currentUser && currentUser.role === 'admin' && (
+                    <motion.button
+                      onClick={() => {
+                        setConversationToDelete(selectedConversation);
+                        setIsDeleteConversationModalOpen(true);
+                      }}
+                      className="p-2 rounded-lg hover:bg-red-50 transition-colors"
+                      title="Delete conversation"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Trash2 className="h-5 w-5" style={{ color: "#ef4444" }} />
+                    </motion.button>
                   )}
                 </div>
                 <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4">
@@ -729,6 +803,19 @@ export default function MessagesPage() {
         title="Delete Message"
         message="Are you sure you want to delete this message? This action cannot be undone."
         isLoading={deleting}
+      />
+
+      {/* Delete Conversation Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={isDeleteConversationModalOpen}
+        onClose={() => {
+          setIsDeleteConversationModalOpen(false);
+          setConversationToDelete(null);
+        }}
+        onConfirm={handleDeleteConversation}
+        title="Delete Conversation"
+        message="Are you sure you want to delete this entire conversation? All messages in this conversation will be deleted. This action cannot be undone."
+        isLoading={deletingConversation}
       />
     </motion.div>
   );
