@@ -15,6 +15,7 @@ import {
 import { StoriesService } from "@/services/storiesService";
 import { ThemesService } from "@/services/themesService";
 import { Check } from "lucide-react";
+import CustomDropdown from "@/components/core/CustomDropdown";
 
 const modalVariants = {
   hidden: {
@@ -535,19 +536,20 @@ export default function AddStoryModal({
                             onChange={handleInputChange}
                             className="w-16 h-10 border border-gray-300 rounded cursor-pointer"
                           />
-                          <select
-                            name="backgroundColor"
+                          <CustomDropdown
                             value={formData.backgroundColor}
-                            onChange={handleInputChange}
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
-                            style={{ focusRingColor: "#2691ce" }}
-                          >
-                            {backgroundColors.map((color) => (
-                              <option key={color.value} value={color.value}>
-                                {color.label}
-                              </option>
-                            ))}
-                          </select>
+                            onChange={(value) => {
+                              const e = { target: { name: 'backgroundColor', value } };
+                              handleInputChange(e);
+                            }}
+                            options={backgroundColors}
+                            placeholder="Select background color"
+                            minWidth="100%"
+                            maxHeight="200px"
+                            getOptionLabel={(option) => option.label}
+                            getOptionValue={(option) => option.value}
+                            getOptionKey={(option, index) => option.value || index}
+                          />
                         </div>
                       </motion.div>
 
@@ -582,19 +584,20 @@ export default function AddStoryModal({
                         >
                           Font Family
                         </label>
-                        <select
-                          name="fontFamily"
+                        <CustomDropdown
                           value={formData.fontFamily}
-                          onChange={handleInputChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
-                          style={{ focusRingColor: "#2691ce" }}
-                        >
-                          {fontFamilies.map((font) => (
-                            <option key={font.value} value={font.value}>
-                              {font.label}
-                            </option>
-                          ))}
-                        </select>
+                          onChange={(value) => {
+                            const e = { target: { name: 'fontFamily', value } };
+                            handleInputChange(e);
+                          }}
+                          options={fontFamilies}
+                          placeholder="Select font family"
+                          minWidth="100%"
+                          maxHeight="200px"
+                          getOptionLabel={(option) => option.label}
+                          getOptionValue={(option) => option.value}
+                          getOptionKey={(option, index) => option.value || index}
+                        />
                       </motion.div>
                     </div>
                   </>
@@ -650,19 +653,20 @@ export default function AddStoryModal({
                   >
                     Duration
                   </label>
-                  <select
-                    name="duration"
+                  <CustomDropdown
                     value={formData.duration}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
-                    style={{ focusRingColor: "#2691ce" }}
-                  >
-                    {durations.map((duration) => (
-                      <option key={duration.value} value={duration.value}>
-                        {duration.label}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(value) => {
+                      const e = { target: { name: 'duration', value } };
+                      handleInputChange(e);
+                    }}
+                    options={durations}
+                    placeholder="Select duration"
+                    minWidth="100%"
+                    maxHeight="200px"
+                    getOptionLabel={(option) => option.label}
+                    getOptionValue={(option) => option.value}
+                    getOptionKey={(option, index) => option.value || index}
+                  />
                 </motion.div>
 
                 {/* Tags */}

@@ -14,6 +14,7 @@ import {
   AlertCircle,
   Zap,
 } from "lucide-react";
+import CustomDropdown from "@/components/core/CustomDropdown";
 
 // brand colors ke sath custom alert component
 const Alert = ({ children, variant = "default", className = "" }) => {
@@ -90,19 +91,6 @@ const Textarea = ({ className = "", ...props }) => (
   />
 );
 
-// custom select component
-const Select = ({ children, value, onValueChange, className = "" }) => {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onValueChange(e.target.value)}
-      className={`flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
-      style={{ focusRingColor: "#2691ce" }}
-    >
-      {children}
-    </select>
-  );
-};
 
 // notification type ke hisab se icons
 const getNotificationIcon = (type) => {
@@ -202,16 +190,23 @@ const NotificationForm = ({ notification, onSave, onCancel }) => {
             >
               Target Users
             </label>
-            <Select
+            <CustomDropdown
               value={formData.targetUsers}
-              onValueChange={(value) =>
+              onChange={(value) =>
                 setFormData((prev) => ({ ...prev, targetUsers: value }))
               }
-            >
-              <option value="all">All Users</option>
-              <option value="specific">Specific Users (by IDs)</option>
-              <option value="themes">Users by Themes</option>
-            </Select>
+              options={[
+                { value: "all", label: "All Users" },
+                { value: "specific", label: "Specific Users (by IDs)" },
+                { value: "themes", label: "Users by Themes" }
+              ]}
+              placeholder="Select target users"
+              minWidth="100%"
+              maxHeight="200px"
+              getOptionLabel={(option) => option.label}
+              getOptionValue={(option) => option.value}
+              getOptionKey={(option, index) => option.value || index}
+            />
           </div>
 
           {/* User IDs input - shown when targetUsers is 'specific' */}

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { DirectoryService } from "@/services/directoryService";
 import { ThemesService } from "@/services/themesService";
+import CustomDropdown from "@/components/core/CustomDropdown";
 
 const modalVariants = {
   hidden: {
@@ -417,20 +418,28 @@ export default function AddDirectoryModal({
                     <label className="block text-sm font-medium mb-2" style={{ color: "#040606" }}>
                       Organization Type <span className="text-red-500">*</span>
                     </label>
-                    <select
-                      name="organizationType"
+                    <CustomDropdown
                       value={formData.organizationType}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
-                      style={{ focusRingColor: "#2691ce" }}
-                    >
-                      <option value="">Select type</option>
-                      {organizationTypes.map((type) => (
-                        <option key={type.value} value={type.value}>
-                          {type.label}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(value) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          organizationType: value
+                        }));
+                        if (errors.organizationType) {
+                          setErrors(prev => ({
+                            ...prev,
+                            organizationType: ""
+                          }));
+                        }
+                      }}
+                      options={organizationTypes}
+                      placeholder="Select type"
+                      minWidth="100%"
+                      maxHeight="200px"
+                      getOptionLabel={(option) => option.label}
+                      getOptionValue={(option) => option.value}
+                      getOptionKey={(option, index) => option.value || index}
+                    />
                     {errors.organizationType && (
                       <p className="text-sm text-red-500 mt-1">{errors.organizationType}</p>
                     )}

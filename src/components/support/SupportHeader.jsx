@@ -12,6 +12,7 @@ import {
   SortDesc,
   Headphones,
 } from "lucide-react";
+import CustomDropdown from "@/components/core/CustomDropdown";
 
 const headerVariants = {
   hidden: { opacity: 0, y: -20 },
@@ -125,64 +126,43 @@ export default function SupportHeader({
         </div>
 
         {/* Category Filter */}
-        <div className="relative">
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[150px]"
-            style={{ focusRingColor: "#2691ce" }}
-          >
-            {categories.map((category) => (
-              <option key={category.value} value={category.value}>
-                {category.label}
-              </option>
-            ))}
-          </select>
-          <Filter
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
-            style={{ color: "#646464" }}
-          />
-        </div>
+        <CustomDropdown
+          value={filterCategory}
+          onChange={setFilterCategory}
+          options={categories}
+          placeholder="All Categories"
+          minWidth="150px"
+          maxHeight="200px"
+          getOptionLabel={(option) => option.label}
+          getOptionValue={(option) => option.value}
+          getOptionKey={(option, index) => option.value || index}
+        />
 
         {/* Status Filter */}
-        <div className="relative">
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[140px]"
-            style={{ focusRingColor: "#2691ce" }}
-          >
-            {statuses.map((status) => (
-              <option key={status.value} value={status.value}>
-                {status.label}
-              </option>
-            ))}
-          </select>
-          <Filter
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
-            style={{ color: "#646464" }}
-          />
-        </div>
+        <CustomDropdown
+          value={filterStatus}
+          onChange={setFilterStatus}
+          options={statuses}
+          placeholder="All Status"
+          minWidth="140px"
+          maxHeight="200px"
+          getOptionLabel={(option) => option.label}
+          getOptionValue={(option) => option.value}
+          getOptionKey={(option, index) => option.value || index}
+        />
 
         {/* Priority Filter */}
-        <div className="relative">
-          <select
-            value={filterPriority}
-            onChange={(e) => setFilterPriority(e.target.value)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[120px]"
-            style={{ focusRingColor: "#2691ce" }}
-          >
-            {priorities.map((priority) => (
-              <option key={priority.value} value={priority.value}>
-                {priority.label}
-              </option>
-            ))}
-          </select>
-          <Filter
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
-            style={{ color: "#646464" }}
-          />
-        </div>
+        <CustomDropdown
+          value={filterPriority}
+          onChange={setFilterPriority}
+          options={priorities}
+          placeholder="All Priorities"
+          minWidth="120px"
+          maxHeight="200px"
+          getOptionLabel={(option) => option.label}
+          getOptionValue={(option) => option.value}
+          getOptionKey={(option, index) => option.value || index}
+        />
       </motion.div>
 
       {/* Sort and View Controls */}
@@ -195,17 +175,22 @@ export default function SupportHeader({
           <span className="text-sm font-medium" style={{ color: "#646464" }}>
             Sort by:
           </span>
-          <select
+          <CustomDropdown
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:border-transparent transition-all"
-            style={{ focusRingColor: "#2691ce" }}
-          >
-            <option value="createdAt">Most Recent</option>
-            <option value="updatedAt">Recently Updated</option>
-            <option value="priority">Priority</option>
-            <option value="status">Status</option>
-          </select>
+            onChange={setSortBy}
+            options={[
+              { value: "createdAt", label: "Most Recent" },
+              { value: "updatedAt", label: "Recently Updated" },
+              { value: "priority", label: "Priority" },
+              { value: "status", label: "Status" }
+            ]}
+            placeholder="Sort by..."
+            minWidth="140px"
+            maxHeight="200px"
+            getOptionLabel={(option) => option.label}
+            getOptionValue={(option) => option.value}
+            getOptionKey={(option, index) => option.value || index}
+          />
 
           <button
             onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}

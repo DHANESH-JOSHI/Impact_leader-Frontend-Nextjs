@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import CustomDropdown from '@/components/core/CustomDropdown';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from "framer-motion";
@@ -423,21 +423,17 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="organizationType">Organization Type *</Label>
-                      <Select
+                      <CustomDropdown
                         value={formData.organizationType}
-                        onValueChange={(value) => handleInputChange('organizationType', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select organization type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {organizationTypes.map(type => (
-                            <SelectItem key={type.value} value={type.value}>
-                              {type.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        onChange={(value) => handleInputChange('organizationType', value)}
+                        options={organizationTypes}
+                        placeholder="Select organization type"
+                        minWidth="100%"
+                        maxHeight="200px"
+                        getOptionLabel={(option) => option.label}
+                        getOptionValue={(option) => option.value}
+                        getOptionKey={(option, index) => option.value || index}
+                      />
                     </div>
 
                     <div className="space-y-2">

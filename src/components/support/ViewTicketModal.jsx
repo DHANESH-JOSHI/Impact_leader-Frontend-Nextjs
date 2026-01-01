@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { SupportService } from "@/services/supportService";
 import toast from "react-hot-toast";
+import CustomDropdown from "@/components/core/CustomDropdown";
 
 const modalVariants = {
   hidden: { opacity: 0, scale: 0.95 },
@@ -312,20 +313,18 @@ export default function ViewTicketModal({ isOpen, onClose, ticket, onSuccess }) 
               >
                 Change Status
               </label>
-              <select
-                id="status-select"
+              <CustomDropdown
                 value={newStatus}
-                onChange={(e) => handleStatusChange(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                style={{ focusRingColor: "#2691ce" }}
+                onChange={handleStatusChange}
+                options={statuses}
+                placeholder="Select status"
+                minWidth="100%"
+                maxHeight="200px"
+                getOptionLabel={(option) => option.label}
+                getOptionValue={(option) => option.value}
+                getOptionKey={(option, index) => option.value || index}
                 disabled={isSubmitting}
-              >
-                {statuses.map((status) => (
-                  <option key={status.value} value={status.value}>
-                    {status.label}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             {/* Replies Section */}

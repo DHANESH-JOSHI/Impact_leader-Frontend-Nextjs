@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Loader2, Tag, AlertCircle } from "lucide-react";
 import { SupportService } from "@/services/supportService";
 import toast from "react-hot-toast";
+import CustomDropdown from "@/components/core/CustomDropdown";
 
 const modalVariants = {
   hidden: { opacity: 0, scale: 0.95 },
@@ -276,21 +277,21 @@ export default function AddTicketModal({ isOpen, onClose, onSuccess }) {
                 >
                   Category
                 </label>
-                <select
-                  id="category"
-                  name="category"
+                <CustomDropdown
                   value={formData.category}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                  style={{ focusRingColor: "#2691ce" }}
+                  onChange={(value) => {
+                    const e = { target: { name: 'category', value } };
+                    handleChange(e);
+                  }}
+                  options={categories}
+                  placeholder="Select category"
+                  minWidth="100%"
+                  maxHeight="200px"
+                  getOptionLabel={(option) => option.label}
+                  getOptionValue={(option) => option.value}
+                  getOptionKey={(option, index) => option.value || index}
                   disabled={isSubmitting}
-                >
-                  {categories.map((cat) => (
-                    <option key={cat.value} value={cat.value}>
-                      {cat.label}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               <div>
@@ -301,21 +302,21 @@ export default function AddTicketModal({ isOpen, onClose, onSuccess }) {
                 >
                   Priority
                 </label>
-                <select
-                  id="priority"
-                  name="priority"
+                <CustomDropdown
                   value={formData.priority}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                  style={{ focusRingColor: "#2691ce" }}
+                  onChange={(value) => {
+                    const e = { target: { name: 'priority', value } };
+                    handleChange(e);
+                  }}
+                  options={priorities}
+                  placeholder="Select priority"
+                  minWidth="100%"
+                  maxHeight="200px"
+                  getOptionLabel={(option) => option.label}
+                  getOptionValue={(option) => option.value}
+                  getOptionKey={(option, index) => option.value || index}
                   disabled={isSubmitting}
-                >
-                  {priorities.map((pri) => (
-                    <option key={pri.value} value={pri.value}>
-                      {pri.label}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
             </div>
 

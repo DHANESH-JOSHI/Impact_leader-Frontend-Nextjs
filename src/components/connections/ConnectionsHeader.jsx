@@ -12,6 +12,7 @@ import {
   SortDesc,
   Users,
 } from "lucide-react";
+import CustomDropdown from "@/components/core/CustomDropdown";
 
 const headerVariants = {
   hidden: { opacity: 0, y: -20 },
@@ -118,56 +119,47 @@ export default function ConnectionsHeader({
           />
         </div>
 
-        <div className="relative">
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[140px]"
-            style={{ focusRingColor: "#2691ce" }}
-          >
-            {statuses.map((status) => (
-              <option key={status.value} value={status.value}>
-                {status.label}
-              </option>
-            ))}
-          </select>
-          <Filter
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
-            style={{ color: "#646464" }}
-          />
-        </div>
+        <CustomDropdown
+          value={filterStatus}
+          onChange={setFilterStatus}
+          options={statuses}
+          placeholder="All Status"
+          minWidth="140px"
+          maxHeight="200px"
+          getOptionLabel={(option) => option.label}
+          getOptionValue={(option) => option.value}
+          getOptionKey={(option, index) => option.value || index}
+        />
 
-        <div className="relative">
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[140px]"
-            style={{ focusRingColor: "#2691ce" }}
-          >
-            {types.map((type) => (
-              <option key={type.value} value={type.value}>
-                {type.label}
-              </option>
-            ))}
-          </select>
-          <Filter
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
-            style={{ color: "#646464" }}
-          />
-        </div>
+        <CustomDropdown
+          value={filterType}
+          onChange={setFilterType}
+          options={types}
+          placeholder="All Types"
+          minWidth="140px"
+          maxHeight="200px"
+          getOptionLabel={(option) => option.label}
+          getOptionValue={(option) => option.value}
+          getOptionKey={(option, index) => option.value || index}
+        />
 
         <div className="flex items-center space-x-2">
-          <select
+          <CustomDropdown
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all"
-            style={{ focusRingColor: "#2691ce" }}
-          >
-            <option value="createdAt">Date</option>
-            <option value="name">Name</option>
-            <option value="type">Type</option>
-            <option value="status">Status</option>
-          </select>
+            onChange={setSortBy}
+            options={[
+              { value: "createdAt", label: "Date" },
+              { value: "name", label: "Name" },
+              { value: "type", label: "Type" },
+              { value: "status", label: "Status" }
+            ]}
+            placeholder="Sort by..."
+            minWidth="140px"
+            maxHeight="200px"
+            getOptionLabel={(option) => option.label}
+            getOptionValue={(option) => option.value}
+            getOptionKey={(option, index) => option.value || index}
+          />
 
           <motion.button
             onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}

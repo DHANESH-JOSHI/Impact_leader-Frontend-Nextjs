@@ -12,6 +12,7 @@ import {
   SortDesc,
   HelpCircle,
 } from "lucide-react";
+import CustomDropdown from "@/components/core/CustomDropdown";
 
 const headerVariants = {
   hidden: { opacity: 0, y: -20 },
@@ -121,58 +122,55 @@ export default function QnaHeader({
         </div>
 
         {/* Theme Filter */}
-        <div className="relative">
-          <select
-            value={filterTheme}
-            onChange={(e) => setFilterTheme(e.target.value)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[120px]"
-            style={{ focusRingColor: "#2691ce" }}
-          >
-            {themes.map((theme) => (
-              <option key={theme} value={theme}>
-                {theme === "all" ? "All Themes" : theme}
-              </option>
-            ))}
-          </select>
-          <Filter
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
-            style={{ color: "#646464" }}
-          />
-        </div>
+        <CustomDropdown
+          value={filterTheme}
+          onChange={setFilterTheme}
+          options={themes.map(theme => ({ value: theme, label: theme === "all" ? "All Themes" : theme }))}
+          placeholder="All Themes"
+          minWidth="120px"
+          maxHeight="200px"
+          getOptionLabel={(option) => option.label}
+          getOptionValue={(option) => option.value}
+          getOptionKey={(option, index) => option.value || index}
+        />
 
         {/* Status Filter */}
-        <div className="relative">
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all min-w-[120px]"
-            style={{ focusRingColor: "#2691ce" }}
-          >
-            <option value="all">All Status</option>
-            <option value="open">Open</option>
-            <option value="answered">Answered</option>
-            <option value="closed">Closed</option>
-          </select>
-          <Filter
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"
-            style={{ color: "#646464" }}
-          />
-        </div>
+        <CustomDropdown
+          value={filterStatus}
+          onChange={setFilterStatus}
+          options={[
+            { value: "all", label: "All Status" },
+            { value: "open", label: "Open" },
+            { value: "answered", label: "Answered" },
+            { value: "closed", label: "Closed" }
+          ]}
+          placeholder="All Status"
+          minWidth="120px"
+          maxHeight="200px"
+          getOptionLabel={(option) => option.label}
+          getOptionValue={(option) => option.value}
+          getOptionKey={(option, index) => option.value || index}
+        />
 
         {/* Sort Options */}
         <div className="flex items-center space-x-2">
-          <select
+          <CustomDropdown
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all"
-            style={{ focusRingColor: "#2691ce" }}
-          >
-            <option value="createdAt">Date</option>
-            <option value="question">Question</option>
-            <option value="author">Author</option>
-            <option value="views">Views</option>
-            <option value="likes">Likes</option>
-          </select>
+            onChange={setSortBy}
+            options={[
+              { value: "createdAt", label: "Date" },
+              { value: "question", label: "Question" },
+              { value: "author", label: "Author" },
+              { value: "views", label: "Views" },
+              { value: "likes", label: "Likes" }
+            ]}
+            placeholder="Sort by..."
+            minWidth="140px"
+            maxHeight="200px"
+            getOptionLabel={(option) => option.label}
+            getOptionValue={(option) => option.value}
+            getOptionKey={(option, index) => option.value || index}
+          />
 
           <motion.button
             onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}

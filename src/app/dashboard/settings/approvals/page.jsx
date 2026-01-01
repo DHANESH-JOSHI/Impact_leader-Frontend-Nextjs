@@ -32,6 +32,7 @@ import {
   X,
 } from "lucide-react";
 import { AdminService } from "@/services/adminService";
+import CustomDropdown from "@/components/core/CustomDropdown";
 
 const pageVariants = {
   hidden: { opacity: 0, y: 16 },
@@ -711,24 +712,26 @@ export default function ApprovalsPage() {
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
-              <select
-                value={pagination.limit}
-                onChange={(e) =>
+              <CustomDropdown
+                value={pagination.limit.toString()}
+                onChange={(value) =>
                   setPagination((p) => ({
                     ...p,
                     page: 1,
-                    limit: Number(e.target.value),
+                    limit: Number(value),
                   }))
                 }
-                className="ml-2 rounded-md border px-2 py-2 text-sm hover:bg-gray-50 transition-colors"
-                title="Rows per page"
-              >
-                {[10, 20, 50].map((n) => (
-                  <option key={n} value={n}>
-                    {n}/page
-                  </option>
-                ))}
-              </select>
+                options={[10, 20, 50].map((n) => ({
+                  value: n.toString(),
+                  label: `${n}/page`
+                }))}
+                placeholder="Rows per page"
+                minWidth="100px"
+                maxHeight="200px"
+                getOptionLabel={(option) => option.label}
+                getOptionValue={(option) => option.value}
+                getOptionKey={(option, index) => option.value || index}
+              />
             </div>
           </div>
         </motion.div>

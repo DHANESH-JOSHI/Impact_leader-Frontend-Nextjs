@@ -11,6 +11,7 @@ import {
   SortDesc,
   Palette,
 } from "lucide-react";
+import CustomDropdown from "@/components/core/CustomDropdown";
 
 const headerVariants = {
   hidden: { opacity: 0, y: -20 },
@@ -112,15 +113,20 @@ export default function ThemesHeader({
         </div>
 
         <div className="flex items-center space-x-2">
-          <select
+          <CustomDropdown
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 focus:ring-2 focus:border-transparent transition-all"
-            style={{ focusRingColor: "#2691ce" }}
-          >
-            <option value="name">Name</option>
-            <option value="createdAt">Created Date</option>
-          </select>
+            onChange={setSortBy}
+            options={[
+              { value: "name", label: "Name" },
+              { value: "createdAt", label: "Created Date" }
+            ]}
+            placeholder="Sort by..."
+            minWidth="140px"
+            maxHeight="200px"
+            getOptionLabel={(option) => option.label}
+            getOptionValue={(option) => option.value}
+            getOptionKey={(option, index) => option.value || index}
+          />
 
           <motion.button
             onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}

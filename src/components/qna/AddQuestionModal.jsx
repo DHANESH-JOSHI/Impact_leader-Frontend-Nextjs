@@ -10,6 +10,7 @@ import {
   Check,
 } from "lucide-react";
 import { QUESTION_STATUS_ENUM, QUESTION_THEMES_ENUM, QA_PRIORITY_ENUM } from "@/constants/backendEnums";
+import CustomDropdown from "@/components/core/CustomDropdown";
 
 const modalVariants = {
   hidden: {
@@ -456,20 +457,24 @@ export default function AddQuestionModal({
                     >
                       Priority
                     </label>
-                    <select
-                      name="priority"
+                    <CustomDropdown
                       value={formData.priority}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                      style={{ focusRingColor: "#2691ce" }}
+                      onChange={(value) => {
+                        const e = { target: { name: 'priority', value } };
+                        handleInputChange(e);
+                      }}
+                      options={QA_PRIORITY_ENUM.map(priority => ({
+                        value: priority,
+                        label: priority.charAt(0).toUpperCase() + priority.slice(1)
+                      }))}
+                      placeholder="Select priority"
+                      minWidth="100%"
+                      maxHeight="200px"
+                      getOptionLabel={(option) => option.label}
+                      getOptionValue={(option) => option.value}
+                      getOptionKey={(option, index) => option.value || index}
                       disabled={isSubmitting}
-                    >
-                      {QA_PRIORITY_ENUM.map((priority) => (
-                        <option key={priority} value={priority}>
-                          {priority.charAt(0).toUpperCase() + priority.slice(1)}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </motion.div>
 
                   <motion.div
@@ -483,20 +488,24 @@ export default function AddQuestionModal({
                     >
                       Status
                     </label>
-                    <select
-                      name="status"
+                    <CustomDropdown
                       value={formData.status}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                      style={{ focusRingColor: "#2691ce" }}
+                      onChange={(value) => {
+                        const e = { target: { name: 'status', value } };
+                        handleInputChange(e);
+                      }}
+                      options={QUESTION_STATUS_ENUM.map(status => ({
+                        value: status,
+                        label: status.charAt(0).toUpperCase() + status.slice(1)
+                      }))}
+                      placeholder="Select status"
+                      minWidth="100%"
+                      maxHeight="200px"
+                      getOptionLabel={(option) => option.label}
+                      getOptionValue={(option) => option.value}
+                      getOptionKey={(option, index) => option.value || index}
                       disabled={isSubmitting}
-                    >
-                      {QUESTION_STATUS_ENUM.map((status) => (
-                        <option key={status} value={status}>
-                          {status.charAt(0).toUpperCase() + status.slice(1)}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </motion.div>
                 </div>
 

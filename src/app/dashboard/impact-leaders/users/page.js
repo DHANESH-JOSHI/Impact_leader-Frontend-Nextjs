@@ -20,7 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import CustomDropdown from '@/components/core/CustomDropdown';
 import Link from 'next/link';
 
 // Import services
@@ -302,47 +302,41 @@ export default function UsersManagement() {
               />
             </div>
 
-            <Select value={selectedOrganizationType} onValueChange={(value) => handleFilterChange('organizationType', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Organization Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
-                {UsersService.getOrganizationTypes().map(type => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CustomDropdown
+              value={selectedOrganizationType || ""}
+              onChange={(value) => handleFilterChange('organizationType', value)}
+              options={[{ value: "", label: "All Types" }, ...UsersService.getOrganizationTypes()]}
+              placeholder="Organization Type"
+              minWidth="160px"
+              maxHeight="200px"
+              getOptionLabel={(option) => option.label}
+              getOptionValue={(option) => option.value}
+              getOptionKey={(option, index) => option.value || index}
+            />
 
-            <Select value={selectedRole} onValueChange={(value) => handleFilterChange('role', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Roles</SelectItem>
-                {UsersService.getUserRoles().map(role => (
-                  <SelectItem key={role.value} value={role.value}>
-                    {role.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CustomDropdown
+              value={selectedRole || ""}
+              onChange={(value) => handleFilterChange('role', value)}
+              options={[{ value: "", label: "All Roles" }, ...UsersService.getUserRoles()]}
+              placeholder="Role"
+              minWidth="160px"
+              maxHeight="200px"
+              getOptionLabel={(option) => option.label}
+              getOptionValue={(option) => option.value}
+              getOptionKey={(option, index) => option.value || index}
+            />
 
-            <Select value={selectedTheme} onValueChange={(value) => handleFilterChange('theme', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Theme" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Themes</SelectItem>
-                {UsersService.getUserThemes().map(theme => (
-                  <SelectItem key={theme.value} value={theme.value}>
-                    {theme.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CustomDropdown
+              value={selectedTheme || ""}
+              onChange={(value) => handleFilterChange('theme', value)}
+              options={[{ value: "", label: "All Themes" }, ...UsersService.getUserThemes()]}
+              placeholder="Theme"
+              minWidth="160px"
+              maxHeight="200px"
+              getOptionLabel={(option) => option.label}
+              getOptionValue={(option) => option.value}
+              getOptionKey={(option, index) => option.value || index}
+            />
 
             <Button
               variant="outline"

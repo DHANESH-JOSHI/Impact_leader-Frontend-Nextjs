@@ -14,6 +14,7 @@ import {
   FiCheck,
 } from "react-icons/fi";
 import { ThemesService } from "@/services/themesService";
+import CustomDropdown from "@/components/core/CustomDropdown";
 
 const modalVariants = {
   hidden: {
@@ -727,17 +728,24 @@ export default function EditStoryModal({ isOpen, onClose, story, onEdit }) {
                       />
                       Status
                     </label>
-                    <select
-                      name="status"
+                    <CustomDropdown
                       value={formData.status}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all"
-                      style={{ focusRingColor: "#2691ce" }}
-                    >
-                      <option value="draft">Draft</option>
-                      <option value="published">Published</option>
-                      <option value="scheduled">Scheduled</option>
-                    </select>
+                      onChange={(value) => {
+                        const e = { target: { name: 'status', value } };
+                        handleInputChange(e);
+                      }}
+                      options={[
+                        { value: "draft", label: "Draft" },
+                        { value: "published", label: "Published" },
+                        { value: "scheduled", label: "Scheduled" }
+                      ]}
+                      placeholder="Select status"
+                      minWidth="100%"
+                      maxHeight="200px"
+                      getOptionLabel={(option) => option.label}
+                      getOptionValue={(option) => option.value}
+                      getOptionKey={(option, index) => option.value || index}
+                    />
                   </div>
 
                   <div>

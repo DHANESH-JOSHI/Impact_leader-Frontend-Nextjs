@@ -11,6 +11,7 @@ import {
   Video,
   FileText,
 } from "lucide-react";
+import CustomDropdown from "@/components/core/CustomDropdown";
 
 const modalVariants = {
   hidden: {
@@ -290,37 +291,45 @@ export default function AddMeetingModal({
                       <Video className="h-4 w-4 inline mr-1" />
                       Meeting Type *
                     </label>
-                    <select
-                      name="meetingType"
+                    <CustomDropdown
                       value={formData.meetingType}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                      style={{ focusRingColor: "#2691ce" }}
-                    >
-                      {meetingTypes.map((type) => (
-                        <option key={type.value} value={type.value}>
-                          {type.label}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(value) => {
+                        const e = { target: { name: 'meetingType', value } };
+                        handleInputChange(e);
+                      }}
+                      options={meetingTypes}
+                      placeholder="Select meeting type"
+                      minWidth="100%"
+                      maxHeight="200px"
+                      getOptionLabel={(option) => option.label}
+                      getOptionValue={(option) => option.value}
+                      getOptionKey={(option, index) => option.value || index}
+                    />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium mb-2" style={{ color: "#040606" }}>
                       Timezone
                     </label>
-                    <select
-                      name="timezone"
+                    <CustomDropdown
                       value={formData.timezone}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                      style={{ focusRingColor: "#2691ce" }}
-                    >
-                      <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
-                      <option value="UTC">UTC</option>
-                      <option value="America/New_York">America/New_York (EST/EDT)</option>
-                      <option value="Europe/London">Europe/London (GMT/BST)</option>
-                    </select>
+                      onChange={(value) => {
+                        const e = { target: { name: 'timezone', value } };
+                        handleInputChange(e);
+                      }}
+                      options={[
+                        { value: "Asia/Kolkata", label: "Asia/Kolkata (IST)" },
+                        { value: "UTC", label: "UTC" },
+                        { value: "America/New_York", label: "America/New_York (EST/EDT)" },
+                        { value: "Europe/London", label: "Europe/London (GMT/BST)" }
+                      ]}
+                      placeholder="Select timezone"
+                      minWidth="100%"
+                      maxHeight="200px"
+                      getOptionLabel={(option) => option.label}
+                      getOptionValue={(option) => option.value}
+                      getOptionKey={(option, index) => option.value || index}
+                    />
                   </div>
                 </div>
 

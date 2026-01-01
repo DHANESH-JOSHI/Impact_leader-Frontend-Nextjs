@@ -11,6 +11,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { UsersService } from "@/services/usersService";
+import CustomDropdown from "@/components/core/CustomDropdown";
 
 const modalVariants = {
   hidden: {
@@ -189,26 +190,30 @@ export default function AddConnectionModal({
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all mb-2"
                       style={{ focusRingColor: "#2691ce" }}
                     />
-                    <select
-                      name="recipientId"
+                    <CustomDropdown
                       value={formData.recipientId}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${
-                        errors.recipientId ? "border-red-500" : "border-gray-300"
-                      }`}
-                      style={{ focusRingColor: "#2691ce" }}
-                    >
-                      <option value="">Select a user...</option>
-                      {filteredUsers.map((user) => {
-                        const name = user.name || user.firstName || user.username || user.email || "Unknown";
-                        const email = user.email || "";
-                        return (
-                          <option key={user._id || user.id} value={user._id || user.id}>
-                            {name} {email ? `(${email})` : ""}
-                          </option>
-                        );
-                      })}
-                    </select>
+                      onChange={(value) => {
+                        const e = { target: { name: 'recipientId', value } };
+                        handleInputChange(e);
+                      }}
+                      options={[
+                        { value: "", label: "Select a user..." },
+                        ...filteredUsers.map((user) => {
+                          const name = user.name || user.firstName || user.username || user.email || "Unknown";
+                          const email = user.email || "";
+                          return {
+                            value: user._id || user.id,
+                            label: `${name}${email ? ` (${email})` : ""}`
+                          };
+                        })
+                      ]}
+                      placeholder="Select a user..."
+                      minWidth="100%"
+                      maxHeight="200px"
+                      getOptionLabel={(option) => option.label}
+                      getOptionValue={(option) => option.value}
+                      getOptionKey={(option, index) => option.value || index}
+                    />
                   </div>
                   {errors.recipientId && (
                     <p className="text-sm text-red-600 mt-1">{errors.recipientId}</p>
@@ -219,21 +224,20 @@ export default function AddConnectionModal({
                   <label className="block text-sm font-medium mb-2" style={{ color: "#040606" }}>
                     Connection Type *
                   </label>
-                  <select
-                    name="connectionType"
+                  <CustomDropdown
                     value={formData.connectionType}
-                    onChange={handleInputChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent transition-all ${
-                      errors.connectionType ? "border-red-500" : "border-gray-300"
-                    }`}
-                    style={{ focusRingColor: "#2691ce" }}
-                  >
-                    {connectionTypes.map((type) => (
-                      <option key={type.value} value={type.value}>
-                        {type.label}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(value) => {
+                      const e = { target: { name: 'connectionType', value } };
+                      handleInputChange(e);
+                    }}
+                    options={connectionTypes}
+                    placeholder="Select connection type"
+                    minWidth="100%"
+                    maxHeight="200px"
+                    getOptionLabel={(option) => option.label}
+                    getOptionValue={(option) => option.value}
+                    getOptionKey={(option, index) => option.value || index}
+                  />
                   {errors.connectionType && (
                     <p className="text-sm text-red-600 mt-1">{errors.connectionType}</p>
                   )}

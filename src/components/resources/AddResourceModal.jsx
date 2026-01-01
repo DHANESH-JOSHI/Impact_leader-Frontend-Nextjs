@@ -15,6 +15,7 @@ import {
   Check,
 } from "lucide-react";
 import { ThemesService } from "@/services/themesService";
+import CustomDropdown from "@/components/core/CustomDropdown";
 
 const modalVariants = {
   hidden: {
@@ -618,21 +619,28 @@ export default function AddResourceModal({
                     >
                       Type *
                     </label>
-                    <select
-                      name="type"
+                    <CustomDropdown
                       value={formData.type}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                      style={{ focusRingColor: "#2691ce" }}
+                      onChange={(value) => {
+                        const e = { target: { name: 'type', value } };
+                        handleInputChange(e);
+                      }}
+                      options={[
+                        { value: "document", label: "Document" },
+                        { value: "video", label: "Video" },
+                        { value: "audio", label: "Audio" },
+                        { value: "image", label: "Image" },
+                        { value: "link", label: "Link" },
+                        { value: "other", label: "Other" }
+                      ]}
+                      placeholder="Select type"
+                      minWidth="100%"
+                      maxHeight="200px"
+                      getOptionLabel={(option) => option.label}
+                      getOptionValue={(option) => option.value}
+                      getOptionKey={(option, index) => option.value || index}
                       disabled={isSubmitting}
-                    >
-                      <option value="document">Document</option>
-                      <option value="video">Video</option>
-                      <option value="audio">Audio</option>
-                      <option value="image">Image</option>
-                      <option value="link">Link</option>
-                      <option value="other">Other</option>
-                    </select>
+                    />
                   </motion.div>
 
                   <motion.div
@@ -646,17 +654,21 @@ export default function AddResourceModal({
                     >
                       Visibility
                     </label>
-                    <select
-                      name="isPublic"
+                    <CustomDropdown
                       value={formData.isPublic ? "true" : "false"}
-                      onChange={(e) => setFormData(prev => ({ ...prev, isPublic: e.target.value === "true" }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
-                      style={{ focusRingColor: "#2691ce" }}
+                      onChange={(value) => setFormData(prev => ({ ...prev, isPublic: value === "true" }))}
+                      options={[
+                        { value: "true", label: "Public" },
+                        { value: "false", label: "Private" }
+                      ]}
+                      placeholder="Select visibility"
+                      minWidth="100%"
+                      maxHeight="200px"
+                      getOptionLabel={(option) => option.label}
+                      getOptionValue={(option) => option.value}
+                      getOptionKey={(option, index) => option.value || index}
                       disabled={isSubmitting}
-                    >
-                      <option value="true">Public</option>
-                      <option value="false">Private</option>
-                    </select>
+                    />
                   </motion.div>
                 </div>
 
